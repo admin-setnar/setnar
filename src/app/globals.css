@@ -1,0 +1,174 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * Design tokens — the single source of every visual value in SETNAR.
+ *
+ * These :root values are the *fallback* (SETNAR's own brand). At runtime the
+ * resolved tenant injects the same token names with its own values, so a
+ * white-labelled tenant repaints the product without touching components.
+ * Colors are RGB channels so Tailwind alpha modifiers keep working.
+ */
+@layer base {
+  :root {
+    /* Brand palette — SETNAR visual identity */
+    --palette-900: 20 33 61; /* #14213D */
+    --palette-800: 31 45 80; /* #1F2D50 */
+    --palette-700: 51 68 102; /* #334466 */
+    --palette-500: 107 114 128; /* #6B7280 */
+    --palette-200: 229 231 235; /* #E5E7EB */
+    --palette-50: 248 250 252; /* #F8FAFC */
+
+    /* Semantic surfaces */
+    --surface: 255 255 255;
+    --surface-raised: 255 255 255;
+    --surface-sunken: var(--palette-50);
+    --surface-inverted: var(--palette-900);
+
+    /* Semantic content */
+    --content: var(--palette-900);
+    --content-muted: 71 84 112;
+    /* Decoupled from --palette-500 (#6B7280): that value cleared AA by only
+       0.12 against the sunken surface, which is no margin at all once a tenant
+       shifts its palette. This clears it by a comfortable distance. */
+    --content-subtle: 90 99 114;
+    --content-inverted: 255 255 255;
+
+    /* Lines */
+    --border: var(--palette-200);
+    --border-strong: 203 209 217;
+
+    /* Primary action */
+    --brand: var(--palette-900);
+    --brand-hover: var(--palette-800);
+    --brand-active: 12 21 40;
+    --brand-subtle: var(--palette-50);
+    --brand-contrast: 255 255 255;
+
+    /* Status */
+    --success: 21 105 74;
+    --success-subtle: 236 250 244;
+    --warning: 146 84 14;
+    --warning-subtle: 254 248 235;
+    --danger: 176 32 43;
+    --danger-subtle: 254 243 243;
+
+    /* Focus */
+    --ring: var(--palette-700);
+
+    /* Radius — subtle, precise. Never exaggerated. */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    /* Elevation — borders first, shadows only to separate layers */
+    --shadow-subtle: 0 1px 2px 0 rgb(var(--palette-900) / 0.04);
+    --shadow-raised: 0 1px 3px 0 rgb(var(--palette-900) / 0.06), 0 8px 24px -12px rgb(var(--palette-900) / 0.12);
+    --shadow-overlay: 0 24px 60px -20px rgb(var(--palette-900) / 0.28);
+
+    /* Motion — 300ms ceiling, per DESIGN_SYSTEM.md */
+    --duration-fast: 120ms;
+    --duration-base: 200ms;
+    --duration-slow: 300ms;
+
+    /* Layout */
+    --container-max: 1200px;
+
+    /* Typography — the brand face, self-hosted. The stack in tailwind.config
+       supplies the fallbacks. */
+    --font-sans: 'Plus Jakarta Sans Variable';
+  }
+
+  /**
+   * Dark theme tokens are defined now so components never need revisiting when
+   * the theme switcher ships. No toggle is exposed yet (YAGNI) — adding one is
+   * a matter of writing `dark` onto <html>.
+   */
+  .dark {
+    --surface: 11 15 25;
+    --surface-raised: 18 24 38;
+    --surface-sunken: 8 11 19;
+    --surface-inverted: 255 255 255;
+    --content: 244 246 250;
+    --content-muted: 176 184 200;
+    --content-subtle: 138 147 165;
+    --content-inverted: var(--palette-900);
+    --border: 38 47 66;
+    --border-strong: 56 68 92;
+    --brand: 255 255 255;
+    --brand-hover: 226 232 240;
+    --brand-active: 203 213 225;
+    --brand-subtle: 24 32 48;
+    --brand-contrast: var(--palette-900);
+    --ring: 148 163 184;
+  }
+
+  * {
+    @apply border-line;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Fixed navbar must not cover anchored sections. */
+    scroll-padding-top: 96px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-surface text-content antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'ss01';
+    text-rendering: optimizeLegibility;
+  }
+
+  /* One consistent, always-visible focus treatment across the product. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-offset-2;
+    --tw-ring-color: rgb(var(--ring));
+    --tw-ring-offset-color: rgb(var(--surface));
+  }
+
+  ::selection {
+    background-color: rgb(var(--palette-900) / 0.12);
+  }
+}
+
+@layer components {
+  /**
+   * Signature motif: the staggered rules from the SETNAR identity's
+   * "elemento gráfico". Used as a section eyebrow and inside the app preview
+   * so the page is unmistakably SETNAR without adding decoration.
+   */
+  .brand-rule {
+    background-image: linear-gradient(
+      to right,
+      rgb(var(--palette-900)) 0%,
+      rgb(var(--palette-900) / 0.85) 55%,
+      rgb(var(--palette-900) / 0) 100%
+    );
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* Motion supports understanding — it is never required to understand. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
