@@ -39,8 +39,10 @@ export const setnarTenant: Tenant = {
   },
 
   features: {
-    googleAuth: true,
-    microsoftAuth: true,
+    // No social provider is wired in yet — SocialAuthButtons and
+    // signInWithProvider stay in the repo, disabled by flag, not deleted.
+    googleAuth: false,
+    microsoftAuth: false,
     selfServiceSignUp: true,
   },
 

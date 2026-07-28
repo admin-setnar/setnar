@@ -18,8 +18,12 @@ npm run dev          # http://localhost:3000
 npm run verify       # typecheck → lint → tests → production build
 ```
 
-Copy `.env.example` to `.env.local`. Both variables have working defaults, so
-the project runs with no configuration at all.
+Copy `.env.example` to `.env.local`. `NEXT_PUBLIC_SITE_URL` and
+`NEXT_PUBLIC_DEFAULT_TENANT` have working defaults, so the marketing page
+renders with no configuration at all. Authentication needs the three
+Supabase-related variables filled in — see `supabase/README.md` for where
+each one comes from and what else has to be set up on the Supabase/Vercel
+side first.
 
 ### Verification status
 
@@ -29,12 +33,18 @@ Everything below was run against this codebase, not assumed:
 | --- | --- |
 | `tsc --noEmit` (strict, `noUncheckedIndexedAccess`) | clean |
 | `next lint` | clean |
-| `tsx --test` | 17/17 passing |
-| `next build` | success — `/` at **127 kB** First Load JS |
+| `tsx --test` | 23/23 passing — the 4 login-rate-limiter integration tests self-skip without a configured Supabase project (see below) |
+| `next build` | success — `/` at **127 kB**, `/entrar`/`/criar-conta` at 156 kB, `/termos`/`/privacidade` at 127 kB First Load JS |
 | Served HTML (`next start` + fetch) | headings, JSON-LD, OG tags, tenant tokens and legal notice all present |
 | `/robots.txt`, `/sitemap.xml`, `/opengraph-image` (1200×630 PNG), `/icon.svg`, 404 | all correct |
 | WCAG AA contrast audit on every colour pair in use | lowest ratio 5.73:1 against a 4.5 requirement |
 | Rendered list semantics (`ul`/`ol` children) | every list contains only `<li>` |
+
+**Not yet verified against a real Supabase project in this session** — pending
+the credentials and the migration described in `supabase/README.md`: actual
+sign-up/sign-in end to end, `profiles`/`login_attempts` rows written and
+shaped as expected, the 6th failed login in 15 minutes returning
+`rate_limited`, and the 4 skipped integration tests above.
 
 > **Measure performance against a production build, in an incognito window.**
 > `npm run dev` serves unminified React with HMR and source maps; a Lighthouse
@@ -62,8 +72,9 @@ src/
 │   ├── auth/                who is this person
 │   │   ├── domain/          rules, types, AuthGateway (port)
 │   │   ├── application/     sign-in, sign-up, sign-in-with-provider
-│   │   ├── infrastructure/  MockAuthGateway, factory
-│   │   └── presentation/    modals, forms, zod schemas, error copy
+│   │   ├── infrastructure/  SupabaseAuthGateway, MockAuthGateway (tests), factory,
+│   │   │                    login rate limiter, Supabase error mapping
+│   │   └── presentation/    modals, standalone forms, Server Actions, zod schemas, error copy
 │   └── marketing/           what this page says
 │       ├── domain/          MarketingContent types, IconKey
 │       └── presentation/    Hero, HowItWorks, Benefits, FinalCta, ProductPreview
@@ -72,7 +83,7 @@ src/
     ├── layout/              Container, Section, Navbar, Footer
     ├── brand/               Logo
     ├── hooks/               useScrollThreshold
-    └── lib/                 cn
+    └── lib/                 cn, getClientIp, supabase/ (client.ts, server.ts)
 ```
 
 **The dependency rule is enforced by ESLint, not by good intentions.**
@@ -187,10 +198,12 @@ implementation today, and it has deterministic triggers:
 **Why.** Every state — idle, submitting, failed, succeeded — is buildable,
 reviewable and testable before a backend exists. Failure codes are
 provider-agnostic, so the UI never parses a vendor's error strings.
-**Migrating to Clerk / Auth.js / Supabase.** Write an adapter implementing
-`AuthGateway`, return it from `getAuthGateway()`. Replace the two success
-handlers (currently an in-place confirmation) with a redirect. Nothing else
-changes — no structural refactor, which was the explicit requirement.
+**Status: migrated (Sprint A).** `getAuthGateway()` now returns
+`SupabaseAuthGateway`. `MockAuthGateway` stays in the repo for the test
+suite, but nothing in `app/` or `presentation/` reaches it any more —
+`no-restricted-imports` enforces that. See ADR-011 through ADR-013 for what
+the migration itself required. As predicted here, no structural refactor of
+`AuthGateway`, the use cases, or their call sites was needed.
 **Reversal cost.** Low.
 
 ### ADR-004 — shadcn/ui primitives are vendored, not installed
@@ -272,6 +285,79 @@ modals, with `react-hook-form` and `zod`, are loaded on first open via
 only scroll.
 **Reversal cost.** Low.
 
+### ADR-011 — Profile provisioning by a `SECURITY DEFINER` trigger, not a second application call
+**Decision.** `auth.signUp()` writes only `full_name` to `raw_user_meta_data`.
+A Postgres trigger (`handle_new_user()`) inserts the matching `profiles` row
+inside the same transaction as the `auth.users` insert. `tenant_id`,
+`terms_accepted_at` and `terms_version` are decided by the trigger itself —
+`tenant_id` is a literal, `terms_accepted_at` is `now()`, and `terms_version`
+comes from `current_terms_version()`, a second database function that is the
+single source of truth for which version of `/termos` and `/privacidade` is
+currently in force (no duplicate constant in TypeScript, so a signed consent
+record and the copy a user actually saw can never drift apart).
+**Alternative rejected.** Two sequential application calls — `auth.signUp()`,
+then an insert into `profiles`. Without a service role key, a failure between
+the two steps leaves a real auth user with no profile: an orphaned account
+with no clean way to detect or repair it from the app layer.
+**Why this works without a service role key.** `SECURITY DEFINER` runs the
+function as its owner, not as the anonymous caller — the same mechanism RLS
+is built on, applied deliberately instead of bypassed. If the insert fails,
+Postgres rolls back the entire transaction, including the `auth.users` row:
+there is no intermediate state to be orphaned in the first place.
+**Reversal cost.** Low — the trigger is one function, dropping it stops
+provisioning without touching `SupabaseAuthGateway`.
+
+### ADR-012 — Login rate limiting lives in Postgres, not in application memory
+**Decision.** `is_login_blocked` / `record_login_failure` /
+`clear_login_attempts`, three more `SECURITY DEFINER` functions over a
+`login_attempts` table with zero RLS policies — the exact same pattern as
+ADR-011 — back the 5-failures-per-15-minutes rule, keyed independently by a
+salted SHA-256 hash of the e-mail and of the IP (never plain text: an
+attempt log is personal data, and this table exists in the same sprint that
+publishes the privacy policy declaring it).
+**Alternative rejected, and why it is wrong, not just simpler.** A `Map` in a
+module, counting failures in process memory. This app deploys to Vercel,
+which is serverless: there is no process that persists between requests, so
+a counter kept in one module-level variable can silently reset on every
+single request. The dangerous part is that this is invisible locally —
+`npm run dev` runs one persistent process, so the bug only appears in
+production, with no error and no signal, as a rate limiter that never
+actually limits anything.
+**Consequence — a limitation, recorded rather than solved.** Without service
+role, this table is reachable through the app's Server Actions. Someone who
+calls the Supabase API directly with the publishable key (which is public by
+design) bypasses this limiter entirely; native Supabase Auth rate limiting is
+the only remaining defence against that path — see ADR-013.
+**Reversal cost.** Medium. An in-memory limiter becomes viable again only if
+the deployment target changes to a host with a persistent process (a
+container, not serverless) — until then, this is the only version that
+actually enforces the rule in production, not just in `npm run dev`.
+
+### ADR-013 — No IP forwarded to Supabase's own rate limiting
+**Decision.** Nothing forwards the visitor's IP to the Supabase Auth API.
+**Why not, even though it looks like the obvious hardening step.** GoTrue
+reads the visitor IP from `Sb-Forwarded-For`, not the generic
+`x-forwarded-for` — and honouring that header at all requires a secret API
+key, which this project does not hold this sprint. Sending
+`x-forwarded-for` anyway would have been silently ignored: worse than doing
+nothing, because it would read in code review as a protection that does not
+exist.
+**Consequence.** Every request from this app reaches Supabase carrying the
+IP of whichever Vercel function handled it, not the visitor's — so
+Supabase's own native rate limiting (Authentication → Rate Limits) currently
+sees all of SETNAR's traffic as one origin. This makes `login_attempts`
+(ADR-012) the primary defence against credential stuffing through the app,
+not a second layer behind Supabase's own.
+**Revisit when:** legitimate users start getting HTTP 429 from Supabase
+during ordinary traffic (the shared-bucket symptom), or when the project
+takes on a secret API key for another reason. Two fixes exist for whenever
+that happens: request a secret key scoped only to setting
+`Sb-Forwarded-For`, or move the `signInWithPassword`/`signUp` calls to run in
+the browser instead of a Server Action, so Supabase sees the real IP without
+any forwarding at all.
+**Reversal cost.** Low once a secret key is available — one header on one
+client construction call.
+
 ---
 
 ## Accessibility
@@ -296,16 +382,25 @@ Non-negotiable, per `DESIGN_SYSTEM.md`. What is implemented and verified:
 
 ## What is deliberately not here
 
-Per the brief and YAGNI: real authentication, a dashboard, product pages,
-pricing, a theme toggle, and internationalisation. The seams for each exist
-(`AuthGateway`, dark tokens, `tenant.locale`), but nothing is built ahead of
-demand.
+Per the brief and YAGNI: a dashboard, product pages, pricing, a theme toggle,
+social login, password recovery, and internationalisation. The seams for
+each exist (`AuthGateway`'s `signInWithProvider`, dark tokens, `tenant.locale`),
+but nothing is built ahead of demand — see `docs/` for the sprint scope that
+defines exactly what "ahead of demand" means at each stage.
 
 ## Next steps, in order
 
 1. Confirm the three copy claims flagged under **Compliance**.
 2. Resolve the Inter / Plus Jakarta Sans contradiction in `DESIGN_SYSTEM.md`.
-3. Choose the identity provider, then write one `AuthGateway` adapter.
-4. Build `/termos` and `/privacidade` — the sign-up modal already links to them,
-   and account creation cannot honestly require accepting documents that do not
-   exist.
+3. ~~Choose the identity provider, then write one `AuthGateway` adapter.~~ Done
+   (Sprint A) — see ADR-011 through ADR-013.
+4. ~~Build `/termos` and `/privacidade`.~~ Done (Sprint A), drafted to be
+   accurate about what the product actually collects — **still pending formal
+   legal review before real public sign-up opens**, as flagged on both pages.
+5. Apply `supabase/migrations/` to the project and complete the manual steps
+   in `supabase/README.md` (disable e-mail confirmation, configure Supabase's
+   own rate limits, set the Vercel env vars) before testing sign-up/sign-in
+   end to end.
+6. Sprint B: the authenticated `/app` dashboard, and the redirect-to-`/entrar`
+   wiring for protected routes and expired sessions that `/entrar` and
+   `/criar-conta` exist to serve but do not yet implement.

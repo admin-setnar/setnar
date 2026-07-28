@@ -31,12 +31,17 @@ export function Footer({
     <footer className="border-t border-line bg-surface">
       <Container>
         <div className="grid gap-12 py-16 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-24">
-          <div className="max-w-sm space-y-4">
-            <Logo name={brandName} />
-            <Text variant="caption" className="leading-relaxed">
+          {/* The logo is inline-flex, so it needs a block wrapper of its own:
+              vertical margin has no effect on an inline element, which is why
+              `space-y-*` alone would not separate it from the text below. */}
+          <div className="max-w-sm">
+            <div>
+              <Logo name={brandName} />
+            </div>
+            <Text as="p" variant="caption" className="mt-4 leading-relaxed">
               {content.description}
             </Text>
-            <ul className="flex items-center gap-1 pt-1">
+            <ul className="mt-5 flex items-center gap-1">
               {content.social.map((social) => {
                 const Icon = resolveIcon(social.icon);
                 return (

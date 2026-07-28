@@ -56,6 +56,8 @@ function defaultElementFor(variant: TextProps['variant']): ElementType {
     case 'title':
       return 'h3';
     case 'caption':
+      return 'p';
+    // Eyebrow is a label sitting above a heading, never a paragraph on its own.
     case 'eyebrow':
       return 'span';
     default:
