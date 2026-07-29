@@ -38,6 +38,10 @@ export function SignUpForm() {
   const { brandName, legal } = useTenant();
   const [failureCode, setFailureCode] = useState<AuthErrorCode | null>(null);
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthenticatedUser | null>(null);
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
 
   const {
     register,
@@ -69,7 +73,21 @@ export function SignUpForm() {
       setFailureCode(result.code);
       return;
     }
+    if (result.status === 'pending_confirmation') {
+      setAwaitingConfirmation({ name: result.name, email: result.email });
+      return;
+    }
     setAuthenticatedUser(result.user);
+  }
+
+  if (awaitingConfirmation) {
+    return (
+      <FormAlert
+        tone="success"
+        title={`Quase lá, ${awaitingConfirmation.name}`}
+        description={`Enviamos um e-mail de confirmação para ${awaitingConfirmation.email}. Clique no link para ativar sua conta.`}
+      />
+    );
   }
 
   if (authenticatedUser) {

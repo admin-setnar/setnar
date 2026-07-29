@@ -47,6 +47,24 @@ describe('mapSupabaseAuthError', () => {
     assert.equal(code, 'unknown');
   });
 
+  it('maps the built-in e-mail service rate limit to its own code, not rate_limited', () => {
+    const code = mapSupabaseAuthError({
+      status: 429,
+      code: 'over_email_send_rate_limit',
+      message: 'Email rate limit exceeded',
+    });
+    assert.equal(code, 'email_service_unavailable');
+    assert.notEqual(code, 'rate_limited');
+  });
+
+  it('falls back on the message for a duplicate sign-up when no code is present (self-hosted GoTrue)', () => {
+    const code = mapSupabaseAuthError({
+      status: 422,
+      message: 'A user with this email address has already been registered',
+    });
+    assert.equal(code, 'email_already_registered');
+  });
+
   it('antienumeration: a non-existent e-mail and a wrong password map to the exact same code', () => {
     // These are two distinct real-world failures that a naive implementation
     // could be tempted to distinguish. Supabase itself already returns the

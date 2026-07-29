@@ -173,4 +173,49 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     });
     assert.equal(afterWindow.data, false);
   });
+
+  it('a caller-supplied p_window_seconds cannot wipe another identity\'s attempts', async () => {
+    const victim = testIdentity();
+    const attacker = testIdentity();
+    const maxAttempts = 1;
+    const windowSeconds = 900;
+
+    await supabase!.rpc('record_login_failure', {
+      p_email_hash: victim.email,
+      p_ip_hash: victim.ip,
+      p_window_seconds: windowSeconds,
+    });
+
+    const blockedBefore = await supabase!.rpc('is_login_blocked', {
+      p_email_hash: victim.email,
+      p_ip_hash: victim.ip,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
+      p_window_seconds: windowSeconds,
+    });
+    assert.equal(blockedBefore.data, true);
+
+    // Attacker: an identity unrelated to the victim, calling with a
+    // degenerate window. Before the fix, this wipes every row in
+    // login_attempts regardless of email_hash/ip_hash — including the
+    // victim's — because the cleanup DELETE trusted this value.
+    await supabase!.rpc('record_login_failure', {
+      p_email_hash: attacker.email,
+      p_ip_hash: attacker.ip,
+      p_window_seconds: 0,
+    });
+
+    const blockedAfter = await supabase!.rpc('is_login_blocked', {
+      p_email_hash: victim.email,
+      p_ip_hash: victim.ip,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
+      p_window_seconds: windowSeconds,
+    });
+    assert.equal(
+      blockedAfter.data,
+      true,
+      'an unrelated caller recording a failure with p_window_seconds = 0 must not clear existing attempts',
+    );
+  });
 });
