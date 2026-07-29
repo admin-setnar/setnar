@@ -42,7 +42,8 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     const before = await supabase!.rpc('is_login_blocked', {
       p_email_hash: email,
       p_ip_hash: ip,
-      p_max_attempts: maxAttempts,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
       p_window_seconds: windowSeconds,
     });
     assert.equal(before.error, null);
@@ -57,7 +58,8 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     const afterOne = await supabase!.rpc('is_login_blocked', {
       p_email_hash: email,
       p_ip_hash: ip,
-      p_max_attempts: maxAttempts,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
       p_window_seconds: windowSeconds,
     });
     assert.equal(afterOne.data, false, 'one failure must not block a 2-attempt limit');
@@ -71,7 +73,8 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     const afterTwo = await supabase!.rpc('is_login_blocked', {
       p_email_hash: email,
       p_ip_hash: ip,
-      p_max_attempts: maxAttempts,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
       p_window_seconds: windowSeconds,
     });
     assert.equal(afterTwo.data, true, 'the second failure must trip a 2-attempt limit');
@@ -96,7 +99,8 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     const blocked = await supabase!.rpc('is_login_blocked', {
       p_email_hash: `rate-limiter-test-${randomUUID()}-untried@example.invalid`,
       p_ip_hash: ip,
-      p_max_attempts: maxAttempts,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
       p_window_seconds: windowSeconds,
     });
     assert.equal(
@@ -120,7 +124,8 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     const blocked = await supabase!.rpc('is_login_blocked', {
       p_email_hash: email,
       p_ip_hash: ip,
-      p_max_attempts: maxAttempts,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
       p_window_seconds: windowSeconds,
     });
     assert.equal(blocked.data, true);
@@ -130,7 +135,8 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     const afterClear = await supabase!.rpc('is_login_blocked', {
       p_email_hash: email,
       p_ip_hash: ip,
-      p_max_attempts: maxAttempts,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
       p_window_seconds: windowSeconds,
     });
     assert.equal(afterClear.data, false);
@@ -150,7 +156,8 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     const blocked = await supabase!.rpc('is_login_blocked', {
       p_email_hash: email,
       p_ip_hash: ip,
-      p_max_attempts: maxAttempts,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
       p_window_seconds: windowSeconds,
     });
     assert.equal(blocked.data, true);
@@ -160,7 +167,8 @@ describe('login rate limiter RPCs (Postgres, integration)', { skip: !canRun && s
     const afterWindow = await supabase!.rpc('is_login_blocked', {
       p_email_hash: email,
       p_ip_hash: ip,
-      p_max_attempts: maxAttempts,
+      p_max_attempts_email: maxAttempts,
+      p_max_attempts_ip: maxAttempts,
       p_window_seconds: windowSeconds,
     });
     assert.equal(afterWindow.data, false);

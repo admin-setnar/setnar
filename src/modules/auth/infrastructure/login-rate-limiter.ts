@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
-  LOGIN_MAX_FAILED_ATTEMPTS,
+  LOGIN_MAX_FAILED_ATTEMPTS_PER_EMAIL,
+  LOGIN_MAX_FAILED_ATTEMPTS_PER_IP,
   LOGIN_RATE_LIMIT_WINDOW_MS,
 } from '@/modules/auth/domain/auth-rules';
 
@@ -39,13 +40,19 @@ export async function isLoginBlocked(
   const { data, error } = await supabase.rpc('is_login_blocked', {
     p_email_hash: hash(normalizeEmail(email)),
     p_ip_hash: ip ? hash(ip) : null,
-    p_max_attempts: LOGIN_MAX_FAILED_ATTEMPTS,
+    p_max_attempts_email: LOGIN_MAX_FAILED_ATTEMPTS_PER_EMAIL,
+    p_max_attempts_ip: LOGIN_MAX_FAILED_ATTEMPTS_PER_IP,
     p_window_seconds: LOGIN_RATE_LIMIT_WINDOW_MS / 1000,
   });
 
-  // Fails closed on an unexpected RPC error: better a false "not blocked"
-  // than blocking every login because of a transient database issue —
-  // signInWithPassword remains the actual authority on the credentials.
+  // Fails OPEN on an unexpected RPC error: on error, this returns "not
+  // blocked" rather than "blocked". The trade-off, made deliberately: a
+  // transient database issue never locks every user out of sign-in, but it
+  // also means the rate limiter provides no protection for the duration of
+  // that issue — an attacker could get unlimited attempts through during an
+  // outage window. Accepted because signInWithPassword remains the actual
+  // authority on the credentials either way; what is lost during an outage
+  // is throttling of attempts, not the credential check itself.
   if (error) return false;
   return data === true;
 }

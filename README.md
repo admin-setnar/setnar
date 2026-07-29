@@ -41,10 +41,39 @@ Everything below was run against this codebase, not assumed:
 | Rendered list semantics (`ul`/`ol` children) | every list contains only `<li>` |
 
 **Not yet verified against a real Supabase project in this session** — pending
-the credentials and the migration described in `supabase/README.md`: actual
-sign-up/sign-in end to end, `profiles`/`login_attempts` rows written and
-shaped as expected, the 6th failed login in 15 minutes returning
-`rate_limited`, and the 4 skipped integration tests above.
+the credentials and the migration described in `supabase/README.md`:
+
+- Sign-up/sign-in end to end, `profiles`/`login_attempts` rows written and
+  shaped as expected.
+- The 6th failed login for one e-mail (or the 31st from one IP) in 15 minutes
+  returning `rate_limited`.
+- That no update policy exists on `profiles` post-migration.
+- The 4 skipped integration tests above.
+- That the session token is never written to `localStorage`/`sessionStorage`
+  (only to the httpOnly cookie the privacy policy §6 claims) — this is an
+  assumption about `@supabase/ssr`'s default behaviour, not yet confirmed
+  against a running app in a real browser.
+- Sign-up with an already-registered e-mail actually returns
+  `email_already_registered`, not a generic failure.
+- `/termos` and `/privacidade` rendering `current_terms_version()` from a real
+  database, including the fail-open fallback (`"Versão indisponível no
+  momento"`) under an actual RPC failure — see the note below.
+- **Most importantly:** that Supabase's real error shape for both a wrong
+  password *and* a non-existent e-mail maps to `invalid_credentials` through
+  `mapSupabaseAuthError`. `tests/map-supabase-auth-error.test.ts` only proves
+  the mapping is correct for fabricated error objects built to match the
+  shape the code expects — if GoTrue's real response differs from that
+  assumed shape, either case can fall through to `unknown` instead, and the
+  anti-enumeration guarantee this mapping exists for breaks silently while
+  the unit test stays green.
+
+**Fail-open on `current_terms_version()`.** `getCurrentTermsVersion()`
+previously threw on an RPC error, which would have taken down `/termos` and
+`/privacidade` — public, mandatory pages — with a 500 during any database
+hiccup. Fixed to return `null` instead: both pages now render the full legal
+text unconditionally and show `"Versão indisponível no momento"` in place of
+the version number when the RPC fails, the same fail-open trade-off already
+used in `isLoginBlocked` (`login-rate-limiter.ts`).
 
 > **Measure performance against a production build, in an incognito window.**
 > `npm run dev` serves unminified React with HMR and source maps; a Lighthouse
@@ -311,10 +340,18 @@ provisioning without touching `SupabaseAuthGateway`.
 **Decision.** `is_login_blocked` / `record_login_failure` /
 `clear_login_attempts`, three more `SECURITY DEFINER` functions over a
 `login_attempts` table with zero RLS policies — the exact same pattern as
-ADR-011 — back the 5-failures-per-15-minutes rule, keyed independently by a
-salted SHA-256 hash of the e-mail and of the IP (never plain text: an
-attempt log is personal data, and this table exists in the same sprint that
-publishes the privacy policy declaring it).
+ADR-011 — back the rate-limiting rule within a 15-minute window, keyed
+independently by a salted SHA-256 hash of the e-mail and of the IP (never
+plain text: an attempt log is personal data, and this table exists in the
+same sprint that publishes the privacy policy declaring it).
+**Why the e-mail and IP thresholds differ (5 vs. 30).** A single shared
+threshold was the first version, but it does not fit Brazilian mobile
+traffic: CGNAT means many unrelated users can share one public IP, so a
+tight per-IP limit blocks innocent users on the same carrier connection, not
+just an attacker. The per-e-mail limit stays tight (5) because it has no
+such false-positive risk; the per-IP limit is raised (30) to absorb normal
+CGNAT sharing while still catching a scan across many accounts from one
+origin.
 **Alternative rejected, and why it is wrong, not just simpler.** A `Map` in a
 module, counting failures in process memory. This app deploys to Vercel,
 which is serverless: there is no process that persists between requests, so

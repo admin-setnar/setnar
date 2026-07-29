@@ -28,13 +28,16 @@ create policy "profiles_select_own"
   on public.profiles for select
   using (auth.uid() = id);
 
-create policy "profiles_update_own"
-  on public.profiles for update
-  using (auth.uid() = id)
-  with check (auth.uid() = id);
-
--- No insert/delete policy: rows are created only by handle_new_user() below
--- (SECURITY DEFINER, bypasses RLS) and deleted only by the auth.users cascade.
+-- No update/insert/delete policy. Rows are created only by handle_new_user()
+-- below (SECURITY DEFINER, bypasses RLS) and deleted only by the auth.users
+-- cascade. An update policy was deliberately left out rather than scoped:
+-- nothing in the app reads or writes profiles yet, so there is no consumer
+-- to scope it to, and a same-row `using/with check (auth.uid() = id)` policy
+-- permits updating every column on the row — including tenant_id,
+-- terms_accepted_at and terms_version — which undoes exactly what
+-- handle_new_user() enforces at signup. When profile editing ships, add
+-- `grant update (full_name) on public.profiles to authenticated` plus a
+-- column-scoped policy, not a whole-row one.
 
 create or replace function public.set_updated_at()
 returns trigger
@@ -119,12 +122,16 @@ create trigger on_auth_user_created
 -- ============================================================================
 -- Login rate limiting.
 --
--- 5 failed attempts per 15 minutes (the actual limit/window are passed in as
--- parameters from LOGIN_MAX_FAILED_ATTEMPTS / LOGIN_RATE_LIMIT_WINDOW_MS in
--- auth-rules.ts on every call, so the business rule has one source of truth
--- in the domain layer, not a literal duplicated here), keyed independently by
--- e-mail and by IP so both a targeted attack on one account and a scan across
--- many accounts from one origin get caught.
+-- Keyed independently by e-mail and by IP, each with its own threshold
+-- (5 for e-mail, 30 for IP; window 15 minutes), so both a targeted attack on
+-- one account and a scan across many accounts from one origin get caught.
+-- The actual limits/window are passed in as parameters from
+-- LOGIN_MAX_FAILED_ATTEMPTS_PER_EMAIL / LOGIN_MAX_FAILED_ATTEMPTS_PER_IP /
+-- LOGIN_RATE_LIMIT_WINDOW_MS in auth-rules.ts on every call, so the business
+-- rule has one source of truth in the domain layer, not a literal duplicated
+-- here. The IP threshold is deliberately much higher than the e-mail one:
+-- CGNAT on Brazilian mobile carriers means many unrelated users can share
+-- one public IP, and a tight per-IP limit would let them lock each other out.
 --
 -- email/ip arrive already hashed (sha256 + server-only salt, computed in
 -- login-rate-limiter.ts) — this table never stores either in plain text, so
@@ -152,7 +159,8 @@ alter table public.login_attempts enable row level security;
 create or replace function public.is_login_blocked(
   p_email_hash text,
   p_ip_hash text,
-  p_max_attempts int,
+  p_max_attempts_email int,
+  p_max_attempts_ip int,
   p_window_seconds int
 )
 returns boolean
@@ -165,13 +173,13 @@ as $$
       select count(*) from public.login_attempts
       where email_hash = p_email_hash
         and attempted_at > now() - make_interval(secs => p_window_seconds)
-    ) >= p_max_attempts
+    ) >= p_max_attempts_email
     or (
       p_ip_hash is not null and (
         select count(*) from public.login_attempts
         where ip_hash = p_ip_hash
           and attempted_at > now() - make_interval(secs => p_window_seconds)
-      ) >= p_max_attempts
+      ) >= p_max_attempts_ip
     );
 $$;
 
@@ -206,10 +214,10 @@ as $$
   delete from public.login_attempts where email_hash = p_email_hash;
 $$;
 
-revoke execute on function public.is_login_blocked(text, text, int, int) from public;
+revoke execute on function public.is_login_blocked(text, text, int, int, int) from public;
 revoke execute on function public.record_login_failure(text, text, int) from public;
 revoke execute on function public.clear_login_attempts(text) from public;
 
-grant execute on function public.is_login_blocked(text, text, int, int) to anon, authenticated;
+grant execute on function public.is_login_blocked(text, text, int, int, int) to anon, authenticated;
 grant execute on function public.record_login_failure(text, text, int) to anon, authenticated;
 grant execute on function public.clear_login_attempts(text) to anon, authenticated;

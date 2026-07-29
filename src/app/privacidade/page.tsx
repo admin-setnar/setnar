@@ -34,7 +34,7 @@ export default async function PrivacyPage() {
             Política de privacidade
           </Text>
           <Text as="p" variant="caption" className="mt-2">
-            Versão {version}
+            {version ? `Versão ${version}` : 'Versão indisponível no momento'}
           </Text>
 
           <FormAlert

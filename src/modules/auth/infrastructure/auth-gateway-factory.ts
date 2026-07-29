@@ -27,12 +27,18 @@ export async function getAuthGateway(): Promise<AuthGateway> {
  * database, never duplicated as a constant here, so a signed consent record
  * and the copy a user actually saw can never drift apart (see
  * `current_terms_version()` in `supabase/migrations`).
+ *
+ * Fails OPEN on an unexpected RPC error: returns `null` instead of throwing,
+ * same trade-off as `isLoginBlocked` in `login-rate-limiter.ts`. /termos and
+ * /privacidade are public, mandatory pages — a database hiccup must not turn
+ * them into a 500. The caller renders the legal text regardless and degrades
+ * only the version label; the text itself does not depend on this RPC.
  */
-export async function getCurrentTermsVersion(): Promise<string> {
+export async function getCurrentTermsVersion(): Promise<string | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc('current_terms_version');
   if (error || !data) {
-    throw new Error('Could not resolve the current terms version.');
+    return null;
   }
   return data;
 }
