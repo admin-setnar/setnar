@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 
+import { safeRedirectTarget } from '@/modules/auth/presentation/safe-redirect-target';
 import { SignInForm } from '@/modules/auth/presentation/sign-in-form';
 import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
 import { Container } from '@/shared/layout/container';
@@ -16,11 +17,25 @@ export const metadata: Metadata = { title: 'Entrar' };
  *
  * Renders the exact same `SignInForm` the modal uses. Exists for the cases a
  * modal cannot serve: redirecting here from a protected route or an expired
- * session (both land on `/app` — Sprint B), and for anyone who opens the link
- * directly instead of clicking "Entrar" on the gateway page.
+ * session (both land on `/app`), and for anyone who opens the link directly
+ * instead of clicking "Entrar" on the gateway page.
+ *
+ * `?next=` (Sprint B): sanitised here with the same `safeRedirectTarget` the
+ * Server Action itself re-checks before calling `redirect()` — this pass is
+ * for correct UX only (so the form never even holds an unsafe value), not
+ * the actual security guarantee, which lives server-side in `signInAction`
+ * (a Server Action is a callable POST endpoint; a client could invoke it
+ * directly with an arbitrary `next` bypassing this page entirely).
  */
-export default async function SignInPage() {
-  const tenant = await resolveTenant((await headers()).get('host'));
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const [tenant, { next }] = await Promise.all([
+    resolveTenant((await headers()).get('host')),
+    searchParams,
+  ]);
   const { marketing, brand } = tenant;
 
   return (
@@ -37,7 +52,7 @@ export default async function SignInPage() {
           </Text>
 
           <Card variant="raised" padding="lg" className="mt-8">
-            <SignInForm />
+            <SignInForm next={safeRedirectTarget(next)} />
           </Card>
         </Container>
       </main>

@@ -533,6 +533,13 @@ named domain state, not inferred from the shape of the success payload.
 **Reversal cost.** Medium — collapsing back to two states means deciding
 what a project with Confirm email enabled should show instead, and touching
 every file this ADR lists again.
+**Update (Sprint B) — the "Confirm email enabled" premise above is now
+explicitly decided the other way.** This ADR was written when that setting's
+final value was still open. It has since been turned OFF as a closed
+product decision (`supabase/README.md` §2) — see ADR-022 for the full
+reasoning and what that decision enables. Nothing above is invalidated:
+`AuthPendingConfirmation`/`awaitingConfirmation` remain exactly as this ADR
+built them, deliberately dead code today, not removed.
 
 ### ADR-017 — The test script now loads `.env.local`, with Node's own flag
 **Decision.** `"test"` in `package.json` changed from
@@ -828,6 +835,139 @@ Low-to-medium for `safeAuthCall` itself — removing it restores the original
 unhandled-rejection/stuck-spinner behavior this ADR exists to prevent, and
 any future auth Server Action that skips wrapping its body in
 `safeAuthCall` silently reopens the same hole for that one action.
+
+### ADR-021 — Session-refresh middleware, refresh-only by design
+**Decision.** `src/middleware.ts` calls `updateSession()`
+(`shared/lib/supabase/middleware.ts`) on every non-static request. It does
+exactly one thing: build a `@supabase/ssr` client bound to the request's/
+response's cookies and call `supabase.auth.getUser()`, which refreshes the
+access token when it is near expiry and writes the refreshed cookie back
+onto the response. It does not decide what counts as a protected route —
+that stays entirely in `/app/page.tsx`'s own `redirect()`.
+**Why this needs its own Supabase client, distinct from
+`shared/lib/supabase/server.ts`.** `server.ts` reads/writes cookies through
+`next/headers`'s `cookies()`, which does not exist in middleware —
+middleware runs before that request lifecycle even starts. Confirmed
+against the installed `@supabase/ssr` (0.12.4) type definitions before
+writing any of this, not assumed from memory:
+`node_modules/@supabase/ssr/dist/module/createServerClient.d.ts`'s own JSDoc
+documents a `getAll`/`setAll` shape specifically for middleware use,
+including a second `headers` argument to `setAll` that must also be applied
+to the response (`Cache-Control`, etc., so a response that just set an auth
+cookie is never cached by a CDN/reverse proxy for a different user). The
+deprecated `get`/`set`/`remove` shape is not used anywhere.
+**Why the matcher excludes static assets, `_next/*` and images.** The same
+cost concern ADR-001 already raised against putting *tenant* resolution in
+middleware ("runs on every asset request for no gain") — a session check is
+cheaper than a Host-based tenant lookup, but still pointless work against a
+CSS bundle or a favicon that never carries a session cookie relevant to it.
+**Why splitting "refresh" from "protect" into two places, not one
+middleware that does both.** A route becomes (or stops being) protected by
+editing that one page's own `redirect()`, without touching the single file
+every request already pays the cost of running. Folding the protected-route
+allowlist into middleware would mean every new protected route requires
+editing a file with no direct connection to that route.
+**Consequence.** Every request (except the excluded assets) now does one
+`getUser()` round trip to Supabase, even for fully public pages (`/`,
+`/termos`, `/entrar` itself). Accepted: this is the only correct place to
+refresh a token before a Server Component renders — Server Components
+cannot write cookies at all (`server.ts`'s own `setAll` silently no-ops
+there, by design).
+**Reversal cost.** Low — deleting `src/middleware.ts` returns to no
+proactive session refresh (a session would only ever refresh reactively,
+e.g. on a client-side Supabase call); it does not affect `/app`'s own
+protection, which reads the session independently through
+`getCurrentUser()`.
+
+### ADR-022 — Password reset: Confirm email decided OFF, and the flow this closes for Sprint B
+**Decision, closing what ADR-016 left open.** "Confirm email" is turned OFF
+in the Supabase dashboard (`supabase/README.md` §2) — a closed product
+decision for this sprint, not a "to be decided" note anymore.
+`auth.signUp()` therefore always returns an active session immediately.
+`AuthPendingConfirmation`/the `awaitingConfirmation` branch in
+`sign-up-form.tsx` stay in the code exactly as ADR-016 built them — dead in
+production today, not removed or simplified, ready for the day self-hosted
+SMTP exists and this setting is switched back on.
+**Two-step flow, mirroring Supabase's own documented pattern.** (1)
+`/esqueci-senha` calls `requestPasswordResetAction` →
+`AuthGateway.requestPasswordReset(email, redirectTo)` →
+`supabase.auth.resetPasswordForEmail()`, with `redirectTo` pointing at
+`GET /auth/callback?next=/redefinir-senha`. (2) The user clicks the e-mail
+link; `GET /auth/callback` — **the first Route Handler in this project** —
+exchanges the PKCE `code` for a session via `exchangeCodeForSession()` and
+redirects to `/redefinir-senha`. (3) That page's form calls
+`updatePasswordAction` → `AuthGateway.updatePassword()`, authorized entirely
+by the session the callback just established — the form itself has no
+e-mail field; identity comes from the cookie, never from user input.
+**Why a Route Handler, and not a Server Component or Server Action, for step
+2.** Exchanging the code is not a pure render — it has a real side effect
+(writing an auth cookie) triggered by a `GET` request from an e-mail
+client, which cannot invoke a Server Action. `shared/lib/supabase/server.ts`'s
+own docstring already lists Route Handlers as one of its three valid
+consumers; this is the first time anything in the app actually needed one.
+**Anti-enumeration, verified, not assumed.** `requestPasswordReset`'s
+success path never checks whether the account exists —
+`SupabaseAuthGateway.requestPasswordReset` returns success on `!error`
+unconditionally, and Supabase's own `resetPasswordForEmail` is documented
+to answer identically (no `error`) for both an existing and a non-existent
+e-mail; only a project-wide send-limit produces a real `error`.
+`ForgotPasswordForm`'s success copy ("Se este e-mail tiver uma conta,
+enviamos um link…") matches that behaviour instead of contradicting it.
+**`reset_link_expired` is its own `AuthErrorCode`, not reused `unknown`.**
+`SupabaseAuthGateway.updatePassword` checks for a session explicitly before
+calling `updateUser()` — the only way to reach that method without one is
+an expired, already-used, or tampered link — and that failure needs
+different copy ("request a new link") from every other `unknown` case
+("try again"), the same bar ADR-020 applied when it chose to *reuse*
+`unknown` for a different failure instead of adding a code.
+**Shares the project's 2-e-mails/hour Supabase cap (ADR-014), not a new
+one.** `resetPasswordForEmail`'s errors are mapped through the existing
+`mapSupabaseAuthError`, which already turns Supabase's
+`over_email_send_rate_limit` into `email_service_unavailable` — the same
+code sign-up's duplicate-e-mail-service-error path uses. Recorded here as a
+real constraint, not blocking anything: password-reset e-mails and sign-up
+confirmation e-mails (dormant while Confirm email is off) draw from the
+same 2/hour project-wide quota. Revisit if reset volume and any future
+confirmation-e-mail volume start competing for it.
+**Reversal cost.** Medium — the three routes and the Route Handler would
+need to be removed together; `AuthGateway.requestPasswordReset`/
+`updatePassword` have no other caller today.
+
+### ADR-023 — `?next=` is validated server-side before every `redirect()`, not trusted from the query string
+**Decision.** `safeRedirectTarget()`
+(`modules/auth/presentation/safe-redirect-target.ts`) is the single gate
+every `?next=` value passes through before reaching a `redirect()` call:
+`signInAction`, `signUpAction`, `signInWithProviderAction`, and
+`GET /auth/callback`. It accepts only a same-origin path starting with
+`/`, rejects `//host` (protocol-relative) and anything not starting with
+`/`, and falls back to `/app` otherwise.
+**Why this is a real vulnerability, not theoretical.** `?next=https://
+site-malicioso.com` (or `?next=//site-malicioso.com`) makes a link that
+visibly points at Setnar's own trusted domain end on an attacker's page
+right after a real, successful login — a classic phishing-ready open
+redirect, made more convincing precisely because the address bar shows the
+genuine `setnar.com` domain up until the final hop.
+**Why validated inside the Server Action, not only on the page reading
+`searchParams`.** `/entrar`/`/criar-conta` do sanitise `next` before passing
+it to the form (`safeRedirectTarget(next)` in each page), but that pass is
+UX-only. A Server Action is a callable endpoint independent of the React
+tree that happens to invoke it — nothing stops a request calling
+`signInAction` directly with an arbitrary `next` argument, bypassing the
+page entirely. The actual security boundary is the last point before
+`redirect()` runs, which is inside `safeAuthCall`'s callback in each action.
+**Why the backslash check, beyond the two cases the tests require.**
+`/\site-malicioso.com` starts with `/` and is not literally `//`, so it
+would pass a check that only looks for that exact prefix — some URL parsers
+have historically normalised a leading `/\` the same as `//`. Costs nothing
+to also reject, and there is no legitimate reason for a backslash in one of
+this app's own paths.
+**Tested, not just reasoned about.** `tests/safe-redirect-target.test.ts`
+covers a valid relative path (accepted), an absolute URL (rejected), a
+`//`-prefixed value (rejected), the backslash case, and empty/missing
+input.
+**Reversal cost.** Low — a single pure function; every call site already
+goes through it, so removing or weakening the check is a one-line diff to
+spot in review.
 
 ---
 

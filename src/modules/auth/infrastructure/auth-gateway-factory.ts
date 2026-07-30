@@ -1,8 +1,10 @@
 import 'server-only';
 
+import type { AuthenticatedUser } from '@/modules/auth/domain/auth';
 import type { AuthGateway } from '@/modules/auth/domain/auth-gateway';
 import { SupabaseAuthGateway } from '@/modules/auth/infrastructure/supabase-auth-gateway';
 import { getClientIp } from '@/shared/lib/get-client-ip';
+import { isNextControlFlowError } from '@/shared/lib/next-control-flow-error';
 import { createClient } from '@/shared/lib/supabase/server';
 
 /**
@@ -73,6 +75,71 @@ export async function getCurrentTermsVersion(): Promise<string | null> {
       'getCurrentTermsVersion: RPC current_terms_version lançou exceção inesperada. Servindo fallback fail-open ("Versão indisponível no momento").',
       err,
     );
+    return null;
+  }
+}
+
+/**
+ * The currently authenticated user, for `/app` (Sprint B's one protected
+ * route) to decide whether to render or `redirect()` to `/entrar`.
+ *
+ * Fails OPEN to `null` on any unexpected error — including `createClient()`
+ * throwing on a missing/invalid Supabase config, same trade-off as
+ * `getCurrentTermsVersion` (ADR-019). Unlike that function, this one is safe
+ * to fail open precisely because the caller's only use of a `null` result is
+ * "treat as unauthenticated and redirect to sign in" — the exact same
+ * outcome a real "no session" produces. Failing open here does not create a
+ * silent, dangerous default the way it would for `getAuthGateway()`; it can
+ * only ever make `/app` *more* strict (redirecting a legitimate session on a
+ * transient error), never less.
+ *
+ * `full_name`/`tenant_id` come from `profiles` (readable only via the
+ * `profiles_select_own` RLS policy — this query can never return another
+ * user's row); `email` comes from the authenticated user object itself,
+ * since `profiles` does not store it.
+ *
+ * The broad `catch` re-throws Next's own `DYNAMIC_SERVER_USAGE` control-flow
+ * error instead of swallowing it — reproduced directly: without this check,
+ * `next build`'s static-generation probe for `/app` (which reads `cookies()`
+ * via `createClient()`) logged this function's own "unexpected exception"
+ * message for what is not actually a failure. Worse than log noise: if that
+ * signal never propagates, Next's static pass may not correctly learn the
+ * route did dynamic work. See `isNextControlFlowError`.
+ */
+export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+    if (userError || !user) return null;
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name, tenant_id')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error(
+        'getCurrentUser: authenticated user has no readable profiles row — treating as unauthenticated.',
+        profileError,
+      );
+      return null;
+    }
+
+    return {
+      id: user.id,
+      name: profile.full_name,
+      email: user.email ?? '',
+      tenantId: profile.tenant_id,
+    };
+  } catch (err) {
+    if (isNextControlFlowError(err)) {
+      throw err;
+    }
+    console.error('getCurrentUser: unexpected exception reading the current session.', err);
     return null;
   }
 }

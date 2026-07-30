@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import type { AuthenticatedUser, AuthErrorCode } from '@/modules/auth/domain/auth';
+import type { AuthErrorCode } from '@/modules/auth/domain/auth';
 import { signInAction } from '@/modules/auth/presentation/actions';
 import { authErrorCopy } from '@/modules/auth/presentation/auth-error-messages';
 import { useAuthModal } from '@/modules/auth/presentation/hooks/use-auth-modal';
@@ -29,11 +30,18 @@ import { Label } from '@/shared/ui/label';
  * places `AuthGateway` decisions say this exact form must render.
  * Validation is client-side for feedback only; the Server Action re-validates
  * and is the actual authority.
+ *
+ * `next` (Sprint B): where to land after a successful sign-in — the
+ * standalone `/entrar` route passes its own `?next=` through (already
+ * validated server-side by `safeRedirectTarget` inside `signInAction`,
+ * never trusted here); the modal usage passes nothing, defaulting to `/app`.
+ * There is no "authenticated" render branch anymore: success now navigates
+ * via the Server Action's own `redirect()`, so `onSubmit` only ever sees a
+ * failure back.
  */
-export function SignInForm() {
+export function SignInForm({ next }: { next?: string } = {}) {
   const { open: openView } = useAuthModal();
   const [failureCode, setFailureCode] = useState<AuthErrorCode | null>(null);
-  const [authenticatedUser, setAuthenticatedUser] = useState<AuthenticatedUser | null>(null);
 
   const {
     register,
@@ -51,23 +59,9 @@ export function SignInForm() {
 
   async function onSubmit(values: SignInFormValues) {
     setFailureCode(null);
-    const result = await signInAction(values);
-
-    if (result.status === 'error') {
-      setFailureCode(result.code);
-      return;
-    }
-    setAuthenticatedUser(result.user);
-  }
-
-  if (authenticatedUser) {
-    return (
-      <FormAlert
-        tone="success"
-        title={`Bem-vindo(a), ${authenticatedUser.name}`}
-        description="Você está autenticado no Setnar."
-      />
-    );
+    // Only ever reached on failure — success redirects server-side.
+    const result = await signInAction(values, next);
+    setFailureCode(result.code);
   }
 
   return (
@@ -104,16 +98,24 @@ export function SignInForm() {
         )}
       </FormField>
 
-      <div className="flex items-center gap-2">
-        <Checkbox
-          id="sign-in-remember"
-          checked={rememberMe}
-          disabled={isSubmitting}
-          onCheckedChange={(checked) => setValue('rememberMe', checked === true)}
-        />
-        <Label htmlFor="sign-in-remember" className="font-normal text-content-muted">
-          Lembrar-me neste dispositivo
-        </Label>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="sign-in-remember"
+            checked={rememberMe}
+            disabled={isSubmitting}
+            onCheckedChange={(checked) => setValue('rememberMe', checked === true)}
+          />
+          <Label htmlFor="sign-in-remember" className="font-normal text-content-muted">
+            Lembrar-me neste dispositivo
+          </Label>
+        </div>
+        <Link
+          href="/esqueci-senha"
+          className="rounded-sm text-sm font-medium text-content underline-offset-4 hover:underline"
+        >
+          Esqueci minha senha
+        </Link>
       </div>
 
       <Button type="submit" size="lg" fullWidth loading={isSubmitting}>
@@ -121,6 +123,7 @@ export function SignInForm() {
       </Button>
 
       <SocialAuthButtons
+        next={next}
         disabled={isSubmitting}
         onFailure={(code) => setFailureCode(code as AuthErrorCode)}
       />

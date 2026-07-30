@@ -24,9 +24,11 @@ const PROVIDER_LABEL: Record<SocialProvider, string> = {
 export function SocialAuthButtons({
   onFailure,
   disabled = false,
+  next,
 }: {
   onFailure: (code: string) => void;
   disabled?: boolean;
+  next?: string;
 }) {
   const { features } = useTenant();
   const [pending, setPending] = useState<SocialProvider | null>(null);
@@ -43,7 +45,7 @@ export function SocialAuthButtons({
   async function handleClick(provider: SocialProvider) {
     setPending(provider);
     try {
-      const result = await signInWithProviderAction(provider);
+      const result = await signInWithProviderAction(provider, next);
       if (result.status === 'error') onFailure(result.code);
     } finally {
       setPending(null);

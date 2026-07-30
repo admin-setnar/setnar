@@ -4,9 +4,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
   failure,
+  passwordActionSucceeded,
   pendingConfirmation,
   success,
   type AuthResult,
+  type PasswordActionResult,
   type SignInCredentials,
   type SignInResult,
   type SignUpData,
@@ -105,6 +107,42 @@ export class SupabaseAuthGateway implements AuthGateway {
 
   async signInWithProvider(_provider: SocialProvider): Promise<SignInResult> {
     return failure('provider_unavailable');
+  }
+
+  async signOut(): Promise<void> {
+    const { error } = await this.supabase.auth.signOut();
+    // Thrown, not swallowed: safeAuthCall (the one caller) treats this as an
+    // unexpected failure and shows an error instead of redirecting — see the
+    // AuthGateway.signOut() doc for why a logout must never look successful
+    // when it wasn't.
+    if (error) throw error;
+  }
+
+  async requestPasswordReset(email: string, redirectTo: string): Promise<PasswordActionResult> {
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) return failure(mapSupabaseAuthError(error));
+    // Supabase's own behaviour here is already anti-enumeration: `error` is
+    // null for both an existing and a non-existent e-mail (it only ever
+    // populates for things like the project's send-rate limit). Returning
+    // success unconditionally on `!error` preserves that; adding an
+    // existence check here would be the thing that breaks it, not fixes it.
+    return passwordActionSucceeded();
+  }
+
+  async updatePassword(newPassword: string): Promise<PasswordActionResult> {
+    // Checked explicitly, not inferred from updateUser()'s error shape:
+    // GoTrue's error code for "no/invalid session" isn't a documented,
+    // stable string to switch on, whereas "is there a user" is unambiguous.
+    // The only way to reach this method without a session is an expired,
+    // already-used, or tampered reset link.
+    const {
+      data: { user },
+    } = await this.supabase.auth.getUser();
+    if (!user) return failure('reset_link_expired');
+
+    const { error } = await this.supabase.auth.updateUser({ password: newPassword });
+    if (error) return failure(mapSupabaseAuthError(error));
+    return passwordActionSucceeded();
   }
 }
 

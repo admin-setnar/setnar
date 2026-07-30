@@ -12,14 +12,25 @@ CLI. Cria: `profiles`, `login_attempts`, as funções `current_terms_version()`,
 `handle_new_user()`, `is_login_blocked()`, `record_login_failure()`,
 `clear_login_attempts()`, e os triggers/policies associados.
 
-## 2. Desativar a confirmação de e-mail
+## 2. Confirm email — decidido: DESLIGADO
 
 **Authentication → Providers → Email → "Confirm email" = desligado.**
 
-Sem isso, `auth.signUp()` não devolve uma sessão ativa na hora — a conta é
-criada mas fica pendente de confirmação, e a tela de sucesso do modal não tem
-usuário autenticado para mostrar o nome. Esse é o comportamento assumido em
-todo o fluxo desta sprint.
+Decisão de produto fechada (Sprint B), não mais um "a decidir" — ver ADR-022
+no `README.md` principal para o raciocínio completo. Sem isso,
+`auth.signUp()` não devolve uma sessão ativa na hora — a conta é criada mas
+fica pendente de confirmação — e todo o fluxo pós-cadastro desta sprint
+(redirect para `/app`) depende de uma sessão existir imediatamente após o
+cadastro.
+
+O estado `AuthPendingConfirmation`/`pending_confirmation` (ADR-016) **continua
+no código de propósito**, como seam morto — não foi removido nem
+simplificado. Ele volta a ser alcançável no dia em que este projeto tiver
+SMTP próprio (o SMTP padrão do Supabase, usado hoje tanto para essa
+confirmação quanto para a redefinição de senha — ADR-022 — compartilha um
+teto de 2 e-mails/hora do projeto inteiro) e "Confirm email" for religado —
+nesse momento o branch `awaitingConfirmation` em `sign-up-form.tsx` volta a
+ser exercitável sem nenhuma mudança de código.
 
 ## 3. Configurar Authentication → Rate Limits conscientemente
 

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it, mock } from 'node:test';
+import { redirect } from 'next/navigation';
 
 import { success } from '@/modules/auth/domain/auth';
 import { safeAuthCall } from '@/modules/auth/presentation/safe-auth-call';
@@ -81,6 +82,30 @@ describe('safeAuthCall', () => {
       () => safeAuthCall(async () => Promise.reject(notFoundError)),
       (error: unknown) => error === notFoundError,
     );
+  });
+
+  it('end-to-end: a real next/navigation redirect() call inside the exact callback shape Sprint B\'s actions use is re-thrown, not swallowed', async () => {
+    // Not a synthetic digest this time — this calls the actual `redirect()`
+    // every Server Action in actions.ts calls (e.g. signInAction on
+    // success), inside the same "await the use case, then redirect on
+    // success" callback shape those actions use. This is exactly the
+    // scenario ADR-020's Emenda 3 was written to protect once Sprint B
+    // added real redirect() calls to auth Server Actions.
+    let reachedPastRedirect = false;
+    const call = safeAuthCall(async () => {
+      // The use case call itself is irrelevant here — this test is only
+      // about what happens to redirect() once safeAuthCall wraps it, the
+      // same shape as `signIn(...); if (success) redirect(...)`.
+      await Promise.resolve(success({ id: 'u1', name: 'Ana', email: 'ana@example.com', tenantId: 'setnar' }));
+      redirect('/app');
+      reachedPastRedirect = true;
+    });
+
+    await assert.rejects(call, (error: unknown) => {
+      const digest = (error as { digest?: unknown } | null)?.digest;
+      return typeof digest === 'string' && digest.startsWith('NEXT_REDIRECT');
+    });
+    assert.equal(reachedPastRedirect, false, 'redirect() must throw, never return control to the caller');
   });
 
   it('does not mistake an unrelated error carrying an unrelated digest field for Next flow control', async () => {

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 
+import { safeRedirectTarget } from '@/modules/auth/presentation/safe-redirect-target';
 import { SignUpForm } from '@/modules/auth/presentation/sign-up-form';
 import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
 import { Container } from '@/shared/layout/container';
@@ -16,11 +17,21 @@ export const metadata: Metadata = { title: 'Criar conta' };
  *
  * Renders the exact same `SignUpForm` the modal uses. Exists for the same
  * reason as `/entrar`: a redirect target for a protected route or expired
- * session (`/app` — Sprint B) needs a real URL, not a modal that only opens
- * from within the page.
+ * session (`/app`) needs a real URL, not a modal that only opens from
+ * within the page.
+ *
+ * `?next=` — see `/entrar/page.tsx`'s comment; same sanitisation, same
+ * caveat that the real enforcement is inside `signUpAction`, not here.
  */
-export default async function SignUpPage() {
-  const tenant = await resolveTenant((await headers()).get('host'));
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const [tenant, { next }] = await Promise.all([
+    resolveTenant((await headers()).get('host')),
+    searchParams,
+  ]);
   const { marketing, brand } = tenant;
 
   return (
@@ -37,7 +48,7 @@ export default async function SignUpPage() {
           </Text>
 
           <Card variant="raised" padding="lg" className="mt-8">
-            <SignUpForm />
+            <SignUpForm next={safeRedirectTarget(next)} />
           </Card>
         </Container>
       </main>

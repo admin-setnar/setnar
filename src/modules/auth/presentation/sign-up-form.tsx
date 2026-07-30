@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import type { AuthenticatedUser, AuthErrorCode } from '@/modules/auth/domain/auth';
+import type { AuthErrorCode } from '@/modules/auth/domain/auth';
 import { PASSWORD_MIN_LENGTH } from '@/modules/auth/domain/auth-rules';
 import { signUpAction } from '@/modules/auth/presentation/actions';
 import { authErrorCopy } from '@/modules/auth/presentation/auth-error-messages';
@@ -32,12 +32,18 @@ import { Input } from '@/shared/ui/input';
  * onboarding, after the user has committed, not before.
  * Compliance note: accepting the terms is required and is enforced in the
  * sign-up use case as well as here.
+ *
+ * `next` (Sprint B): same as `SignInForm` — where to land after a successful
+ * sign-up; success now navigates via the Server Action's own `redirect()`,
+ * so there is no "authenticated" render branch here anymore.
+ * `awaitingConfirmation` stays exactly as it was — it is a deliberately dead
+ * seam (Confirm email is off; see README) kept for when self-hosted SMTP
+ * makes it real again, not something Sprint B touches.
  */
-export function SignUpForm() {
+export function SignUpForm({ next }: { next?: string } = {}) {
   const { open: openView } = useAuthModal();
   const { brandName, legal } = useTenant();
   const [failureCode, setFailureCode] = useState<AuthErrorCode | null>(null);
-  const [authenticatedUser, setAuthenticatedUser] = useState<AuthenticatedUser | null>(null);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState<{
     name: string;
     email: string;
@@ -67,17 +73,15 @@ export function SignUpForm() {
 
   async function onSubmit(values: SignUpFormValues) {
     setFailureCode(null);
-    const result = await signUpAction(values);
+    // Reached on failure or on the dead pending_confirmation seam — success
+    // redirects server-side.
+    const result = await signUpAction(values, next);
 
-    if (result.status === 'error') {
-      setFailureCode(result.code);
-      return;
-    }
     if (result.status === 'pending_confirmation') {
       setAwaitingConfirmation({ name: result.name, email: result.email });
       return;
     }
-    setAuthenticatedUser(result.user);
+    setFailureCode(result.code);
   }
 
   if (awaitingConfirmation) {
@@ -86,16 +90,6 @@ export function SignUpForm() {
         tone="success"
         title={`Quase lá, ${awaitingConfirmation.name}`}
         description={`Enviamos um e-mail de confirmação para ${awaitingConfirmation.email}. Clique no link para ativar sua conta.`}
-      />
-    );
-  }
-
-  if (authenticatedUser) {
-    return (
-      <FormAlert
-        tone="success"
-        title={`Conta criada, ${authenticatedUser.name}`}
-        description="Você já está autenticado no Setnar."
       />
     );
   }

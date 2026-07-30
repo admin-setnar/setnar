@@ -36,6 +36,7 @@ export type AuthErrorCode =
   | 'rate_limited'
   | 'email_service_unavailable'
   | 'provider_unavailable'
+  | 'reset_link_expired'
   | 'unknown';
 
 export interface AuthFailure {
@@ -77,3 +78,16 @@ export const pendingConfirmation = (name: string, email: string): AuthPendingCon
   name,
   email,
 });
+
+/**
+ * Result for `requestPasswordReset`/`updatePassword` — neither authenticates
+ * or creates an account, so neither has a user to hand back. Deliberately
+ * NOT `AuthSuccess`: that type's `user` field would either be fabricated or
+ * force callers to treat "the reset e-mail was queued" the same as "you are
+ * now signed in", which they are not.
+ */
+export interface PasswordActionSuccess {
+  readonly status: 'ok';
+}
+export type PasswordActionResult = PasswordActionSuccess | AuthFailure;
+export const passwordActionSucceeded = (): PasswordActionSuccess => ({ status: 'ok' });

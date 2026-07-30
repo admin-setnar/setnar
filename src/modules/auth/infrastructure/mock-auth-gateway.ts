@@ -1,7 +1,9 @@
 import {
   failure,
+  passwordActionSucceeded,
   success,
   type AuthResult,
+  type PasswordActionResult,
   type SignInCredentials,
   type SignInResult,
   type SignUpData,
@@ -63,6 +65,27 @@ export class MockAuthGateway implements AuthGateway {
   async signInWithProvider(_provider: SocialProvider): Promise<SignInResult> {
     await delay(400);
     return failure('provider_unavailable');
+  }
+
+  async signOut(): Promise<void> {
+    await delay(200);
+  }
+
+  async requestPasswordReset(_email: string, _redirectTo: string): Promise<PasswordActionResult> {
+    await delay();
+    // Always succeeds regardless of the address, deliberately — this mirrors
+    // Supabase's own anti-enumeration behaviour for this call (see
+    // SupabaseAuthGateway), not a simplification. A mock that answered
+    // differently for a known vs. unknown e-mail would model the wrong thing.
+    return passwordActionSucceeded();
+  }
+
+  async updatePassword(newPassword: string): Promise<PasswordActionResult> {
+    await delay();
+    if (newPassword.length < PASSWORD_MIN_LENGTH || !hasLetterAndDigit(newPassword)) {
+      return failure('weak_password');
+    }
+    return passwordActionSucceeded();
   }
 }
 

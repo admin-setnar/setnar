@@ -36,6 +36,10 @@ const MESSAGES: Record<AuthErrorCode, AuthErrorCopy> = {
     title: 'Entrada por provedor externo ainda não disponível',
     description: 'Use seu e-mail e senha para continuar.',
   },
+  reset_link_expired: {
+    title: 'Este link expirou ou já foi usado',
+    description: 'Peça uma nova redefinição de senha.',
+  },
   unknown: {
     title: 'Não foi possível concluir agora',
     description: 'Tente novamente em instantes.',

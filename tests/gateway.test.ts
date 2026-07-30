@@ -69,6 +69,9 @@ describe('signIn', () => {
       signIn: () => Promise.reject(new Error('socket hang up')),
       signUp: () => Promise.reject(new Error('socket hang up')),
       signInWithProvider: () => Promise.reject(new Error('socket hang up')),
+      signOut: () => Promise.reject(new Error('socket hang up')),
+      requestPasswordReset: () => Promise.reject(new Error('socket hang up')),
+      updatePassword: () => Promise.reject(new Error('socket hang up')),
     };
     const result = await signIn(brokenGateway, {
       email: 'joao@exemplo.com',
