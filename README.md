@@ -191,6 +191,12 @@ three deliberate constraints. Please read before editing copy.
 
 ## Architecture Decision Records
 
+**Migration rule.** A file under `supabase/migrations/` that has already been
+applied — to any real environment, not only production — is never edited.
+Fixes and follow-ups always land as a new migration with a new timestamp; the
+already-applied file stays exactly as it was applied. The sequence of files in
+that folder is a true history of what ran, in order, never a moving target.
+
 ### ADR-001 — Tenant resolution by `Host` header, in the application layer
 **Decision.** Resolve the tenant server-side from `Host`, through a repository
 port, with an in-memory adapter.
@@ -394,6 +400,264 @@ the browser instead of a Server Action, so Supabase sees the real IP without
 any forwarding at all.
 **Reversal cost.** Low once a secret key is available — one header on one
 client construction call.
+
+### ADR-014 — `email_service_unavailable` is its own code, and a message fallback covers sign-up duplicates too
+**Decision.** `mapSupabaseAuthError` gained a case for GoTrue's
+`over_email_send_rate_limit` → new code `email_service_unavailable`, and a
+second message-text fallback (status 422, `/already (been )?(registered|exists)/i`)
+alongside the existing invalid-credentials one, for sign-up duplicates when
+`error.code` isn't populated.
+**Why a new code instead of reusing `rate_limited`.** They are unrelated
+limits with unrelated remedies. `rate_limited` (ADR-012) is this app's own
+per-account/per-IP login-attempt limiter — waiting a few minutes clears it.
+`over_email_send_rate_limit` is Supabase's built-in transactional e-mail
+service, capped at 2 e-mails/hour for the whole project, not per user;
+telling a user blocked by the project-wide e-mail cap to "wait a few
+minutes and try logging in again" (the `rate_limited` copy) is simply wrong
+advice — the fix is either time (up to an hour) or moving off Supabase's
+built-in mailer, never a login retry.
+**Why the sign-up message fallback exists, mirroring the sign-in one.**
+`invalid_credentials` already had a text fallback because older/self-hosted
+GoTrue does not always populate `error.code` (see the fallback this file
+already had for sign-in). The same gap exists on the sign-up side: nothing
+in this codebase previously caught a duplicate-account message without a
+matching `code`, so it silently fell through to `unknown`, discarding
+information the response actually carried.
+**Consequence.** Both branches were unreachable by the fabricated-object
+unit tests in `tests/map-supabase-auth-error.test.ts` before this change, and
+still are only proven against fabricated error shapes, not a live GoTrue
+response — the same caveat the "Verification status" table above already
+records for the pre-existing `invalid_credentials` fallback.
+**Reversal cost.** Low — two `switch`/`if` branches and one `AuthErrorCode`
+member; removing them only widens what falls into `unknown`, it does not
+change any other behaviour.
+
+### ADR-015 — `signUp()` no longer trusts "no `error`" as proof of success
+**Decision.** `SupabaseAuthGateway.signUp()` now runs a duplicate-account
+check (`isDuplicateSignUp`, in its own file) on `result.user` before treating
+a Supabase response as a real success, and calls `this.supabase.auth.signOut()`
+before returning `failure('email_already_registered')` when that check trips.
+**Why `signUp()` needed this at all.** `@supabase/auth-js`'s own JSDoc on
+`signUp()` (vendored at `node_modules/@supabase/auth-js/src/GoTrueClient.ts`)
+documents that calling `signUp()` for an existing confirmed user, with
+**Confirm email** and **Confirm phone** both enabled, returns an
+"obfuscated/fake user object" with **no `error` at all**. The gateway's only
+check before this change was `if (!result.user) return failure('unknown')` —
+which that fake object satisfies, so the app reported a brand-new account
+created for someone else's already-registered e-mail. This was reproduced in
+manual browser testing against this exact code before the fix: creating an
+account with an already-registered e-mail sometimes rendered the success
+screen with no error shown at all.
+**Why `identities` and not some other field.** An empty (or absent)
+`identities` array is the signal Supabase uses to mark that fake object —
+a genuinely new sign-up always comes back with one populated identity. It
+is intentionally a pure function in its own file
+(`is-duplicate-signup.ts`), not a private method on the gateway: the
+gateway file starts with `import 'server-only'`, which a `tsx --test` unit
+test cannot import (it runs in plain Node, no Next.js runtime), so the
+check had to live somewhere importable on its own.
+**Known limitation, recorded rather than solved.** The same empty-`identities`
+signal is, in some GoTrue versions, also what comes back for an account that
+already exists but is still waiting on its own confirmation e-mail — so this
+function cannot tell "already exists and confirmed" apart from "already
+exists and unconfirmed". Left as-is because both sub-cases should show the
+user the same message today ("this e-mail already has an account"); telling
+them apart would require a second query and only matters once the product
+needs two different messages for them.
+**Why the `signOut()` call is essential, not defensive extra.** `@supabase/ssr`
+(`shared/lib/supabase/server.ts`) writes whatever session comes back from any
+auth call straight into an httpOnly cookie, unconditionally — it has no
+concept of "this response turned out to be a mistake". If Supabase's fake
+object for a duplicate sign-up ever carries a session (some GoTrue
+configurations return one), returning `failure('email_already_registered')`
+without also calling `signOut()` would leave the browser authenticated as
+the pre-existing account while the screen shows an error — a session mix-up,
+not merely a wrong message.
+**Reversal cost.** Medium. Removing the check reopens the exact bug this
+ADR fixes; removing only the `signOut()` call keeps the correct error code
+but reintroduces the session-mix-up risk silently, which is the more
+dangerous partial rollback to watch for.
+
+### ADR-016 — A third `AuthResult` state for "account created, not yet authenticated"
+**Decision.** `AuthResult` is now `AuthSuccess | AuthFailure | AuthPendingConfirmation`.
+`signIn` and `signInWithProvider` — which can never produce that third state,
+since there is no account to create — return the narrower `SignInResult =
+AuthSuccess | AuthFailure` instead, threaded through `AuthGateway`,
+both sign-in use cases, both gateway adapters, and `signInAction`/
+`signInWithProviderAction`. Only `signUpAction` still returns the 3-state
+`AuthResult`.
+**Why this needed a real domain state instead of a UI-only tweak.** Before
+this change, `signUp()` returned `success(...)` whenever `result.user`
+existed post duplicate-check, without checking `result.session` — so a
+project with **Confirm email** enabled (the correct, secure default) made
+`sign-up-form.tsx` render "Você já está autenticado no Setnar" for an
+account that was not, in fact, authenticated: no session exists until the
+user clicks the confirmation link. This was reproduced in manual browser
+testing: the confirmation e-mail arrived and clicking its link did create a
+real session (verified via the `amr: [{ method: 'otp' }]` claim in the
+resulting cookie/JWT) — proving the earlier "already authenticated" message
+had been false at the moment it was shown.
+**Why narrow `SignInResult` instead of leaving every method on `AuthResult`.**
+Once `AuthResult` grew a third state, every caller of `signIn`/
+`signInWithProvider` would otherwise need a dead branch for a state their
+own gateway methods can never return — `sign-in-form.tsx` and
+`social-auth-buttons.tsx` would have to handle `'pending_confirmation'`
+just to satisfy the type checker, for a case that can't happen on those
+paths. Narrowing the type instead of the runtime check means the compiler
+enforces "sign-in only ever succeeds or fails", not a code comment.
+**Consequence.** `sign-up-form.tsx` now has three render branches instead of
+two: error, pending confirmation, and success — each mapped from a distinct,
+named domain state, not inferred from the shape of the success payload.
+**Reversal cost.** Medium — collapsing back to two states means deciding
+what a project with Confirm email enabled should show instead, and touching
+every file this ADR lists again.
+
+### ADR-017 — The test script now loads `.env.local`, with Node's own flag
+**Decision.** `"test"` in `package.json` changed from
+`npx tsx --test tests/**/*.test.ts` to
+`node --env-file-if-exists=.env.local node_modules/tsx/dist/cli.mjs --test tests/**/*.test.ts`.
+**Why this was silently broken before.** Neither `tsx` nor Node's default
+module loader reads `.env.local` on its own — confirmed by running an
+isolated probe test from this repo's root (which already has a filled-in
+`.env.local`) and observing `process.env.NEXT_PUBLIC_SUPABASE_URL` come back
+`undefined` inside the old script. The practical effect: the four
+integration tests in `tests/login-rate-limiter.integration.test.ts`
+self-skip whenever their `canRun` check finds those variables missing (see
+that file's own comment) — which was, silently, every single run of
+`npm run test`/`npm run verify` on a machine with a real `.env.local`,
+because the variables never reached `process.env` in the first place. The
+"23/23 passing" this README's Verification status table recorded already
+included those 4 as skipped, not run.
+**Why `--env-file-if-exists` and not `--env-file`.** `--env-file` errors out
+when the file is missing; `--env-file-if-exists` does not. `npm run test`
+must stay green on a machine with no Supabase project configured yet — the
+same requirement the integration test file's own skip logic already states.
+**Why `node_modules/tsx/dist/cli.mjs` and not `npx tsx` or `node_modules/.bin/tsx`.**
+Confirmed by trying it directly: on this project's Windows dev machine,
+`node_modules/.bin/tsx` is a POSIX `#!/bin/sh` shim (with separate `.cmd`/
+`.ps1` siblings for Windows shells) — `node` cannot execute it, since after
+its shebang line is stripped what remains is shell syntax, not JavaScript;
+it fails with `SyntaxError: missing ) after argument list`. Pointing `node`
+directly at tsx's actual entry file works on every platform regardless of
+which shim npm generated.
+**Consequence, confirmed by re-running the suite.** With the fix in place,
+the same 4 integration tests actually ran against the real Supabase project
+already configured in this repo's `.env.local` — not skipped — and passed
+(1.48 s / 0.19 s / 0.22 s / 1.70 s; real network round trips, not the
+sub-millisecond timing of the unit tests around them). This closes one of
+the "Not yet verified against a real Supabase project" items this README's
+Verification status section listed.
+**Reversal cost.** Low — one line in `package.json`; no test file depends on
+the loading mechanism itself, only on the variables it makes available.
+
+### ADR-018 — `email_hash` opacity blocks unlock-by-stranger; lockout-by-stranger is reachable through the real form and is an accepted risk, not a bug
+**Decision.** `is_login_blocked`, `record_login_failure` and
+`clear_login_attempts` remain `SECURITY DEFINER`, `grant execute to anon,
+authenticated` (ADR-012, unchanged). No `SUPABASE_SERVICE_ROLE_KEY` was
+introduced. `record_login_failure`'s cleanup was additionally scoped to the
+identity being written (`supabase/migrations/20260730000000_...sql`) as
+hygiene — the cross-identity data-destruction bug was already closed by
+`20260729000000_fix_login_attempts_cleanup.sql`; this migration only narrows
+which rows each call's cleanup touches, it does not fix a vulnerability.
+**Two distinct findings below — do not conflate them; they have different
+verdicts.**
+
+**Finding A — unlocking a victim (`clear_login_attempts`) requires the salted
+hash, which nothing outside the server can produce. Not exploitable.** The
+hash is `sha256(salt:normalizedEmail)`, computed only in
+`login-rate-limiter.ts`'s `hash()` — a `server-only` module — from
+`LOGIN_ATTEMPT_SALT`, a server-only env var (no `NEXT_PUBLIC_` prefix).
+Verified empirically, not assumed: a production build's `.next/static`
+output (what actually ships to browsers) was grepped for both the variable
+name and its literal value — zero matches either way; both appear only in
+`.next/server`, which never leaves the Vercel function. None of the three
+RPCs ever returns a hash to the caller, so there is no oracle to recover one.
+An attacker who knows only a victim's plaintext e-mail has no path to the
+matching hash short of brute-forcing a 256-bit random salt.
+
+**Finding B — locking a victim out (`record_login_failure`) needs no hash at
+all: it is reachable through the real sign-in form by anyone who knows the
+victim's e-mail address. Exploitable today. Accepted as risk, not fixed.**
+Reproduced against the actual running application, not a raw RPC call: 5
+wrong-password submissions on the real `/entrar` form for a fresh target
+e-mail each rendered "E-mail ou senha não conferem"; the 6th rendered
+"Muitas tentativas seguidas" (`rate_limited`). No hash, no salt, no secret
+was used — the attacker only ever typed a public e-mail address and an
+arbitrary wrong password into the same form a real visitor uses. A
+front-door-equivalent regression test lives in
+`tests/login-rate-limiter.integration.test.ts` (it reproduces `hash()`
+inline and drives the RPCs with `auth-rules.ts`'s real thresholds, since
+`login-rate-limiter.ts`/`supabase-auth-gateway.ts` cannot be imported from a
+plain `tsx --test` process — the same `server-only` constraint ADR-015
+already documents).
+**Why this is being accepted rather than fixed.** This is the rate limiter
+working exactly as ADR-012 designed it: blocking by identity (e-mail), not
+by caller, so credential stuffing against one account is stopped regardless
+of which IP it comes from. Any lockout keyed on "how many times has X failed
+recently" is triggerable by anyone who can cause a failure for X, and the
+only identity available before authentication succeeds is the e-mail address
+itself — not a secret, since it is what any visitor types into the public
+form. This trade-off is standard for per-account lockout mechanisms
+industry-wide; it is not specific to this implementation.
+**Product consequence, recorded plainly.** Any SETNAR-licensed
+representative can be locked out of `/entrar` for the 15-minute window
+(`LOGIN_RATE_LIMIT_WINDOW_MS`, `auth-rules.ts`) by anyone who knows or
+guesses their e-mail — no account access, no password, no secret required.
+This is a real, user-facing availability cost, not a hypothetical.
+**What was NOT done, and why.** *Blocking only by IP, dropping the
+per-e-mail limit* — rejected: ADR-012 already explains why an IP-only limit
+fails on Brazilian mobile CGNAT (too loose to catch a targeted attack, or it
+locks out every unrelated user sharing that carrier's IP); removing the
+e-mail-keyed limit to close this DoS would reopen the credential-stuffing
+protection it exists for, a worse trade. *A lockout that also invalidates an
+already-active session* — not implemented, and this finding does not need
+it: the block only prevents a *new* sign-in for that e-mail; a session
+already established before the lockout is unaffected. The blast radius here
+is "cannot log in for up to 15 minutes", not "gets signed out."
+**Signal that would make us revisit.** A real abuse report (a licensee
+actually locked out by someone else, not a theoretical), or CAPTCHA becoming
+available first. `supabase/README.md` §3 now names CAPTCHA
+(Turnstile/hCaptcha on Supabase's own auth endpoints) as the next lever for
+native rate limiting; the same lever raises the cost of triggering this
+lockout too, since it requires solving a challenge per attempt instead of a
+bare form submission.
+
+**Operational consequence, surfaced while investigating the hash — not a
+security finding, recorded because it matters.** `hash()`
+(`login-rate-limiter.ts:23-29`) throws if `LOGIN_ATTEMPT_SALT` is unset,
+with no fallback. Because `isLoginBlocked`/`recordLoginFailure` sit directly
+in `SupabaseAuthGateway.signIn()`'s path, an unset `LOGIN_ATTEMPT_SALT` in
+production does not degrade rate limiting — it throws before
+`signInWithPassword` is ever called, taking down every sign-in attempt for
+every user immediately. This is the opposite of `isLoginBlocked`'s own
+documented fail-open trade-off, which only covers RPC *errors*, not a
+missing env var upstream of the call. Rotating `LOGIN_ATTEMPT_SALT` has
+equivalent severity from a different angle: every hash already stored in
+`login_attempts` was computed with the old salt, so a rotation makes every
+existing row permanently unmatchable against any hash computed with the new
+salt — functionally equivalent to truncating the table for every identity at
+once. Neither is changed by this ADR; both are recorded here because they
+surfaced during this investigation, not because a fix is proposed.
+
+**Alternative rejected: move these RPCs behind `SUPABASE_SERVICE_ROLE_KEY`.**
+This project has never held a service-role key — ADR-011/012 were built
+specifically to avoid needing one, and `20260728000000_create_profiles.sql`'s
+own header says so. Introducing one now trades a risk that is already
+structurally bounded for Finding A (breaking a salted hash to touch one
+table) for an unbounded one (a leaked service-role key bypasses RLS on every
+table in the project) — and would do nothing for Finding B, which needs no
+hash to begin with.
+**Alternative rejected: hash inside Postgres instead of the TypeScript
+layer.** Floated as cheaper, but worse for Finding A: it would mean these
+RPCs accept a *plaintext* e-mail and salt it server-side, removing the
+barrier that finding depends on — anyone who knows a victim's e-mail could
+recover the "hash" path with no secret at all.
+
+**Reversal cost.** Low for Finding B specifically if CAPTCHA is added later —
+raises the cost of triggering the lockout without changing the
+identity-keyed design. Low to revisit the service-role alternative for
+Finding A if the threat model changes (e.g. a future endpoint that must
+return a hash to a client for some reason).
 
 ---
 

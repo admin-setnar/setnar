@@ -3,6 +3,7 @@ import {
   success,
   type AuthResult,
   type SignInCredentials,
+  type SignInResult,
   type SignUpData,
   type SocialProvider,
 } from '@/modules/auth/domain/auth';
@@ -27,7 +28,7 @@ const NETWORK_DELAY_MS = 900;
  * Replacing this file with a Clerk/Supabase adapter is the entire migration.
  */
 export class MockAuthGateway implements AuthGateway {
-  async signIn(credentials: SignInCredentials): Promise<AuthResult> {
+  async signIn(credentials: SignInCredentials): Promise<SignInResult> {
     await delay();
     const email = credentials.email.trim().toLowerCase();
 
@@ -59,7 +60,7 @@ export class MockAuthGateway implements AuthGateway {
     });
   }
 
-  async signInWithProvider(_provider: SocialProvider): Promise<AuthResult> {
+  async signInWithProvider(_provider: SocialProvider): Promise<SignInResult> {
     await delay(400);
     return failure('provider_unavailable');
   }

@@ -1,6 +1,11 @@
 'use server';
 
-import { failure, type AuthResult, type SocialProvider } from '@/modules/auth/domain/auth';
+import {
+  failure,
+  type AuthResult,
+  type SignInResult,
+  type SocialProvider,
+} from '@/modules/auth/domain/auth';
 import { signIn } from '@/modules/auth/application/sign-in';
 import { signInWithProvider } from '@/modules/auth/application/sign-in-with-provider';
 import { signUp } from '@/modules/auth/application/sign-up';
@@ -15,7 +20,7 @@ import { signUpSchema, type SignUpFormValues } from '@/modules/auth/presentation
  * actually guarantees nothing malformed reaches the gateway.
  */
 
-export async function signInAction(values: SignInFormValues): Promise<AuthResult> {
+export async function signInAction(values: SignInFormValues): Promise<SignInResult> {
   const parsed = signInSchema.safeParse(values);
   if (!parsed.success) return failure('unknown');
 
@@ -34,6 +39,6 @@ export async function signUpAction(values: SignUpFormValues): Promise<AuthResult
   });
 }
 
-export async function signInWithProviderAction(provider: SocialProvider): Promise<AuthResult> {
+export async function signInWithProviderAction(provider: SocialProvider): Promise<SignInResult> {
   return signInWithProvider(await getAuthGateway(), provider);
 }

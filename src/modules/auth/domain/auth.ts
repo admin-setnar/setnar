@@ -34,6 +34,7 @@ export type AuthErrorCode =
   | 'email_already_registered'
   | 'weak_password'
   | 'rate_limited'
+  | 'email_service_unavailable'
   | 'provider_unavailable'
   | 'unknown';
 
@@ -47,7 +48,32 @@ export interface AuthSuccess {
   readonly user: AuthenticatedUser;
 }
 
-export type AuthResult = AuthSuccess | AuthFailure;
+/**
+ * Sign-up created a real account, but it is not authenticated yet — the
+ * project has "Confirm email" enabled, so a session only exists once the
+ * user clicks the link sent to `email`. Distinct from `AuthFailure`: nothing
+ * went wrong.
+ */
+export interface AuthPendingConfirmation {
+  readonly status: 'pending_confirmation';
+  readonly name: string;
+  readonly email: string;
+}
+
+export type AuthResult = AuthSuccess | AuthFailure | AuthPendingConfirmation;
+
+/**
+ * `signIn` and `signInWithProvider` authenticate an existing account or
+ * fail — there is no account to create, so they can never produce
+ * `AuthPendingConfirmation`. Narrower than `AuthResult` on purpose, so the
+ * sign-in UI doesn't need a branch for a state it can't receive.
+ */
+export type SignInResult = AuthSuccess | AuthFailure;
 
 export const failure = (code: AuthErrorCode): AuthFailure => ({ status: 'error', code });
 export const success = (user: AuthenticatedUser): AuthSuccess => ({ status: 'success', user });
+export const pendingConfirmation = (name: string, email: string): AuthPendingConfirmation => ({
+  status: 'pending_confirmation',
+  name,
+  email,
+});

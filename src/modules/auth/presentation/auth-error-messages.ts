@@ -28,6 +28,10 @@ const MESSAGES: Record<AuthErrorCode, AuthErrorCopy> = {
     title: 'Muitas tentativas seguidas',
     description: 'Aguarde alguns minutos antes de tentar de novo.',
   },
+  email_service_unavailable: {
+    title: 'Não conseguimos enviar o e-mail agora',
+    description: 'Tente novamente em alguns minutos.',
+  },
   provider_unavailable: {
     title: 'Entrada por provedor externo ainda não disponível',
     description: 'Use seu e-mail e senha para continuar.',

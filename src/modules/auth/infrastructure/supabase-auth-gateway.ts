@@ -4,13 +4,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
   failure,
+  pendingConfirmation,
   success,
   type AuthResult,
   type SignInCredentials,
+  type SignInResult,
   type SignUpData,
   type SocialProvider,
 } from '@/modules/auth/domain/auth';
 import type { AuthGateway } from '@/modules/auth/domain/auth-gateway';
+import { isDuplicateSignUp } from '@/modules/auth/infrastructure/is-duplicate-signup';
 import {
   clearLoginAttempts,
   isLoginBlocked,
@@ -31,7 +34,7 @@ export class SupabaseAuthGateway implements AuthGateway {
   constructor(
     private readonly supabase: SupabaseClient,
     private readonly clientIp: string | null,
-  ) {}
+  ) { }
 
   async signUp(data: SignUpData): Promise<AuthResult> {
     // tenant_id, terms_accepted_at and terms_version are never sent here —
@@ -42,19 +45,39 @@ export class SupabaseAuthGateway implements AuthGateway {
       password: data.password,
       options: { data: { full_name: data.name.trim() } },
     });
-
     if (error) return failure(mapSupabaseAuthError(error));
     if (!result.user) return failure('unknown');
 
+    if (isDuplicateSignUp(result.user)) {
+      // Supabase answered with no `error` for an e-mail that already has an
+      // account (see is-duplicate-signup.ts). @supabase/ssr writes whatever
+      // session comes back straight to a cookie (shared/lib/supabase/server.ts),
+      // so signing out here is essential, not optional — without it, the
+      // browser would end up authenticated as the existing account while the
+      // screen shows an error.
+      await this.supabase.auth.signOut();
+      return failure('email_already_registered');
+    }
+
+    const name = data.name.trim();
+    const email = data.email.trim().toLowerCase();
+
+    if (!result.session) {
+      // "Confirm email" is enabled on this project: the account was created
+      // for real, but it is not authenticated yet — that only happens once
+      // the user clicks the link in the confirmation e-mail.
+      return pendingConfirmation(name, email);
+    }
+
     return success({
       id: result.user.id,
-      name: data.name.trim(),
-      email: data.email.trim().toLowerCase(),
+      name,
+      email,
       tenantId: TENANT_ID,
     });
   }
 
-  async signIn(credentials: SignInCredentials): Promise<AuthResult> {
+  async signIn(credentials: SignInCredentials): Promise<SignInResult> {
     const blocked = await isLoginBlocked(this.supabase, credentials.email, this.clientIp);
     if (blocked) return failure('rate_limited');
 
@@ -80,7 +103,7 @@ export class SupabaseAuthGateway implements AuthGateway {
     });
   }
 
-  async signInWithProvider(_provider: SocialProvider): Promise<AuthResult> {
+  async signInWithProvider(_provider: SocialProvider): Promise<SignInResult> {
     return failure('provider_unavailable');
   }
 }

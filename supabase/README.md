@@ -40,6 +40,19 @@ aqui qual foi escolhido e por quê, para a próxima pessoa que mexer nisso:
 
 > _(preencher após configurar)_
 
+**Isso é mitigação PARCIAL, não uma segunda camada independente.** O limite
+por IP do painel do Supabase é uma única alavanca compartilhada entre o IP de
+saída da Vercel (todo o tráfego legítimo do SETNAR somado) e o IP de um
+atacante chamando a API direto — porque, sem o encaminhamento do IP real
+(ADR-013), os dois aparecem para o Supabase como a mesma origem. Calibrar
+esse valor alto o bastante para não gerar 429 nos usuários legítimos
+necessariamente também o torna permissivo para o atacante; não existe um
+valor que resolva as duas pontas ao mesmo tempo com essa arquitetura. Se
+abuso real aparecer depois de configurado, a próxima alavanca — ainda não
+implementada — é CAPTCHA (Turnstile ou hCaptcha) nos endpoints de auth do
+Supabase, que muda o custo por tentativa em vez de depender só de contagem
+por IP, e também eleva o custo do lockout-por-e-mail descrito na ADR-018.
+
 ## 4. Variáveis de ambiente na Vercel
 
 ```
