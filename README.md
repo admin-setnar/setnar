@@ -33,12 +33,34 @@ Everything below was run against this codebase, not assumed:
 | --- | --- |
 | `tsc --noEmit` (strict, `noUncheckedIndexedAccess`) | clean |
 | `next lint` | clean |
-| `tsx --test` | 23/23 passing — the 4 login-rate-limiter integration tests self-skip without a configured Supabase project (see below) |
+| `tsx --test` (`npm run test`) | 40/40 passing with a configured Supabase project (`.env.local` present); 34/34 without one — the 6 login-rate-limiter integration tests self-skip, and `npm run test`'s own summary cannot tell the two scenarios apart (see note below the table) |
+| `npm run test:integration` (new — see note below) | passes only when the 6 integration tests above actually ran |
 | `next build` | success — `/` at **127 kB**, `/entrar`/`/criar-conta` at 156 kB, `/termos`/`/privacidade` at 127 kB First Load JS |
 | Served HTML (`next start` + fetch) | headings, JSON-LD, OG tags, tenant tokens and legal notice all present |
 | `/robots.txt`, `/sitemap.xml`, `/opengraph-image` (1200×630 PNG), `/icon.svg`, 404 | all correct |
 | WCAG AA contrast audit on every colour pair in use | lowest ratio 5.73:1 against a 4.5 requirement |
 | Rendered list semantics (`ul`/`ol` children) | every list contains only `<li>` |
+
+**`npm run test`'s own pass/fail summary cannot signal a skipped integration
+suite — confirmed directly, not assumed.** `tests/login-rate-limiter.integration.test.ts`
+gates its two `describe` blocks (6 `it()`s total) behind `skip: !canRun`.
+Node's test runner does not count a skipped `describe`'s children as
+`skipped` — it removes them from the total outright. Run twice against this
+exact codebase: with `.env.local` present, `npm run test` prints `tests 40 /
+pass 40 / fail 0`; with it absent, `tests 34 / pass 34 / fail 0`. Both read
+as "everything passed." Since the total grows as the project grows, diffing
+the denominator across builds doesn't surface this either — a CI run with no
+Supabase credentials would give a clean, fully green signal without ever
+having exercised the credential-stuffing defense ADR-012/ADR-018 depend on.
+`npm run test` itself is deliberately left unchanged — it must stay green on
+a machine with no Supabase project configured (ADR-017). Instead,
+`npm run test:integration` (`scripts/require-integration-env.mjs`) is a
+separate, new script that does not re-run the RPCs; it only fails loudly,
+with a non-zero exit and a message naming exactly what wasn't exercised, if
+the two env vars are missing. `npm run verify` now runs
+`test && test:integration && build`, so `verify` — the thing CI should
+actually run — goes red end to end (confirmed: exit code `1`, build never
+reached) exactly when this blind spot would otherwise hide something.
 
 **Not yet verified against a real Supabase project in this session** — pending
 the credentials and the migration described in `supabase/README.md`:
@@ -48,7 +70,7 @@ the credentials and the migration described in `supabase/README.md`:
 - The 6th failed login for one e-mail (or the 31st from one IP) in 15 minutes
   returning `rate_limited`.
 - That no update policy exists on `profiles` post-migration.
-- The 4 skipped integration tests above.
+- The 6 skipped integration tests above.
 - That the session token is never written to `localStorage`/`sessionStorage`
   (only to the httpOnly cookie the privacy policy §6 claims) — this is an
   assumption about `@supabase/ssr`'s default behaviour, not yet confirmed
