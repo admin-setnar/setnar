@@ -38,7 +38,7 @@ SETNAR** — que dividem esse único IP de saída — se bloquearem mutuamente n
 pico de tráfego normal. Escolha o valor com essa troca em mente e registre
 aqui qual foi escolhido e por quê, para a próxima pessoa que mexer nisso:
 
-> _(preencher após configurar)_
+Rate limit de sign-in/sign-up: 500/hora por IP. Padrão de 30 é inviável porque todo o tráfego da aplicação sai pelo IP único da função da Vercel — 30/h seria o teto de todos os licenciados somados, não por usuário. Mitigação parcial por construção: um limite que não derruba usuários legítimos também é permissivo com um atacante que bate direto no GoTrue. Defesa fina continua sendo o rate limiter por e-mail (auth-rules.ts, ADR-012). Próxima alavanca se aparecer abuso: CAPTCHA (Turnstile/hCaptcha) nos endpoints de auth, não reduzir este número. Revisitar se: usuários legítimos começarem a receber 429 em uso normal.
 
 **Isso é mitigação PARCIAL, não uma segunda camada independente.** O limite
 por IP do painel do Supabase é uma única alavanca compartilhada entre o IP de
