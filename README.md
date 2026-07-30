@@ -550,6 +550,7 @@ Verification status section listed.
 **Reversal cost.** Low — one line in `package.json`; no test file depends on
 the loading mechanism itself, only on the variables it makes available.
 
+<<<<<<< HEAD
 ### ADR-018 — `email_hash` opacity blocks unlock-by-stranger; lockout-by-stranger is reachable through the real form and is an accepted risk, not a bug
 **Decision.** `is_login_blocked`, `record_login_failure` and
 `clear_login_attempts` remain `SECURITY DEFINER`, `grant execute to anon,
@@ -659,6 +660,8 @@ identity-keyed design. Low to revisit the service-role alternative for
 Finding A if the threat model changes (e.g. a future endpoint that must
 return a hash to a client for some reason).
 
+=======
+>>>>>>> 3a20cdef4e4b958a81e9f412f6d0ed4010e44dfd
 ---
 
 ## Accessibility
