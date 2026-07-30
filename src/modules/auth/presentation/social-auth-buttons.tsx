@@ -42,9 +42,12 @@ export function SocialAuthButtons({
 
   async function handleClick(provider: SocialProvider) {
     setPending(provider);
-    const result = await signInWithProviderAction(provider);
-    setPending(null);
-    if (result.status === 'error') onFailure(result.code);
+    try {
+      const result = await signInWithProviderAction(provider);
+      if (result.status === 'error') onFailure(result.code);
+    } finally {
+      setPending(null);
+    }
   }
 
   return (
