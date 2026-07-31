@@ -156,20 +156,31 @@ create trigger companies_set_updated_at
 -- ============================================================================
 
 create table public.representatives (
-  id         uuid primary key default gen_random_uuid(),
-  profile_id uuid not null unique references public.profiles (id),
-  company_id uuid not null references public.companies (id),
-  slug       text not null unique
-             constraint representatives_slug_format
-             check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
-  license_id text not null,
-  phone      text,
-  city       text,
-  avatar_url text,
-  status     text not null default 'active'
-             check (status in ('active', 'suspended')),
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  id           uuid primary key default gen_random_uuid(),
+  profile_id   uuid not null unique references public.profiles (id),
+  company_id   uuid not null references public.companies (id),
+  slug         text not null unique
+               constraint representatives_slug_format
+               check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  -- Denormalized from profiles.full_name at write time, not read via join.
+  -- profiles' only SELECT policy (profiles_select_own, 20260728000000) is
+  -- `auth.uid() = id` — it never allowed public reads, and widening it would
+  -- expose the whole profiles row (terms_accepted_at, terms_version, ...),
+  -- not just the name. Every other public Representative field
+  -- (phone/city/avatar_url/license_id) already lives directly on this table;
+  -- full_name being fetched via join was the one exception, and it made the
+  -- public Commercial Page path unreadable by the anon key, not just
+  -- inconsistent. display_name closes that gap the same way those columns
+  -- already do.
+  display_name text not null,
+  license_id   text not null,
+  phone        text,
+  city         text,
+  avatar_url   text,
+  status       text not null default 'active'
+               check (status in ('active', 'suspended')),
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
 );
 
 create index representatives_company_id_idx on public.representatives (company_id);
