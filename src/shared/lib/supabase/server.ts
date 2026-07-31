@@ -26,9 +26,23 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           // Server Components cannot set cookies — only Server Actions and
-          // Route Handlers can. Middleware would be needed to refresh an
-          // expiring session from a Server Component; out of scope for this
-          // sprint (no protected route exists yet to need it).
+          // Route Handlers can. `shared/lib/supabase/middleware.ts` is what
+          // refreshes an expiring session ahead of a Server Component render
+          // (see ADR-021); this client's own `setAll` intentionally stays a
+          // no-op sink for that case.
+          //
+          // The second `setAll` argument (`headers` — the anti-cache headers
+          // `@supabase/ssr` asks every caller to apply alongside a cookie
+          // write) is deliberately not read here — see ADR-025 in the
+          // README for why: confirmed live against a production build that
+          // Next's own dynamic-rendering default already emits an
+          // equal-or-stronger `Cache-Control`, for every caller of this
+          // function, because every one of them already calls `cookies()`
+          // above (which is what forces Next out of static/cached
+          // rendering in the first place). Do not add this back without
+          // re-reading that ADR — the point of documenting it there was to
+          // stop this exact "the contract says apply it" instinct from
+          // re-adding dead code.
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
               cookieStore.set(name, value, options);

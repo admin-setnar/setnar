@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
+import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { safeRedirectTarget } from '@/modules/auth/presentation/safe-redirect-target';
 import { SignUpForm } from '@/modules/auth/presentation/sign-up-form';
 import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
@@ -22,17 +24,25 @@ export const metadata: Metadata = { title: 'Criar conta' };
  *
  * `?next=` — see `/entrar/page.tsx`'s comment; same sanitisation, same
  * caveat that the real enforcement is inside `signUpAction`, not here.
+ *
+ * Already-signed-in visitor: same redirect as `/entrar`, same reasoning —
+ * see that page's comment.
  */
 export default async function SignUpPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
-  const [tenant, { next }] = await Promise.all([
+  const [tenant, { next }, user] = await Promise.all([
     resolveTenant((await headers()).get('host')),
     searchParams,
+    getCurrentUser(),
   ]);
   const { marketing, brand } = tenant;
+
+  if (user) {
+    redirect(safeRedirectTarget(next));
+  }
 
   return (
     <>

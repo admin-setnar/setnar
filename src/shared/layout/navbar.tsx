@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Menu, X } from 'lucide-react';
 
+import { useAuth } from '@/modules/auth/presentation/auth-context';
 import { AuthTriggerButton } from '@/modules/auth/presentation/auth-trigger-button';
 import type { NavigationItem } from '@/modules/marketing/domain/marketing-content';
 import { cn } from '@/shared/lib/cn';
@@ -35,6 +37,7 @@ export function Navbar({
 }) {
   const scrolled = useScrollThreshold(8);
   const [menuOpen, setMenuOpen] = useState(false);
+  const authenticated = useAuth();
 
   return (
     <header
@@ -62,12 +65,20 @@ export function Navbar({
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            <AuthTriggerButton view="sign-in" variant="ghost" size="sm">
-              Entrar
-            </AuthTriggerButton>
-            <AuthTriggerButton view="sign-up" size="sm">
-              Criar conta
-            </AuthTriggerButton>
+            {authenticated ? (
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/app">Minha conta</Link>
+              </Button>
+            ) : (
+              <>
+                <AuthTriggerButton view="sign-in" variant="ghost" size="sm">
+                  Entrar
+                </AuthTriggerButton>
+                <AuthTriggerButton view="sign-up" size="sm">
+                  Criar conta
+                </AuthTriggerButton>
+              </>
+            )}
           </div>
 
           <Dialog.Root open={menuOpen} onOpenChange={setMenuOpen}>
@@ -112,21 +123,29 @@ export function Navbar({
                 </nav>
 
                 <div className="mt-4 grid gap-2 border-t border-line pt-4">
-                  <AuthTriggerButton
-                    view="sign-in"
-                    variant="secondary"
-                    fullWidth
-                    onClickCapture={() => setMenuOpen(false)}
-                  >
-                    Entrar
-                  </AuthTriggerButton>
-                  <AuthTriggerButton
-                    view="sign-up"
-                    fullWidth
-                    onClickCapture={() => setMenuOpen(false)}
-                  >
-                    Criar conta
-                  </AuthTriggerButton>
+                  {authenticated ? (
+                    <Button asChild fullWidth onClickCapture={() => setMenuOpen(false)}>
+                      <Link href="/app">Minha conta</Link>
+                    </Button>
+                  ) : (
+                    <>
+                      <AuthTriggerButton
+                        view="sign-in"
+                        variant="secondary"
+                        fullWidth
+                        onClickCapture={() => setMenuOpen(false)}
+                      >
+                        Entrar
+                      </AuthTriggerButton>
+                      <AuthTriggerButton
+                        view="sign-up"
+                        fullWidth
+                        onClickCapture={() => setMenuOpen(false)}
+                      >
+                        Criar conta
+                      </AuthTriggerButton>
+                    </>
+                  )}
                 </div>
               </Dialog.Content>
             </Dialog.Portal>

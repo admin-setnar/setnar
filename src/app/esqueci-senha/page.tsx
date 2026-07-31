@@ -9,7 +9,10 @@ import { Navbar } from '@/shared/layout/navbar';
 import { Card } from '@/shared/ui/card';
 import { Text } from '@/shared/ui/typography';
 
-export const metadata: Metadata = { title: 'Esqueci minha senha' };
+export const metadata: Metadata = {
+  title: 'Esqueci minha senha',
+  robots: { index: false, follow: false },
+};
 
 /**
  * Standalone `/esqueci-senha` route — step 1 of the reset flow (see the

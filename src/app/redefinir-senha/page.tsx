@@ -9,7 +9,10 @@ import { Navbar } from '@/shared/layout/navbar';
 import { Card } from '@/shared/ui/card';
 import { Text } from '@/shared/ui/typography';
 
-export const metadata: Metadata = { title: 'Redefinir senha' };
+export const metadata: Metadata = {
+  title: 'Redefinir senha',
+  robots: { index: false, follow: false },
+};
 
 /**
  * Standalone `/redefinir-senha` route — step 2 (final) of the reset flow.

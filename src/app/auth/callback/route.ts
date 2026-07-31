@@ -16,7 +16,14 @@ import { createClient } from '@/shared/lib/supabase/server';
  * re-validated here with the same `safeRedirectTarget` used everywhere else
  * `?next=` is trusted — this URL is itself sent by e-mail, so it is exactly
  * as attacker-reachable as any other entry point into the app.
+ *
+ * Never renders HTML — every path through this handler is a redirect — so
+ * a page-level `metadata.robots` (the mechanism `/app`, `/esqueci-senha`
+ * and `/redefinir-senha` use) has nothing to attach to. `X-Robots-Tag` is
+ * the documented equivalent for a response with no `<head>` of its own.
  */
+const NOINDEX_HEADERS = { 'X-Robots-Tag': 'noindex' };
+
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get('code');
@@ -26,7 +33,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+      return NextResponse.redirect(`${origin}${next}`, { headers: NOINDEX_HEADERS });
     }
     console.error(
       'GET /auth/callback: exchangeCodeForSession failed — link expired, already used, or invalid.',
@@ -38,5 +45,5 @@ export async function GET(request: NextRequest) {
   // to request a fresh link is the correct next step for that flow
   // specifically, not a generic assumption this handler should keep making
   // if a second caller (e.g. e-mail confirmation) is ever added here.
-  return NextResponse.redirect(`${origin}/esqueci-senha`);
+  return NextResponse.redirect(`${origin}/esqueci-senha`, { headers: NOINDEX_HEADERS });
 }

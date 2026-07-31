@@ -7,7 +7,7 @@ import { Card } from '@/shared/ui/card';
 import { Container } from '@/shared/layout/container';
 import { Text } from '@/shared/ui/typography';
 
-export const metadata: Metadata = { title: 'Sua conta' };
+export const metadata: Metadata = { title: 'Sua conta', robots: { index: false, follow: false } };
 
 /**
  * `/app` — Sprint B's one protected route.

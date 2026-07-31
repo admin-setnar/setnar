@@ -2,6 +2,30 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
+ * Logged at most once per process, not once per request — this middleware
+ * runs on every non-static request (ADR-021), so a naive `console.error`
+ * inside `updateSession` would produce one line per hit for the entire
+ * lifetime of a misconfigured deployment. `missing`/`invalid` are tracked
+ * independently: which one fires first does not suppress the other, since
+ * they are different root causes and ADR-024 requires them to stay
+ * distinguishable in the log, not just deduplicated together.
+ */
+const loggedOnce = { missing: false, invalid: false };
+
+/**
+ * Test-only: `updateSession`'s warn-once state is module-level by design
+ * (see `loggedOnce` above), so a test suite that drives the same process
+ * through more than one misconfiguration scenario needs a way to reset it
+ * between cases — otherwise only the first test to trip a given reason
+ * would ever observe its log line. Not used anywhere outside
+ * `tests/supabase-middleware.test.ts`.
+ */
+export function resetUpdateSessionWarningsForTests(): void {
+  loggedOnce.missing = false;
+  loggedOnce.invalid = false;
+}
+
+/**
  * Supabase client for middleware — distinct from `server.ts`'s, on purpose.
  *
  * `server.ts` reads/writes cookies through `next/headers`' `cookies()`, which
@@ -22,14 +46,50 @@ import { NextResponse, type NextRequest } from 'next/server';
  * and `types.d.ts`), including the `setAll` second argument (`headers`) the
  * library expects call sites to also apply to the response — not assumed
  * from memory. The deprecated `get`/`set`/`remove` shape is not used.
+ *
+ * **Fails open on missing config AND on present-but-invalid config — see
+ * ADR-024, which corrects this ADR's own earlier, narrower version.**
+ * ADR-019 already established that `/termos` and `/privacidade` must fail
+ * open on `createClient()` throwing "because the Supabase env vars are
+ * missing or invalid" (its own words) — `getCurrentTermsVersion()` wraps
+ * that call in one blanket `try/catch` regardless of *why* it throws.
+ * Middleware runs in front of every page, including those two, so it has
+ * to honour the same "missing or invalid" scope, or it 500s the request
+ * before either page's own fail-open code ever runs — which is exactly
+ * what a narrower, presence-only guard did.
+ *
+ * The two causes are kept **distinguishable in the log**, not folded into
+ * one message: an absent env var is an expected, common state (a fresh
+ * clone, a preview deploy with no Supabase project yet); a present but
+ * malformed value (e.g. a truncated `NEXT_PUBLIC_SUPABASE_URL` from a
+ * copy-paste error) is a real deploy bug that should look different in the
+ * log even though both currently produce the same outward behaviour (public
+ * pages render, session refresh is skipped). "Fail loud" for this file does
+ * not mean 500 a public page — ADR-019 already forecloses that for
+ * `/termos`/`/privacidade`, and there is no reason `/` should be worse
+ * protected than pages that call Supabase directly — it means the operator
+ * reading logs can tell "not configured yet" apart from "configured wrong"
+ * without needing to reproduce the request.
  */
 export async function updateSession(request: NextRequest): Promise<NextResponse> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    if (!loggedOnce.missing) {
+      loggedOnce.missing = true;
+      console.error(
+        'updateSession: NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY not set — session refresh is disabled for every request until these are configured.',
+      );
+    }
+    return NextResponse.next({ request });
+  }
+
   let response = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
+  let supabase;
+  try {
+    supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -49,8 +109,22 @@ export async function updateSession(request: NextRequest): Promise<NextResponse>
           });
         },
       },
-    },
-  );
+    });
+  } catch (err) {
+    // Only reachable for a synchronous, config-validation throw (a
+    // malformed URL — `@supabase/supabase-js`'s `validateSupabaseUrl`) —
+    // no network call has been attempted yet at this point, so there is
+    // nothing unsafe about failing open here the same way the missing-var
+    // branch above does.
+    if (!loggedOnce.invalid) {
+      loggedOnce.invalid = true;
+      console.error(
+        'updateSession: NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are set but invalid — session refresh is disabled for every request until this is fixed.',
+        err,
+      );
+    }
+    return NextResponse.next({ request });
+  }
 
   // Must be called before any response is generated — a refresh completing
   // after the response is committed cannot be written back (see setAll's

@@ -122,6 +122,7 @@ Representatives need a professional way to present themselves and their products
 - Product pages
 - Responsive design
 - WhatsApp CTA
+- URL: `<representative-slug>.<domain>` — subdomain per representative, not a path (README.md ADR-026)
 
 ---
 

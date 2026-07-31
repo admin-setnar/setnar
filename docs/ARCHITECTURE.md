@@ -434,6 +434,15 @@ All data must be scoped by Company.
 
 No module should assume a single company.
 
+Representative resolution — which Representative owns the Commercial Page
+being served — is a second, nested resolution problem, one level inside the
+Company already resolved by ADR-001's `Host`-based tenant resolution (README.md).
+When the Commercial Page generator is built (Sprint C, not started), it
+should reuse the same pattern already established for Company — repository
+port, resolved server-side from the request — applied one level deeper, not
+a new resolution mechanism. The URL scheme for that resolution (subdomain
+per representative) is decided in README.md ADR-026.
+
 ---
 
 # Scalability Strategy

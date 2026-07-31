@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import type { AuthenticatedUser } from '@/modules/auth/domain/auth';
 import type { AuthGateway } from '@/modules/auth/domain/auth-gateway';
 import { SupabaseAuthGateway } from '@/modules/auth/infrastructure/supabase-auth-gateway';
@@ -105,8 +107,20 @@ export async function getCurrentTermsVersion(): Promise<string | null> {
  * message for what is not actually a failure. Worse than log noise: if that
  * signal never propagates, Next's static pass may not correctly learn the
  * route did dynamic work. See `isNextControlFlowError`.
+ *
+ * Wrapped in React's `cache()`: `app/layout.tsx` (every route, to drive
+ * `AuthProvider`/the Navbar) and `/app/page.tsx` both call this, and so do
+ * `/entrar`/`/criar-conta` (to redirect an already-signed-in visitor away
+ * from the form — see the README). Without `cache()`, a single request to
+ * `/app` would pay for the `getUser()` network round trip and the
+ * `profiles` query *twice* — once from the layout, once from the page.
+ * `cache()` memoises by call-with-no-arguments per request, so every one of
+ * those call sites shares the same in-flight `Promise` — confirmed with a
+ * live `curl` run against `/app`, timed alongside `/` (which never calls
+ * this), showing no measurable difference for an anonymous visitor (see
+ * README).
  */
-export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
+export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> => {
   try {
     const supabase = await createClient();
     const {
@@ -142,4 +156,4 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
     console.error('getCurrentUser: unexpected exception reading the current session.', err);
     return null;
   }
-}
+});

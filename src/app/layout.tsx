@@ -7,6 +7,8 @@ import { headers } from 'next/headers';
 import '@fontsource-variable/plus-jakarta-sans';
 import '@/app/globals.css';
 
+import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
+import { AuthProvider } from '@/modules/auth/presentation/auth-context';
 import { AuthModalProvider } from '@/modules/auth/presentation/hooks/use-auth-modal';
 import { AuthModals } from '@/modules/auth/presentation/auth-modals';
 import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
@@ -37,7 +39,10 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const tenant = await resolveTenant((await headers()).get('host'));
+  const [tenant, user] = await Promise.all([
+    resolveTenant((await headers()).get('host')),
+    getCurrentUser(),
+  ]);
 
   return (
     <html lang={tenant.locale} className="scroll-smooth">
@@ -53,10 +58,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </a>
 
         <TenantProvider tenant={toClientView(tenant)}>
-          <AuthModalProvider>
-            {children}
-            <AuthModals />
-          </AuthModalProvider>
+          <AuthProvider authenticated={user !== null}>
+            <AuthModalProvider>
+              {children}
+              <AuthModals />
+            </AuthModalProvider>
+          </AuthProvider>
         </TenantProvider>
       </body>
     </html>
