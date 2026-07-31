@@ -1244,7 +1244,9 @@ defines exactly what "ahead of demand" means at each stage.
 ## Next steps, in order
 
 1. Confirm the three copy claims flagged under **Compliance**.
-2. Resolve the Inter / Plus Jakarta Sans contradiction in `DESIGN_SYSTEM.md`.
+2. ~~Resolve the Inter / Plus Jakarta Sans contradiction in `DESIGN_SYSTEM.md`.~~
+   Done — `DESIGN_SYSTEM.md` now states Plus Jakarta Sans as the preferred
+   font, matching ADR-006 and `layout.tsx`.
 3. ~~Choose the identity provider, then write one `AuthGateway` adapter.~~ Done
    (Sprint A) — see ADR-011 through ADR-013.
 4. ~~Build `/termos` and `/privacidade`.~~ Done (Sprint A), drafted to be

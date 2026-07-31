@@ -204,7 +204,7 @@ Typography is the primary visual element.
 
 Preferred font:
 
-Inter
+Plus Jakarta Sans
 
 Fallback:
 
