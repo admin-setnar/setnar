@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conexão Club | Clube de benefícios com mais de 600 mil produtos e serviços</title>
+<meta name="description" content="Economize todos os dias em supermercados, farmácias, viagens e lazer. Acesso a mais de 600 mil produtos e serviços com desconto em todo o Brasil.">
+
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Conexão Club | Clube de benefícios com mais de 600 mil produtos e serviços">
+<meta property="og:description" content="Economize todos os dias em supermercados, farmácias, viagens, lazer e muito mais.">
+<meta property="og:image" content="{{OG_IMAGE}}">
+<meta property="og:url" content="{{PAGE_URL}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Conexão Club | Clube de benefícios iGreen">
+<meta name="twitter:description" content="Mais de 600 mil produtos e serviços com desconto exclusivo, em todo o Brasil.">
+<meta name="twitter:image" content="{{OG_IMAGE}}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="{{PAGE_URL}}">
+<link rel="stylesheet" href="style.css">
+
+<!-- ===== ANALYTICS DA PLATAFORMA =====
+     Uma única propriedade GA4, da SETNAR. Cada evento carrega representative_id
+     e produto como parâmetros, o que permite segmentar por licenciado sem que
+     ele precise configurar nada — e sem misturar visitantes de licenciados
+     diferentes numa mesma propriedade pessoal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{GA4_ID}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{GA4_ID}}', {
+    representative_id: '{{REP_ID}}',
+    produto: '{{PRODUTO_SLUG}}'
+  });
+</script>
+
+<!-- Estilos específicos deste produto: seletor de categorias de benefício -->
+<style>
+  .cat-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; position:relative; z-index:1; }
+  .cat-tabs button{ border:1px solid var(--borda); background:var(--fundo); padding:8px 14px; border-radius:100px; font-family:'Inter',sans-serif; font-weight:600; font-size:0.85rem; color:var(--cinza-texto); cursor:pointer; }
+  .cat-tabs button.active{ background:var(--verde-vivo); color:#fff; border-color:var(--verde-vivo); }
+  .cat-desc{ position:relative; z-index:1; color:var(--cinza-texto); min-height:3.2em; }
+  .categorias-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+  @media (max-width:860px){ .categorias-grid{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:480px){ .categorias-grid{ grid-template-columns:1fr; } }
+  .categoria-card{ background:var(--fundo-card); border:1px solid var(--borda); border-radius:12px; padding:18px; text-align:center; }
+  .categoria-card .emoji{ font-size:1.8rem; display:block; margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+<header>
+  <div class="header-inner">
+    <a href="#topo" class="logo">
+      <span class="logo-dot" aria-hidden="true"></span>
+      <span class="logo-text">
+        Conexão Club
+        <small class="logo-sub">
+          <span class="full">{{REP_NOME}} · Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</span>
+          <span class="short">{{REP_NOME}} · Licenciado iGreen · ID {{REP_ID}}</span>
+        </small>
+      </span>
+    </a>
+    <a class="btn-whats" id="cta-header" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20o%20Conex%C3%A3o%20Club."
+       target="_blank" rel="noopener" aria-label="Falar agora no WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+      <span class="full">Falar no WhatsApp</span>
+    </a>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="hero" id="topo">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Clube de benefícios</span>
+        <h1>Economize todos os dias em mais de 600 mil produtos e serviços, no Brasil inteiro.</h1>
+        <p class="subhead">Supermercado, farmácia, combustível, viagem e lazer com desconto exclusivo. Você ativa uma vez e usa sempre que quiser.</p>
+        <div class="hero-ctas">
+          <a class="btn-whats" id="cta-hero" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20ativar%20meu%20Conex%C3%A3o%20Club."
+             target="_blank" rel="noopener">
+            Quero ativar meu Club
+          </a>
+        </div>
+        <p class="hero-note">Ativação rápida pelo app · Valor confirmado no WhatsApp</p>
+      </div>
+
+      <div>
+        <div class="bill-card">
+          <div class="bill-header">
+            <span>Veja o que dá pra economizar</span>
+            <span class="badge-desconto">+600 mil produtos e serviços</span>
+          </div>
+          <div class="cat-tabs" role="tablist" aria-label="Categorias de benefício">
+            <button type="button" data-cat="mercado" class="active">Mercado</button>
+            <button type="button" data-cat="farmacia">Farmácia</button>
+            <button type="button" data-cat="viagem">Viagem</button>
+            <button type="button" data-cat="lazer">Lazer</button>
+            <button type="button" data-cat="combustivel">Combustível</button>
+          </div>
+          <p class="cat-desc" id="cat-desc"></p>
+          <a class="btn-whats bill-cta" id="cat-cta" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20ativar%20meu%20Conex%C3%A3o%20Club." target="_blank" rel="noopener">
+            Quero economizar assim
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAIXA DE CONFIANÇA -->
+  <div class="trust-strip">
+    <div class="container">
+      <span>+600 mil produtos e serviços</span>
+      <span>Ativação rápida pelo app</span>
+      <span>Sem trocar de distribuidora ou operadora</span>
+    </div>
+  </div>
+
+  <!-- QUEM ATENDE — identidade do licenciado.
+       Cumpre a exigência de identificação clara da Política de Uso da Marca e
+       é o que diferencia esta página do site institucional: quem chega aqui
+       está decidindo se manda mensagem para uma pessoa, não para uma empresa. -->
+  <section id="consultor">
+    <div class="container">
+      <div class="consultor-card">
+        {{REP_AVATAR}}
+        <div class="consultor-info">
+          <span class="consultor-eyebrow">Quem vai te atender</span>
+          <h2>{{REP_NOME}}</h2>
+          <p class="consultor-cargo">Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</p>
+          <p class="consultor-local">{{REP_CIDADE}}</p>
+        </div>
+        <a class="btn-whats" id="cta-consultor"
+           href="https://wa.me/{{REP_WHATSAPP}}?text={{MSG_CONSULTOR}}"
+           target="_blank" rel="noopener">Falar com {{REP_PRIMEIRO_NOME}}</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- FORMULÁRIO DE LEAD -->
+  <section id="quero-simular">
+    <div class="container">
+      <div class="lead-form-card">
+        <div>
+          <h2>Prefere que a gente te chame?</h2>
+          <p>Deixe seus dados que entramos em contato, sem compromisso.</p>
+        </div>
+        <form id="lead-form" class="lead-form" name="lead-{{PRODUTO_SLUG}}-{{REP_ID}}" method="POST" novalidate>
+          <p class="hp-field" aria-hidden="true"><label>Não preencha isto: <input name="empresa" tabindex="-1" autocomplete="off"></label></p>
+
+          <div class="lead-field">
+            <label for="lead-nome">Nome</label>
+            <input type="text" id="lead-nome" name="nome" required autocomplete="name" placeholder="Seu nome">
+          </div>
+          <div class="lead-field" id="telefone-field">
+            <label for="lead-telefone">Telefone</label>
+            <input type="tel" id="lead-telefone" name="telefone" required autocomplete="tel" inputmode="tel"
+                   placeholder="(11) 98888-7777" maxlength="16"
+                   pattern="\(\d{2}\)\s\d{4,5}-\d{4}" title="Formato: (11) 98888-7777"
+                   aria-describedby="telefone-hint">
+            <p class="field-hint" id="telefone-hint" aria-live="polite"></p>
+          </div>
+          <div class="lead-field">
+            <label for="lead-cidade">Cidade / Estado <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-cidade" name="cidade" autocomplete="address-level2" placeholder="Ex: Curitiba/PR">
+          </div>
+          <button type="submit" class="btn-whats lead-submit">Quero ativar meu Club</button>
+          <p class="lead-status" id="lead-status" role="status" aria-live="polite"></p>
+          <p class="lead-privacy">Seus dados são usados apenas para entrarmos em contato sobre a ativação. Nada de spam.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="container">
+      <div class="section-head">
+        <h2>Como funciona, em 4 passos</h2>
+        <p>Ativa uma vez, usa sempre que quiser.</p>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3>Você ativa o Club</h3>
+          <p>Rápido, direto pelo WhatsApp com seu licenciado.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3>Baixa o app iGreen Club</h3>
+          <p>Disponível para Android e iOS.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3>Escolhe o parceiro</h3>
+          <p>Busca por categoria ou pelo estabelecimento mais perto de você.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">4</div>
+          <h3>Aproveita o desconto</h3>
+          <p>Direto na hora da compra, sem burocracia.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CATEGORIAS -->
+  <section class="section-alt">
+    <div class="container">
+      <div class="section-head">
+        <h2>Categorias com desconto</h2>
+        <p>Uma pequena amostra do que você encontra no app.</p>
+      </div>
+      <div class="categorias-grid">
+        <div class="categoria-card"><span class="emoji" aria-hidden="true">🛒</span><strong>Supermercados</strong></div>
+        <div class="categoria-card"><span class="emoji" aria-hidden="true">🍽️</span><strong>Alimentação</strong></div>
+        <div class="categoria-card"><span class="emoji" aria-hidden="true">✈️</span><strong>Viagens</strong></div>
+        <div class="categoria-card"><span class="emoji" aria-hidden="true">🎬</span><strong>Lazer</strong></div>
+        <div class="categoria-card"><span class="emoji" aria-hidden="true">🛍️</span><strong>Compras online</strong></div>
+        <div class="categoria-card"><span class="emoji" aria-hidden="true">⛽</span><strong>Combustível</strong></div>
+        <div class="categoria-card"><span class="emoji" aria-hidden="true">💊</span><strong>Farmácias</strong></div>
+        <div class="categoria-card"><span class="emoji" aria-hidden="true">➕</span><strong>E muito mais</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>Perguntas frequentes</h2>
+        <p>As dúvidas que mais recebemos, respondidas direto.</p>
+      </div>
+      <div class="faq">
+        <details class="faq-item">
+          <summary>Preciso ser cliente de outro produto iGreen para ter o Club?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. O Conexão Club é um clube de benefícios independente, você pode ativá-lo mesmo sem contratar outro produto iGreen.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Quanto custa a assinatura?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>O valor é confirmado direto com seu licenciado no WhatsApp, junto com as formas de pagamento disponíveis.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Posso cancelar quando quiser?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim. As condições exatas de cancelamento são confirmadas no momento da ativação.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Como uso os descontos no dia a dia?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Pelo aplicativo iGreen Club: você busca o parceiro mais próximo ou por categoria, e o desconto é aplicado direto na compra, conforme as regras de cada parceiro.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>O clube funciona em todo o Brasil?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim, a rede de parceiros está distribuída em todo o território nacional, embora a quantidade de opções possa variar conforme a sua região.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section>
+    <div class="container">
+      <div class="cta-final">
+        <h2>Fale agora e ative seu Conexão Club em poucos minutos</h2>
+        <p>É só chamar no WhatsApp. Sem compromisso, sem letras miúdas.</p>
+        <a class="btn-whats" id="cta-final" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20ativar%20meu%20Conex%C3%A3o%20Club%20agora."
+           target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+          Falar no WhatsApp agora
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Conexão Club — clube de benefícios comercializado por licenciados autorizados iGreen Energy. Rede de parceiros e condições sujeitas a alteração sem aviso prévio.</p>
+    <p>Site produzido por <strong>{{REP_NOME}}</strong> — Licenciado Autorizado iGreen Energy (ID: <strong>{{REP_ID}}</strong>). Este não é um site oficial da iGreen Energy.</p>
+    <p class="footer-privacy">Seus dados (nome, WhatsApp e cidade) são usados apenas para contato sobre a ativação do Club, em conformidade com a LGPD (Lei nº 13.709/2018), e não são compartilhados com terceiros. <a href="politica-privacidade.html">Política de Privacidade</a></p>
+  </div>
+</footer>
+
+<a class="btn-whats float-whats" id="cta-flutuante" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20o%20Conex%C3%A3o%20Club."
+   target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:24px;height:24px;"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+</a>
+
+<script>
+  const NUM_WHATS = '{{REP_WHATSAPP}}';
+
+  const CATEGORIAS = {
+    mercado: 'Descontos em redes de supermercado parceiras, para o seu dia a dia render mais.',
+    farmacia: 'Economia em farmácias parceiras na compra de medicamentos e produtos de higiene.',
+    viagem: 'Condições especiais em passagens, hospedagem e pacotes de viagem.',
+    lazer: 'Descontos em cinema, parques e opções de entretenimento perto de você.',
+    combustivel: 'Economia no abastecimento em postos parceiros da rede.',
+  };
+
+  const catDesc = document.getElementById('cat-desc');
+  const catButtons = document.querySelectorAll('.cat-tabs button');
+
+  function setCategoria(cat){
+    if(catDesc) catDesc.textContent = CATEGORIAS[cat] || '';
+    catButtons.forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  }
+
+  catButtons.forEach(btn => {
+    btn.addEventListener('click', () => setCategoria(btn.dataset.cat));
+  });
+  setCategoria('mercado');
+
+  // ===== Rastreamento de cliques nos botões de WhatsApp (GA4) =====
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-whats');
+    if(btn && typeof gtag === 'function'){
+      gtag('event', 'contato_whatsapp', { event_category: 'lead', event_label: btn.id || 'whatsapp_cta' });
+    }
+  });
+
+  // ===== Máscara e validação do WhatsApp =====
+  // Normaliza o que o visitante cola: "+55 41 9...", "041 9..." e variações
+  // chegavam antes como número inválido que PASSAVA na validação — o lead
+  // entrava com um telefone inexistente e se perdia silenciosamente.
+  const DDDS = new Set([11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,
+    41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,
+    81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99]);
+
+  function normalizeDigits(value){
+    let d = String(value).replace(/\D/g, '');
+    if(d.length > 11 && d.startsWith('55')) d = d.slice(2);
+    if(d.length > 11 && d.startsWith('0'))  d = d.replace(/^0+/, '');
+    if(d.length === 11 && d.startsWith('0')) d = d.slice(1);
+    return d.slice(0, 11);
+  }
+
+  function maskPhone(value){
+    const d = normalizeDigits(value);
+    if(!d.length) return '';
+    if(d.length <= 2) return '(' + d;
+    const ddd = d.slice(0,2), resto = d.slice(2);
+    if(resto.length <= 4) return `(${ddd}) ${resto}`;
+    if(resto.length <= 8) return `(${ddd}) ${resto.slice(0,4)}-${resto.slice(4)}`;
+    return `(${ddd}) ${resto.slice(0,5)}-${resto.slice(5,9)}`;
+  }
+
+  function validaTelefone(value){
+    const d = normalizeDigits(value);
+    if(d.length !== 10 && d.length !== 11) return { ok:false, erro:'Digite DDD + número' };
+    if(!DDDS.has(Number(d.slice(0,2))))    return { ok:false, erro:'DDD inválido' };
+    if(d.length === 11 && d[2] !== '9')    return { ok:false, erro:'Celular deve começar com 9 após o DDD' };
+    if(d.length === 10 && d[2] === '9')    return { ok:false, erro:'Falta 1 dígito no celular' };
+    if(/^(\d)\1+$/.test(d.slice(2)))       return { ok:false, erro:'Número inválido' };
+    return { ok:true, e164:'55' + d };
+  }
+
+  const leadTelefoneInput = document.getElementById('lead-telefone');
+  const telefoneField = document.getElementById('telefone-field');
+  const telefoneHint  = document.getElementById('telefone-hint');
+
+  function validatePhoneLive(){
+    const bruto = leadTelefoneInput.value;
+    const digits = normalizeDigits(bruto);
+    telefoneField.classList.remove('field-valid', 'field-invalid');
+    if(digits.length === 0){ telefoneHint.textContent = ''; return; }
+    const v = validaTelefone(bruto);
+    if(v.ok){
+      telefoneField.classList.add('field-valid');
+      telefoneHint.textContent = 'Número válido ✓';
+    } else if(digits.length < 10){
+      telefoneHint.textContent = 'Faltam ' + (10 - digits.length) + ' dígitos';
+    } else {
+      telefoneField.classList.add('field-invalid');
+      telefoneHint.textContent = v.erro;
+    }
+  }
+
+  if(leadTelefoneInput){
+    leadTelefoneInput.addEventListener('input', () => {
+      leadTelefoneInput.value = maskPhone(leadTelefoneInput.value);
+      validatePhoneLive();
+    });
+  }
+
+  // ===== Envio do lead para a API do SETNAR =====
+  // O lead precisa entrar no pipeline da plataforma (evento LeadCaptured),
+  // não num painel externo que o licenciado nunca abre. O honeypot continua:
+  // se vier preenchido, respondemos como sucesso e descartamos silenciosamente.
+  const leadForm = document.getElementById('lead-form');
+  const leadStatus = document.getElementById('lead-status');
+
+  if(leadForm){
+    leadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const v = validaTelefone(leadTelefoneInput.value);
+      if(!v.ok){
+        telefoneField.classList.remove('field-valid');
+        telefoneField.classList.add('field-invalid');
+        telefoneHint.textContent = v.erro;
+        leadStatus.textContent = 'Confira o número de telefone antes de enviar.';
+        leadStatus.style.color = '#B33A3A';
+        leadTelefoneInput.focus();
+        return;
+      }
+
+      const dados = Object.fromEntries(new FormData(leadForm).entries());
+      if(dados.empresa || dados.empresa2){        // honeypot preenchido = bot
+        window.location.href = '/obrigado.html';
+        return;
+      }
+      delete dados.empresa; delete dados.empresa2;
+
+      const payload = {
+        representative_id: '{{REP_ID}}',
+        produto: '{{PRODUTO_SLUG}}',
+        origem: window.location.href,
+        referrer: document.referrer || null,
+        telefone_e164: v.e164,
+        campos: dados
+      };
+
+      leadStatus.style.color = '';
+      leadStatus.textContent = 'Enviando...';
+
+      const submitBtn = leadForm.querySelector('[type="submit"]');
+      if(submitBtn) submitBtn.disabled = true;
+
+      fetch('{{LEADS_ENDPOINT}}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then((r) => {
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        if(typeof gtag === 'function'){
+          gtag('event', 'generate_lead', {
+            representative_id: '{{REP_ID}}', produto: '{{PRODUTO_SLUG}}'
+          });
+        }
+        window.location.href = '/obrigado.html';
+      })
+      .catch(() => {
+        if(submitBtn) submitBtn.disabled = false;
+        leadStatus.innerHTML = 'Não foi possível enviar agora. Tente novamente ou ' +
+          '<a href="https://wa.me/{{REP_WHATSAPP}}" target="_blank" rel="noopener">chame direto no WhatsApp</a>.';
+        leadStatus.style.color = '#B33A3A';
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

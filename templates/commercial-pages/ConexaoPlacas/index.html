@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conexão Placas | Sistema fotovoltaico próprio, com financiamento facilitado</title>
+<meta name="description" content="Tenha seu próprio sistema de energia solar, à vista, financiado ou no cartão. Proposta personalizada, instalação por fornecedores homologados.">
+
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Conexão Placas | Sistema fotovoltaico próprio, com financiamento facilitado">
+<meta property="og:description" content="Proposta personalizada, fornecedores homologados e opções de pagamento que cabem no seu bolso.">
+<meta property="og:image" content="{{OG_IMAGE}}">
+<meta property="og:url" content="{{PAGE_URL}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Conexão Placas | Seu sistema fotovoltaico próprio">
+<meta name="twitter:description" content="À vista, financiado ou no cartão — você escolhe como pagar.">
+<meta name="twitter:image" content="{{OG_IMAGE}}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="{{PAGE_URL}}">
+<link rel="stylesheet" href="style.css">
+
+<!-- ===== ANALYTICS DA PLATAFORMA =====
+     Uma única propriedade GA4, da SETNAR. Cada evento carrega representative_id
+     e produto como parâmetros, o que permite segmentar por licenciado sem que
+     ele precise configurar nada — e sem misturar visitantes de licenciados
+     diferentes numa mesma propriedade pessoal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{GA4_ID}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{GA4_ID}}', {
+    representative_id: '{{REP_ID}}',
+    produto: '{{PRODUTO_SLUG}}'
+  });
+</script>
+
+<!-- Estilos específicos deste produto: seletor de forma de pagamento -->
+<style>
+  .pay-tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; position:relative; z-index:1; }
+  .pay-tabs button{ border:1px solid var(--borda); background:var(--fundo); padding:8px 12px; border-radius:100px; font-family:'Inter',sans-serif; font-weight:600; font-size:0.8rem; color:var(--cinza-texto); cursor:pointer; }
+  .pay-tabs button.active{ background:var(--verde-vivo); color:#fff; border-color:var(--verde-vivo); }
+  .pay-desc{ position:relative; z-index:1; color:var(--cinza-texto); min-height:4.4em; font-size:0.95rem; }
+  .pay-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; }
+  @media (max-width:860px){ .pay-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:480px){ .pay-grid{ grid-template-columns:1fr; } }
+  .pay-card{ background:var(--fundo-card); border:1px solid var(--borda); border-radius:var(--radius); padding:22px; }
+  .pay-card h3{ font-size:1.05rem; }
+  .pay-card p{ color:var(--cinza-texto); font-size:0.92rem; margin-bottom:0; }
+</style>
+</head>
+<body>
+
+<a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+<header>
+  <div class="header-inner">
+    <a href="#topo" class="logo">
+      <span class="logo-dot" aria-hidden="true"></span>
+      <span class="logo-text">
+        Conexão Placas
+        <small class="logo-sub">
+          <span class="full">{{REP_NOME}} · Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</span>
+          <span class="short">{{REP_NOME}} · Licenciado iGreen · ID {{REP_ID}}</span>
+        </small>
+      </span>
+    </a>
+    <a class="btn-whats" id="cta-header" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20a%20Conex%C3%A3o%20Placas."
+       target="_blank" rel="noopener" aria-label="Falar agora no WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+      <span class="full">Falar no WhatsApp</span>
+    </a>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="hero" id="topo">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Sistema fotovoltaico próprio</span>
+        <h1>Tenha suas próprias placas solares e pare de depender só do desconto na conta de luz.</h1>
+        <p class="subhead">Projeto personalizado, instalação por fornecedores homologados e a forma de pagamento que couber no seu bolso: à vista, financiado ou no cartão.</p>
+        <div class="hero-ctas">
+          <a class="btn-whats" id="cta-hero" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20gerar%20minha%20proposta%20de%20placas%20solares."
+             target="_blank" rel="noopener">
+            Quero minha proposta
+          </a>
+        </div>
+        <p class="hero-note">Proposta personalizada, sem custo · Financiamento sujeito a análise de crédito</p>
+      </div>
+
+      <div>
+        <div class="bill-card">
+          <div class="bill-header">
+            <span>Como prefere pagar?</span>
+            <span class="badge-desconto">4 opções</span>
+          </div>
+          <div class="pay-tabs" role="tablist" aria-label="Formas de pagamento">
+            <button type="button" data-pay="financ-igreen" class="active">Financiado (bancos parceiros)</button>
+            <button type="button" data-pay="financ-proprio">Financiado (seu banco)</button>
+            <button type="button" data-pay="avista">À vista</button>
+            <button type="button" data-pay="cartao">Cartão até 21x</button>
+          </div>
+          <p class="pay-desc" id="pay-desc"></p>
+          <a class="btn-whats bill-cta" id="pay-cta" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20simular%20o%20financiamento%20com%20bancos%20parceiros%20da%20iGreen." target="_blank" rel="noopener">
+            Simular esta opção
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAIXA DE CONFIANÇA -->
+  <div class="trust-strip">
+    <div class="container">
+      <span>Fornecedores homologados iGreen</span>
+      <span>Vistoria técnica antes da instalação</span>
+      <span>Financiamento sujeito a análise de crédito</span>
+    </div>
+  </div>
+
+  <!-- QUEM ATENDE — identidade do licenciado.
+       Cumpre a exigência de identificação clara da Política de Uso da Marca e
+       é o que diferencia esta página do site institucional: quem chega aqui
+       está decidindo se manda mensagem para uma pessoa, não para uma empresa. -->
+  <section id="consultor">
+    <div class="container">
+      <div class="consultor-card">
+        {{REP_AVATAR}}
+        <div class="consultor-info">
+          <span class="consultor-eyebrow">Quem vai te atender</span>
+          <h2>{{REP_NOME}}</h2>
+          <p class="consultor-cargo">Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</p>
+          <p class="consultor-local">{{REP_CIDADE}}</p>
+        </div>
+        <a class="btn-whats" id="cta-consultor"
+           href="https://wa.me/{{REP_WHATSAPP}}?text={{MSG_CONSULTOR}}"
+           target="_blank" rel="noopener">Falar com {{REP_PRIMEIRO_NOME}}</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- FORMULÁRIO DE LEAD -->
+  <section id="quero-simular">
+    <div class="container">
+      <div class="lead-form-card">
+        <div>
+          <h2>Prefere que a gente te chame?</h2>
+          <p>Deixe seus dados que entramos em contato, sem compromisso.</p>
+        </div>
+        <form id="lead-form" class="lead-form" name="lead-{{PRODUTO_SLUG}}-{{REP_ID}}" method="POST" novalidate>
+          <p class="hp-field" aria-hidden="true"><label>Não preencha isto: <input name="empresa" tabindex="-1" autocomplete="off"></label></p>
+
+          <div class="lead-field">
+            <label for="lead-nome">Nome</label>
+            <input type="text" id="lead-nome" name="nome" required autocomplete="name" placeholder="Seu nome">
+          </div>
+          <div class="lead-field" id="telefone-field">
+            <label for="lead-telefone">Telefone</label>
+            <input type="tel" id="lead-telefone" name="telefone" required autocomplete="tel" inputmode="tel"
+                   placeholder="(11) 98888-7777" maxlength="16"
+                   pattern="\(\d{2}\)\s\d{4,5}-\d{4}" title="Formato: (11) 98888-7777"
+                   aria-describedby="telefone-hint">
+            <p class="field-hint" id="telefone-hint" aria-live="polite"></p>
+          </div>
+          <div class="lead-field">
+            <label for="lead-conta">Valor médio da conta de luz <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-conta" name="valor_conta" placeholder="Ex: R$ 600">
+          </div>
+          <div class="lead-field">
+            <label for="lead-cidade">Cidade / Estado <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-cidade" name="cidade" autocomplete="address-level2" placeholder="Ex: Curitiba/PR">
+          </div>
+          <button type="submit" class="btn-whats lead-submit">Quero minha proposta</button>
+          <p class="lead-status" id="lead-status" role="status" aria-live="polite"></p>
+          <p class="lead-privacy">Seus dados são usados apenas para entrarmos em contato sobre sua proposta. Nada de spam.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="container">
+      <div class="section-head">
+        <h2>Como funciona, passo a passo</h2>
+        <p>Do primeiro contato até a instalação do seu sistema.</p>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3>Geramos sua proposta</h3>
+          <p>Com base na sua conta de luz e no espaço disponível para instalação.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3>Você escolhe a forma de pagamento</h3>
+          <p>Financiamento, à vista ou cartão de crédito — o que fizer mais sentido pra você.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3>Vistoria técnica</h3>
+          <p>Uma análise técnica confirma a viabilidade da instalação no seu imóvel.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">4</div>
+          <h3>Instalação do sistema</h3>
+          <p>Feita por fornecedores homologados pela iGreen, após aprovação da vistoria.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORMAS DE PAGAMENTO -->
+  <section class="section-alt">
+    <div class="container">
+      <div class="section-head">
+        <h2>Formas de pagamento</h2>
+        <p>Todas sujeitas a análise e aprovação, conforme a modalidade escolhida.</p>
+      </div>
+      <div class="pay-grid">
+        <div class="pay-card">
+          <h3>Bancos parceiros</h3>
+          <p>Simulação de financiamento com instituições parceiras da iGreen. Sujeita a análise de crédito.</p>
+        </div>
+        <div class="pay-card">
+          <h3>Banco do cliente</h3>
+          <p>Se preferir, financie direto com o gerente do seu próprio banco — nossa equipe apoia a simulação.</p>
+        </div>
+        <div class="pay-card">
+          <h3>À vista</h3>
+          <p>Pagamento integral pelo valor que consta na proposta gerada.</p>
+        </div>
+        <div class="pay-card">
+          <h3>Cartão de crédito</h3>
+          <p>Parcelamento em até 21 vezes no cartão, com os juros da operadora do cartão.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>Perguntas frequentes</h2>
+        <p>As dúvidas que mais recebemos, respondidas direto.</p>
+      </div>
+      <div class="faq">
+        <details class="faq-item">
+          <summary>Quanto custa um sistema de placas solares?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>O valor depende do tamanho do sistema, que é dimensionado conforme o seu consumo médio de energia. Você recebe uma proposta personalizada e sem custo antes de decidir qualquer coisa.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>O financiamento é garantido?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. Toda modalidade de financiamento está sujeita à análise de crédito da instituição financeira envolvida, seja um banco parceiro ou o seu próprio banco. A aprovação e as condições finais dependem dessa análise.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Quanto tempo demora a instalação?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>O prazo é informado após a vistoria técnica, já que depende da aprovação, da forma de pagamento escolhida e da disponibilidade do fornecedor homologado responsável pela instalação na sua região.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>E se a vistoria pedir alguma adequação no imóvel?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Se a visita técnica identificar necessidade de adequações (por exemplo, no telhado ou no padrão de energia), o custo dessas adequações é do cliente, e as condições exatas são explicadas antes da confirmação da venda.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Posso propor uma forma de pagamento diferente das listadas?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim, é possível levar a proposta para análise de viabilidade. Fale com a gente pelo WhatsApp para verificar.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section>
+    <div class="container">
+      <div class="cta-final">
+        <h2>Fale agora e receba sua proposta personalizada</h2>
+        <p>É só chamar no WhatsApp. Sem compromisso, sem letras miúdas.</p>
+        <a class="btn-whats" id="cta-final" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20receber%20minha%20proposta%20de%20placas%20solares."
+           target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+          Falar no WhatsApp agora
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Conexão Placas — compra e instalação de sistema fotovoltaico comercializada por licenciados autorizados iGreen Energy, com instalação realizada por fornecedores homologados. Financiamento sujeito a análise e aprovação de crédito pela instituição financeira responsável. Valores finais confirmados apenas após proposta e vistoria técnica.</p>
+    <p>Site produzido por <strong>{{REP_NOME}}</strong> — Licenciado Autorizado iGreen Energy (ID: <strong>{{REP_ID}}</strong>). Este não é um site oficial da iGreen Energy.</p>
+    <p class="footer-privacy">Seus dados (nome, WhatsApp, valor da conta e cidade) são usados apenas para contato sobre sua proposta, em conformidade com a LGPD (Lei nº 13.709/2018), e não são compartilhados com terceiros. <a href="politica-privacidade.html">Política de Privacidade</a></p>
+  </div>
+</footer>
+
+<a class="btn-whats float-whats" id="cta-flutuante" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20a%20Conex%C3%A3o%20Placas."
+   target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:24px;height:24px;"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+</a>
+
+<script>
+  const NUM_WHATS = '{{REP_WHATSAPP}}';
+
+  const FORMAS = {
+    'financ-igreen': { texto: 'Simule diretamente com os bancos parceiros da iGreen. Basta enviar os dados do cliente para receber a simulação de financiamento, sujeita a análise de crédito.', msg: 'Olá! Quero simular o financiamento com bancos parceiros da iGreen.' },
+    'financ-proprio': { texto: 'Prefere financiar com seu próprio banco? Envie o contato do seu gerente e nossa equipe conduz a simulação com ele, sujeita à análise de crédito da instituição.', msg: 'Olá! Quero financiar meu sistema de placas solares com meu próprio banco.' },
+    'avista': { texto: 'Pagamento integral pelo valor apresentado na proposta, sem necessidade de análise de crédito.', msg: 'Olá! Quero pagar meu sistema de placas solares à vista.' },
+    'cartao': { texto: 'Parcelamento em até 21 vezes no cartão de crédito, com os juros praticados pela operadora do seu cartão.', msg: 'Olá! Quero parcelar meu sistema de placas solares no cartão de crédito.' },
+  };
+
+  const payDesc = document.getElementById('pay-desc');
+  const payCta = document.getElementById('pay-cta');
+  const payButtons = document.querySelectorAll('.pay-tabs button');
+
+  function setForma(chave){
+    const forma = FORMAS[chave];
+    if(!forma) return;
+    payDesc.textContent = forma.texto;
+    payCta.href = 'https://wa.me/' + NUM_WHATS + '?text=' + encodeURIComponent(forma.msg);
+    payButtons.forEach(b => b.classList.toggle('active', b.dataset.pay === chave));
+  }
+
+  payButtons.forEach(btn => {
+    btn.addEventListener('click', () => setForma(btn.dataset.pay));
+  });
+  setForma('financ-igreen');
+
+  // ===== Rastreamento de cliques nos botões de WhatsApp (GA4) =====
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-whats');
+    if(btn && typeof gtag === 'function'){
+      gtag('event', 'contato_whatsapp', { event_category: 'lead', event_label: btn.id || 'whatsapp_cta' });
+    }
+  });
+
+  // ===== Máscara e validação do WhatsApp =====
+  // Normaliza o que o visitante cola: "+55 41 9...", "041 9..." e variações
+  // chegavam antes como número inválido que PASSAVA na validação — o lead
+  // entrava com um telefone inexistente e se perdia silenciosamente.
+  const DDDS = new Set([11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,
+    41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,
+    81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99]);
+
+  function normalizeDigits(value){
+    let d = String(value).replace(/\D/g, '');
+    if(d.length > 11 && d.startsWith('55')) d = d.slice(2);
+    if(d.length > 11 && d.startsWith('0'))  d = d.replace(/^0+/, '');
+    if(d.length === 11 && d.startsWith('0')) d = d.slice(1);
+    return d.slice(0, 11);
+  }
+
+  function maskPhone(value){
+    const d = normalizeDigits(value);
+    if(!d.length) return '';
+    if(d.length <= 2) return '(' + d;
+    const ddd = d.slice(0,2), resto = d.slice(2);
+    if(resto.length <= 4) return `(${ddd}) ${resto}`;
+    if(resto.length <= 8) return `(${ddd}) ${resto.slice(0,4)}-${resto.slice(4)}`;
+    return `(${ddd}) ${resto.slice(0,5)}-${resto.slice(5,9)}`;
+  }
+
+  function validaTelefone(value){
+    const d = normalizeDigits(value);
+    if(d.length !== 10 && d.length !== 11) return { ok:false, erro:'Digite DDD + número' };
+    if(!DDDS.has(Number(d.slice(0,2))))    return { ok:false, erro:'DDD inválido' };
+    if(d.length === 11 && d[2] !== '9')    return { ok:false, erro:'Celular deve começar com 9 após o DDD' };
+    if(d.length === 10 && d[2] === '9')    return { ok:false, erro:'Falta 1 dígito no celular' };
+    if(/^(\d)\1+$/.test(d.slice(2)))       return { ok:false, erro:'Número inválido' };
+    return { ok:true, e164:'55' + d };
+  }
+
+  const leadTelefoneInput = document.getElementById('lead-telefone');
+  const telefoneField = document.getElementById('telefone-field');
+  const telefoneHint  = document.getElementById('telefone-hint');
+
+  function validatePhoneLive(){
+    const bruto = leadTelefoneInput.value;
+    const digits = normalizeDigits(bruto);
+    telefoneField.classList.remove('field-valid', 'field-invalid');
+    if(digits.length === 0){ telefoneHint.textContent = ''; return; }
+    const v = validaTelefone(bruto);
+    if(v.ok){
+      telefoneField.classList.add('field-valid');
+      telefoneHint.textContent = 'Número válido ✓';
+    } else if(digits.length < 10){
+      telefoneHint.textContent = 'Faltam ' + (10 - digits.length) + ' dígitos';
+    } else {
+      telefoneField.classList.add('field-invalid');
+      telefoneHint.textContent = v.erro;
+    }
+  }
+
+  if(leadTelefoneInput){
+    leadTelefoneInput.addEventListener('input', () => {
+      leadTelefoneInput.value = maskPhone(leadTelefoneInput.value);
+      validatePhoneLive();
+    });
+  }
+
+  // ===== Envio do lead para a API do SETNAR =====
+  // O lead precisa entrar no pipeline da plataforma (evento LeadCaptured),
+  // não num painel externo que o licenciado nunca abre. O honeypot continua:
+  // se vier preenchido, respondemos como sucesso e descartamos silenciosamente.
+  const leadForm = document.getElementById('lead-form');
+  const leadStatus = document.getElementById('lead-status');
+
+  if(leadForm){
+    leadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const v = validaTelefone(leadTelefoneInput.value);
+      if(!v.ok){
+        telefoneField.classList.remove('field-valid');
+        telefoneField.classList.add('field-invalid');
+        telefoneHint.textContent = v.erro;
+        leadStatus.textContent = 'Confira o número de telefone antes de enviar.';
+        leadStatus.style.color = '#B33A3A';
+        leadTelefoneInput.focus();
+        return;
+      }
+
+      const dados = Object.fromEntries(new FormData(leadForm).entries());
+      if(dados.empresa || dados.empresa2){        // honeypot preenchido = bot
+        window.location.href = '/obrigado.html';
+        return;
+      }
+      delete dados.empresa; delete dados.empresa2;
+
+      const payload = {
+        representative_id: '{{REP_ID}}',
+        produto: '{{PRODUTO_SLUG}}',
+        origem: window.location.href,
+        referrer: document.referrer || null,
+        telefone_e164: v.e164,
+        campos: dados
+      };
+
+      leadStatus.style.color = '';
+      leadStatus.textContent = 'Enviando...';
+
+      const submitBtn = leadForm.querySelector('[type="submit"]');
+      if(submitBtn) submitBtn.disabled = true;
+
+      fetch('{{LEADS_ENDPOINT}}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then((r) => {
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        if(typeof gtag === 'function'){
+          gtag('event', 'generate_lead', {
+            representative_id: '{{REP_ID}}', produto: '{{PRODUTO_SLUG}}'
+          });
+        }
+        window.location.href = '/obrigado.html';
+      })
+      .catch(() => {
+        if(submitBtn) submitBtn.disabled = false;
+        leadStatus.innerHTML = 'Não foi possível enviar agora. Tente novamente ou ' +
+          '<a href="https://wa.me/{{REP_WHATSAPP}}" target="_blank" rel="noopener">chame direto no WhatsApp</a>.';
+        leadStatus.style.color = '#B33A3A';
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

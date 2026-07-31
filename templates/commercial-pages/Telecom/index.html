@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iGreen Telecom | Chip com portabilidade grátis e internet que acumula</title>
+<meta name="description" content="Troque de operadora com portabilidade grátis e ganhe mais internet todo mês. Clube de benefícios, cashback e ligações ilimitadas inclusos.">
+
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="iGreen Telecom | Chip com portabilidade grátis e internet que acumula">
+<meta property="og:description" content="Troque de operadora com portabilidade grátis e ganhe mais internet todo mês. Clube de benefícios incluso e ligações ilimitadas.">
+<meta property="og:image" content="{{OG_IMAGE}}">
+<meta property="og:url" content="{{PAGE_URL}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="iGreen Telecom | Chip com portabilidade grátis">
+<meta name="twitter:description" content="Mais internet, cashback e clube de benefícios inclusos no seu plano.">
+<meta name="twitter:image" content="{{OG_IMAGE}}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="{{PAGE_URL}}">
+<link rel="stylesheet" href="style.css">
+
+<!-- ===== ANALYTICS DA PLATAFORMA =====
+     Uma única propriedade GA4, da SETNAR. Cada evento carrega representative_id
+     e produto como parâmetros, o que permite segmentar por licenciado sem que
+     ele precise configurar nada — e sem misturar visitantes de licenciados
+     diferentes numa mesma propriedade pessoal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{GA4_ID}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{GA4_ID}}', {
+    representative_id: '{{REP_ID}}',
+    produto: '{{PRODUTO_SLUG}}'
+  });
+</script>
+
+<!-- Estilos específicos deste produto: grade de planos + toggle portabilidade -->
+<style>
+  .telecom-toggle{ display:flex; flex-wrap:wrap; gap:8px; background:var(--faixa-sage); border-radius:var(--radius); padding:4px; max-width:420px; margin:0 auto 32px; }
+  .telecom-toggle button{ flex:1 1 130px; min-width:0; border:none; background:none; padding:10px 12px; border-radius:12px; font-family:'Manrope',sans-serif; font-weight:700; font-size:0.9rem; color:var(--verde-profundo); cursor:pointer; white-space:normal; text-align:center; }
+  .telecom-toggle button.active{ background:var(--verde-vivo); color:#fff; }
+  .plans-grid{ display:grid; grid-template-columns:repeat(5, 1fr); gap:16px; }
+  @media (max-width:980px){ .plans-grid{ grid-template-columns:repeat(2, 1fr); } }
+  @media (max-width:560px){ .plans-grid{ grid-template-columns:1fr; } }
+  .plan-tile{ background:var(--fundo-card); border:1px solid var(--borda); border-radius:var(--radius); padding:22px 18px; text-align:center; display:flex; flex-direction:column; }
+  .plan-tile.featured{ border:2px solid var(--verde-vivo); box-shadow:var(--sombra); position:relative; }
+  .plan-tile .plan-tag{ font-size:0.72rem; font-weight:800; color:#fff; background:var(--amarelo-sol); color:#3a2900; padding:3px 10px; border-radius:100px; align-self:center; margin-bottom:10px; }
+  .plan-tile h3{ margin-bottom:4px; }
+  .plan-gb{ font-family:'Manrope',sans-serif; font-weight:800; font-size:2rem; color:var(--verde-profundo); margin:6px 0 2px; }
+  .plan-gb small{ font-size:1rem; font-weight:700; color:var(--cinza-texto); }
+  .plan-price{ font-weight:700; color:var(--verde-vivo-escuro); margin-bottom:14px; font-size:1.05rem; }
+  .plan-price small{ font-weight:500; color:var(--cinza-texto); font-size:0.8rem; display:block; }
+  .plan-tile .btn-whats{ margin-top:auto; font-size:0.85rem; padding:10px 14px; }
+  .beneficios-list{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:600px){ .beneficios-list{ grid-template-columns:1fr; } }
+  .beneficios-list li{ display:flex; gap:10px; align-items:flex-start; background:var(--fundo-card); border:1px solid var(--borda); border-radius:12px; padding:14px 16px; }
+</style>
+</head>
+<body>
+
+<a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+<header>
+  <div class="header-inner">
+    <a href="#topo" class="logo">
+      <span class="logo-dot" aria-hidden="true"></span>
+      <span class="logo-text">
+        iGreen Telecom
+        <small class="logo-sub">
+          <span class="full">{{REP_NOME}} · Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</span>
+          <span class="short">{{REP_NOME}} · Licenciado iGreen · ID {{REP_ID}}</span>
+        </small>
+      </span>
+    </a>
+    <a class="btn-whats" id="cta-header" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20os%20planos%20iGreen%20Telecom."
+       target="_blank" rel="noopener" aria-label="Falar agora no WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+      <span class="full">Falar no WhatsApp</span>
+    </a>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="hero" id="topo">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Portabilidade grátis</span>
+        <h1>Leve seu número para a iGreen Telecom e ganhe mais internet todo mês.</h1>
+        <p class="subhead">Chip com bônus de ativação e de portabilidade, clube de benefícios incluso e ligações ilimitadas para qualquer operadora do Brasil.</p>
+        <div class="hero-ctas">
+          <a class="btn-whats" id="cta-hero" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20portar%20meu%20n%C3%BAmero%20para%20a%20iGreen%20Telecom."
+             target="_blank" rel="noopener">
+            Quero portar meu número
+          </a>
+        </div>
+        <p class="hero-note">Ativação 100% pelo app iGreen Connect · Sem loja física, sem fila</p>
+      </div>
+
+      <div>
+        <div class="bill-card">
+          <div class="bill-header">
+            <span>O que vem no chip</span>
+            <span class="badge-desconto">Todos os planos</span>
+          </div>
+          <ul class="plan-list" style="margin-top:18px;">
+            <li><span class="check" aria-hidden="true">✓</span><span>Internet que acumula mês a mês</span></li>
+            <li><span class="check" aria-hidden="true">✓</span><span>Bônus de +5GB só por trazer seu número</span></li>
+            <li><span class="check" aria-hidden="true">✓</span><span>Acesso grátis ao Clube de benefícios</span></li>
+            <li><span class="check" aria-hidden="true">✓</span><span>Ligações ilimitadas + WhatsApp ilimitado</span></li>
+          </ul>
+          <a class="btn-whats bill-cta" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20ver%20os%20planos%20da%20iGreen%20Telecom." target="_blank" rel="noopener">
+            Ver planos no WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAIXA DE CONFIANÇA -->
+  <div class="trust-strip">
+    <div class="container">
+      <span>Cobertura nacional</span>
+      <span>Ativação 100% pelo app</span>
+      <span>Cashback exclusivo</span>
+    </div>
+  </div>
+
+  <!-- QUEM ATENDE — identidade do licenciado.
+       Cumpre a exigência de identificação clara da Política de Uso da Marca e
+       é o que diferencia esta página do site institucional: quem chega aqui
+       está decidindo se manda mensagem para uma pessoa, não para uma empresa. -->
+  <section id="consultor">
+    <div class="container">
+      <div class="consultor-card">
+        {{REP_AVATAR}}
+        <div class="consultor-info">
+          <span class="consultor-eyebrow">Quem vai te atender</span>
+          <h2>{{REP_NOME}}</h2>
+          <p class="consultor-cargo">Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</p>
+          <p class="consultor-local">{{REP_CIDADE}}</p>
+        </div>
+        <a class="btn-whats" id="cta-consultor"
+           href="https://wa.me/{{REP_WHATSAPP}}?text={{MSG_CONSULTOR}}"
+           target="_blank" rel="noopener">Falar com {{REP_PRIMEIRO_NOME}}</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- FORMULÁRIO DE LEAD -->
+  <section id="quero-simular">
+    <div class="container">
+      <div class="lead-form-card">
+        <div>
+          <h2>Prefere que a gente te chame?</h2>
+          <p>Deixe seus dados que entramos em contato, sem compromisso.</p>
+        </div>
+        <form id="lead-form" class="lead-form" name="lead-{{PRODUTO_SLUG}}-{{REP_ID}}" method="POST" novalidate>
+          <p class="hp-field" aria-hidden="true"><label>Não preencha isto: <input name="empresa" tabindex="-1" autocomplete="off"></label></p>
+
+          <div class="lead-field">
+            <label for="lead-nome">Nome</label>
+            <input type="text" id="lead-nome" name="nome" required autocomplete="name" placeholder="Seu nome">
+          </div>
+          <div class="lead-field" id="telefone-field">
+            <label for="lead-telefone">Telefone</label>
+            <input type="tel" id="lead-telefone" name="telefone" required autocomplete="tel" inputmode="tel"
+                   placeholder="(11) 98888-7777" maxlength="16"
+                   pattern="\(\d{2}\)\s\d{4,5}-\d{4}" title="Formato: (11) 98888-7777"
+                   aria-describedby="telefone-hint">
+            <p class="field-hint" id="telefone-hint" aria-live="polite"></p>
+          </div>
+          <div class="lead-field">
+            <label for="lead-plano">Plano de interesse <span class="opcional">(opcional)</span></label>
+            <select id="lead-plano" name="plano" style="width:100%;padding:12px 14px;border:1px solid var(--borda);border-radius:10px;background:var(--fundo);font-family:'Inter',sans-serif;font-size:1rem;color:var(--carvao);">
+              <option value="">Ainda não sei / quero indicação</option>
+              <option value="Start">Start</option>
+              <option value="Mega">Mega</option>
+              <option value="Giga">Giga</option>
+              <option value="Ultra">Ultra</option>
+              <option value="Infinity">Infinity</option>
+            </select>
+          </div>
+          <div class="lead-field">
+            <label for="lead-cidade">Cidade / Estado <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-cidade" name="cidade" autocomplete="address-level2" placeholder="Ex: Curitiba/PR">
+          </div>
+          <button type="submit" class="btn-whats lead-submit">Quero saber mais</button>
+          <p class="lead-status" id="lead-status" role="status" aria-live="polite"></p>
+          <p class="lead-privacy">Seus dados são usados apenas para entrarmos em contato sobre o plano. Nada de spam.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLANOS -->
+  <section class="section-alt" id="planos">
+    <div class="container">
+      <div class="section-head">
+        <h2>Nossos planos</h2>
+        <p>A franquia é o que entra garantido todo mês. Os bônus de ativação e de portabilidade somam em cima dela.</p>
+      </div>
+
+      <div class="telecom-toggle" role="tablist" aria-label="Tipo de ativação">
+        <button type="button" id="btn-portabilidade" class="active" role="tab" aria-selected="true">Com portabilidade</button>
+        <button type="button" id="btn-numeronovo" role="tab" aria-selected="false">Número novo</button>
+      </div>
+
+              <div class="plans-grid" data-modo="portabilidade">
+          <div class="plan-tile">
+            
+            <h3>Start</h3>
+            <div class="plan-gb">4<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+2 GB de ativação e +5 GB de portabilidade<br><strong>até 11 GB acumulados</strong></p>
+            <div class="plan-price">R$ 54,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Start%20da%20iGreen%20Telecom%20%28com%20portabilidade%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+          <div class="plan-tile">
+            
+            <h3>Mega</h3>
+            <div class="plan-gb">7<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+3 GB de ativação e +5 GB de portabilidade<br><strong>até 15 GB acumulados</strong></p>
+            <div class="plan-price">R$ 59,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Mega%20da%20iGreen%20Telecom%20%28com%20portabilidade%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+          <div class="plan-tile featured">
+            <span class="plan-tag">Mais escolhido</span>
+            <h3>Giga</h3>
+            <div class="plan-gb">11<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+4 GB de ativação e +5 GB de portabilidade<br><strong>até 20 GB acumulados</strong></p>
+            <div class="plan-price">R$ 69,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Giga%20da%20iGreen%20Telecom%20%28com%20portabilidade%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+          <div class="plan-tile">
+            
+            <h3>Ultra</h3>
+            <div class="plan-gb">19<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+4 GB de ativação e +5 GB de portabilidade<br><strong>até 28 GB acumulados</strong></p>
+            <div class="plan-price">R$ 79,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Ultra%20da%20iGreen%20Telecom%20%28com%20portabilidade%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+          <div class="plan-tile">
+            
+            <h3>Infinity</h3>
+            <div class="plan-gb">41<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+4 GB de ativação e +5 GB de portabilidade<br><strong>até 50 GB acumulados</strong></p>
+            <div class="plan-price">R$ 99,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Infinity%20da%20iGreen%20Telecom%20%28com%20portabilidade%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+        </div>
+        <div class="plans-grid" data-modo="numeronovo" hidden>
+          <div class="plan-tile">
+            
+            <h3>Start</h3>
+            <div class="plan-gb">4<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+2 GB de ativação<br><strong>até 6 GB acumulados</strong></p>
+            <div class="plan-price">R$ 59,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Start%20da%20iGreen%20Telecom%20%28n%C3%BAmero%20novo%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+          <div class="plan-tile">
+            
+            <h3>Mega</h3>
+            <div class="plan-gb">7<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+3 GB de ativação<br><strong>até 10 GB acumulados</strong></p>
+            <div class="plan-price">R$ 64,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Mega%20da%20iGreen%20Telecom%20%28n%C3%BAmero%20novo%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+          <div class="plan-tile featured">
+            <span class="plan-tag">Mais escolhido</span>
+            <h3>Giga</h3>
+            <div class="plan-gb">11<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+4 GB de ativação<br><strong>até 15 GB acumulados</strong></p>
+            <div class="plan-price">R$ 74,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Giga%20da%20iGreen%20Telecom%20%28n%C3%BAmero%20novo%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+          <div class="plan-tile">
+            
+            <h3>Ultra</h3>
+            <div class="plan-gb">19<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+4 GB de ativação<br><strong>até 23 GB acumulados</strong></p>
+            <div class="plan-price">R$ 84,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Ultra%20da%20iGreen%20Telecom%20%28n%C3%BAmero%20novo%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+          <div class="plan-tile">
+            
+            <h3>Infinity</h3>
+            <div class="plan-gb">41<small>GB</small></div>
+            <p class="plan-franquia">franquia mensal garantida</p>
+            <p class="plan-bonus">+4 GB de ativação<br><strong>até 45 GB acumulados</strong></p>
+            <div class="plan-price">R$ 104,90<small>por mês</small></div>
+            <a class="btn-whats" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1%21%20Quero%20o%20plano%20Infinity%20da%20iGreen%20Telecom%20%28n%C3%BAmero%20novo%29." target="_blank" rel="noopener">Quero esse plano</a>
+          </div>
+        </div>
+      <p style="text-align:center;font-size:0.85rem;color:var(--cinza-texto);margin-top:20px;max-width:640px;margin-left:auto;margin-right:auto;">O número em destaque é a <strong>franquia mensal garantida</strong>. O total indicado abaixo dele soma os bônus de ativação e de portabilidade, e o acúmulo é limitado ao dobro da franquia contratada. Em caso de atraso no pagamento, os dados acumulados do mês são perdidos. Condições completas no contrato de prestação de serviço.</p>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="container">
+      <div class="section-head">
+        <h2>Como funciona a portabilidade</h2>
+        <p>Simples, sem precisar ir a uma loja.</p>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3>Você escolhe o plano</h3>
+          <p>Direto pelo WhatsApp, com a ajuda do seu licenciado.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3>Pede a portabilidade no app</h3>
+          <p>A ativação é feita pelo aplicativo iGreen Connect, usando o ID do seu licenciado.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3>Recebe o chip ou eSIM</h3>
+          <p>Sem precisar visitar loja física.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">4</div>
+          <h3>Número portado, chip ativo</h3>
+          <p>Você já sai ganhando o bônus de gigas por portabilidade.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIFERENCIAIS -->
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <h2>Mais do que um plano de celular</h2>
+        <p>Benefícios que acompanham sua linha todo mês.</p>
+      </div>
+      <ul class="beneficios-list">
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Internet que acumula</strong> — o que sobra passa pro mês seguinte, dentro do limite do plano.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Clube de benefícios grátis</strong> — descontos em farmácias, pizzarias, cinema e mais.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Cashback exclusivo</strong> — indique amigos e acumule saldo.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Plano Família</strong> — linhas adicionais com condições especiais.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Ligações ilimitadas</strong> para qualquer operadora do Brasil.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>WhatsApp ilimitado</strong>, sem consumir sua franquia de dados.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section-alt" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>Perguntas frequentes</h2>
+        <p>As dúvidas que mais recebemos, respondidas direto.</p>
+      </div>
+      <div class="faq">
+        <details class="faq-item">
+          <summary>Vou perder meu número atual?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. A portabilidade transfere o seu número atual para a iGreen Telecom — você continua com o mesmo número, só muda a operadora.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Preciso ir a uma loja para ativar?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. Toda a ativação é feita pelo app iGreen Connect, de forma remota.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>O que acontece se eu atrasar o pagamento?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Os dados acumulados até aquele momento são perdidos. Por isso, manter o pagamento em dia garante que sua internet continue acumulando normalmente.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Tem fidelidade ou multa de cancelamento?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>As condições de fidelidade, se houver, constam no contrato de prestação de serviço apresentado no momento da contratação. Confirme os detalhes com seu licenciado antes de assinar.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>O bônus de portabilidade vale para número novo também?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. O bônus de +5GB é exclusivo para quem porta um número já existente de outra operadora. Novas ativações (número novo) não geram esse bônus.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section>
+    <div class="container">
+      <div class="cta-final">
+        <h2>Fale agora e escolha seu plano em poucos minutos</h2>
+        <p>É só chamar no WhatsApp. Sem compromisso, sem letras miúdas.</p>
+        <a class="btn-whats" id="cta-final" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20escolher%20meu%20plano%20iGreen%20Telecom."
+           target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+          Falar no WhatsApp agora
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>iGreen Telecom — planos comercializados por licenciados autorizados iGreen Energy. Bônus, franquias e valores sujeitos às condições vigentes do contrato de prestação de serviço.</p>
+    <p>Site produzido por <strong>{{REP_NOME}}</strong> — Licenciado Autorizado iGreen Energy (ID: <strong>{{REP_ID}}</strong>). Este não é um site oficial da iGreen Energy.</p>
+    <p class="footer-privacy">Seus dados (nome, WhatsApp, plano de interesse e cidade) são usados apenas para contato sobre a contratação, em conformidade com a LGPD (Lei nº 13.709/2018), e não são compartilhados com terceiros. <a href="politica-privacidade.html">Política de Privacidade</a></p>
+  </div>
+</footer>
+
+<a class="btn-whats float-whats" id="cta-flutuante" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20os%20planos%20iGreen%20Telecom."
+   target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:24px;height:24px;"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+</a>
+
+<script>
+  // ===== Planos e grade com toggle portabilidade / número novo =====
+  const NUM_WHATS = '{{REP_WHATSAPP}}';
+
+  // ===== Planos =====
+  // Os cards são HTML estático (bons para SEO e funcionam sem JS). O toggle
+  // apenas alterna qual das duas grades está visível.
+  const grades = document.querySelectorAll('.plans-grid[data-modo]');
+  const btnPort = document.getElementById('btn-portabilidade');
+  const btnNovo = document.getElementById('btn-numeronovo');
+
+  function setModo(modo){
+    grades.forEach(g => { g.hidden = g.dataset.modo !== modo; });
+    if(btnPort){
+      btnPort.classList.toggle('active', modo === 'portabilidade');
+      btnPort.setAttribute('aria-selected', modo === 'portabilidade');
+    }
+    if(btnNovo){
+      btnNovo.classList.toggle('active', modo === 'numeronovo');
+      btnNovo.setAttribute('aria-selected', modo === 'numeronovo');
+    }
+  }
+
+  if(btnPort) btnPort.addEventListener('click', () => setModo('portabilidade'));
+  if(btnNovo) btnNovo.addEventListener('click', () => setModo('numeronovo'));
+  setModo('portabilidade');
+
+  // ===== Rastreamento de cliques nos botões de WhatsApp (GA4) =====
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-whats');
+    if(btn && typeof gtag === 'function'){
+      gtag('event', 'contato_whatsapp', { event_category: 'lead', event_label: btn.id || 'whatsapp_cta' });
+    }
+  });
+
+  // ===== Máscara e validação do WhatsApp =====
+  // Normaliza o que o visitante cola: "+55 41 9...", "041 9..." e variações
+  // chegavam antes como número inválido que PASSAVA na validação — o lead
+  // entrava com um telefone inexistente e se perdia silenciosamente.
+  const DDDS = new Set([11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,
+    41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,
+    81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99]);
+
+  function normalizeDigits(value){
+    let d = String(value).replace(/\D/g, '');
+    if(d.length > 11 && d.startsWith('55')) d = d.slice(2);
+    if(d.length > 11 && d.startsWith('0'))  d = d.replace(/^0+/, '');
+    if(d.length === 11 && d.startsWith('0')) d = d.slice(1);
+    return d.slice(0, 11);
+  }
+
+  function maskPhone(value){
+    const d = normalizeDigits(value);
+    if(!d.length) return '';
+    if(d.length <= 2) return '(' + d;
+    const ddd = d.slice(0,2), resto = d.slice(2);
+    if(resto.length <= 4) return `(${ddd}) ${resto}`;
+    if(resto.length <= 8) return `(${ddd}) ${resto.slice(0,4)}-${resto.slice(4)}`;
+    return `(${ddd}) ${resto.slice(0,5)}-${resto.slice(5,9)}`;
+  }
+
+  function validaTelefone(value){
+    const d = normalizeDigits(value);
+    if(d.length !== 10 && d.length !== 11) return { ok:false, erro:'Digite DDD + número' };
+    if(!DDDS.has(Number(d.slice(0,2))))    return { ok:false, erro:'DDD inválido' };
+    if(d.length === 11 && d[2] !== '9')    return { ok:false, erro:'Celular deve começar com 9 após o DDD' };
+    if(d.length === 10 && d[2] === '9')    return { ok:false, erro:'Falta 1 dígito no celular' };
+    if(/^(\d)\1+$/.test(d.slice(2)))       return { ok:false, erro:'Número inválido' };
+    return { ok:true, e164:'55' + d };
+  }
+
+  const leadTelefoneInput = document.getElementById('lead-telefone');
+  const telefoneField = document.getElementById('telefone-field');
+  const telefoneHint  = document.getElementById('telefone-hint');
+
+  function validatePhoneLive(){
+    const bruto = leadTelefoneInput.value;
+    const digits = normalizeDigits(bruto);
+    telefoneField.classList.remove('field-valid', 'field-invalid');
+    if(digits.length === 0){ telefoneHint.textContent = ''; return; }
+    const v = validaTelefone(bruto);
+    if(v.ok){
+      telefoneField.classList.add('field-valid');
+      telefoneHint.textContent = 'Número válido ✓';
+    } else if(digits.length < 10){
+      telefoneHint.textContent = 'Faltam ' + (10 - digits.length) + ' dígitos';
+    } else {
+      telefoneField.classList.add('field-invalid');
+      telefoneHint.textContent = v.erro;
+    }
+  }
+
+  if(leadTelefoneInput){
+    leadTelefoneInput.addEventListener('input', () => {
+      leadTelefoneInput.value = maskPhone(leadTelefoneInput.value);
+      validatePhoneLive();
+    });
+  }
+
+  // ===== Envio do lead para a API do SETNAR =====
+  // O lead precisa entrar no pipeline da plataforma (evento LeadCaptured),
+  // não num painel externo que o licenciado nunca abre. O honeypot continua:
+  // se vier preenchido, respondemos como sucesso e descartamos silenciosamente.
+  const leadForm = document.getElementById('lead-form');
+  const leadStatus = document.getElementById('lead-status');
+
+  if(leadForm){
+    leadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const v = validaTelefone(leadTelefoneInput.value);
+      if(!v.ok){
+        telefoneField.classList.remove('field-valid');
+        telefoneField.classList.add('field-invalid');
+        telefoneHint.textContent = v.erro;
+        leadStatus.textContent = 'Confira o número de telefone antes de enviar.';
+        leadStatus.style.color = '#B33A3A';
+        leadTelefoneInput.focus();
+        return;
+      }
+
+      const dados = Object.fromEntries(new FormData(leadForm).entries());
+      if(dados.empresa || dados.empresa2){        // honeypot preenchido = bot
+        window.location.href = '/obrigado.html';
+        return;
+      }
+      delete dados.empresa; delete dados.empresa2;
+
+      const payload = {
+        representative_id: '{{REP_ID}}',
+        produto: '{{PRODUTO_SLUG}}',
+        origem: window.location.href,
+        referrer: document.referrer || null,
+        telefone_e164: v.e164,
+        campos: dados
+      };
+
+      leadStatus.style.color = '';
+      leadStatus.textContent = 'Enviando...';
+
+      const submitBtn = leadForm.querySelector('[type="submit"]');
+      if(submitBtn) submitBtn.disabled = true;
+
+      fetch('{{LEADS_ENDPOINT}}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then((r) => {
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        if(typeof gtag === 'function'){
+          gtag('event', 'generate_lead', {
+            representative_id: '{{REP_ID}}', produto: '{{PRODUTO_SLUG}}'
+          });
+        }
+        window.location.href = '/obrigado.html';
+      })
+      .catch(() => {
+        if(submitBtn) submitBtn.disabled = false;
+        leadStatus.innerHTML = 'Não foi possível enviar agora. Tente novamente ou ' +
+          '<a href="https://wa.me/{{REP_WHATSAPP}}" target="_blank" rel="noopener">chame direto no WhatsApp</a>.';
+        leadStatus.style.color = '#B33A3A';
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

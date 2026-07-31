@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>iGreen Auto Mensal | Seguro de carro por assinatura, sem anuidade</title>
+<meta name="description" content="Seguro de carro mês a mês, sem anuidade e sem multa de cancelamento. Cobertura real, garantida pela BP Seguradora, com assistência 24h.">
+
+<!-- Favicon -->
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<!-- Open Graph / compartilhamento no WhatsApp, Facebook, Instagram -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="iGreen Auto Mensal | Seguro de carro por assinatura, sem anuidade">
+<meta property="og:description" content="Cobertura real, garantida pela BP Seguradora. Paga mês a mês, cancela quando quiser, sem multa.">
+<meta property="og:image" content="{{OG_IMAGE}}">
+<meta property="og:url" content="{{PAGE_URL}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="iGreen Auto Mensal | Seguro de carro por assinatura">
+<meta name="twitter:description" content="Cobertura real, garantida pela BP Seguradora. Sem anuidade, sem multa de cancelamento.">
+<meta name="twitter:image" content="{{OG_IMAGE}}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="{{PAGE_URL}}">
+<link rel="stylesheet" href="style.css">
+
+<!-- ===== ANALYTICS DA PLATAFORMA =====
+     Uma única propriedade GA4, da SETNAR. Cada evento carrega representative_id
+     e produto como parâmetros, o que permite segmentar por licenciado sem que
+     ele precise configurar nada — e sem misturar visitantes de licenciados
+     diferentes numa mesma propriedade pessoal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{GA4_ID}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{GA4_ID}}', {
+    representative_id: '{{REP_ID}}',
+    produto: '{{PRODUTO_SLUG}}'
+  });
+</script>
+<script>
+  !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+  n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+  document,'script','https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'SEU_PIXEL_ID');
+  fbq('track', 'PageView');
+</script>
+
+<!-- Estilos específicos deste produto (o toggle de planos não existe na página de Solar) -->
+<style>
+  .plan-card{ background:var(--fundo-card); border:1px solid var(--borda); border-radius:var(--radius); box-shadow:var(--sombra); padding:28px; }
+  .plan-toggle{ display:flex; flex-wrap:wrap; gap:8px; background:var(--faixa-sage); border-radius:var(--radius); padding:4px; margin-bottom:20px; }
+  .plan-toggle button{ flex:1 1 130px; min-width:0; border:none; background:none; padding:10px 12px; border-radius:12px; font-family:'Manrope',sans-serif; font-weight:700; font-size:0.92rem; color:var(--verde-profundo); cursor:pointer; white-space:normal; text-align:center; }
+  .plan-toggle button.active{ background:var(--verde-vivo); color:#fff; }
+  .plan-list{ list-style:none; margin:0 0 20px; padding:0; }
+  .plan-list li{ display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; color:var(--cinza-texto); }
+  .plan-list .check{ color:var(--verde-vivo-escuro); font-weight:700; flex-shrink:0; }
+  .addons-note{ font-size:0.85rem; color:var(--cinza-texto); border-top:1px solid var(--borda); padding-top:14px; margin-top:4px; }
+</style>
+</head>
+<body>
+
+<a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+<header>
+  <div class="header-inner">
+    <a href="#topo" class="logo">
+      <span class="logo-dot" aria-hidden="true"></span>
+      <span class="logo-text">
+        iGreen Auto Mensal
+        <small class="logo-sub">
+          <span class="full">{{REP_NOME}} · Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</span>
+          <span class="short">{{REP_NOME}} · Licenciado iGreen · ID {{REP_ID}}</span>
+        </small>
+      </span>
+    </a>
+    <a class="btn-whats" id="cta-header" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20o%20seguro%20por%20assinatura."
+       target="_blank" rel="noopener" aria-label="Falar agora no WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+      <span class="full">Falar no WhatsApp</span>
+    </a>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="hero" id="topo">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Seguro por assinatura</span>
+        <h1>Seguro pro seu carro, mês a mês, sem anuidade e sem multa de cancelamento.</h1>
+        <p class="subhead">Cobertura real, com apólice e garantia da BP Seguradora. Cancela quando quiser, sem burocracia.</p>
+        <div class="hero-ctas">
+          <a class="btn-whats" id="cta-hero" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20simular%20meu%20seguro%20de%20carro%20por%20assinatura."
+             target="_blank" rel="noopener">
+            Quero meu seguro
+          </a>
+        </div>
+        <p class="hero-note">Já tem cotação em outra seguradora? Dá para enviar a proposta para análise de cobertura de oferta.</p>
+      </div>
+
+      <div>
+        <div class="plan-card" id="plan-card">
+          <div class="bill-header">
+            <span>Qual proteção você quer pro seu carro?</span>
+          </div>
+
+          <div class="plan-toggle" role="tablist" aria-label="Escolha do plano">
+            <button type="button" id="btn-compreensivo" class="active" role="tab" aria-selected="true">Compreensivo</button>
+            <button type="button" id="btn-furtoroubo" role="tab" aria-selected="false">Furto e Roubo</button>
+          </div>
+
+          <ul class="plan-list" id="plan-list">
+            <!-- preenchido via JS -->
+          </ul>
+
+          <p class="addons-note">Adicionais disponíveis na simulação: carro reserva, cobertura de vidros e ampliação do limite de RCF.</p>
+
+          <a class="btn-whats bill-cta" id="plan-cta"
+             href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20simular%20o%20plano%20Compreensivo%20do%20seguro%20por%20assinatura."
+             target="_blank" rel="noopener">
+            Simular este plano no WhatsApp
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAIXA DE CONFIANÇA -->
+  <div class="trust-strip">
+    <div class="container">
+      <span>Garantido pela BP Seguradora S.A.</span>
+      <span>Sem anuidade, sem fidelidade</span>
+      <span>Análise de cobertura de oferta</span>
+    </div>
+  </div>
+
+  <!-- QUEM ATENDE — identidade do licenciado.
+       Cumpre a exigência de identificação clara da Política de Uso da Marca e
+       é o que diferencia esta página do site institucional: quem chega aqui
+       está decidindo se manda mensagem para uma pessoa, não para uma empresa. -->
+  <section id="consultor">
+    <div class="container">
+      <div class="consultor-card">
+        {{REP_AVATAR}}
+        <div class="consultor-info">
+          <span class="consultor-eyebrow">Quem vai te atender</span>
+          <h2>{{REP_NOME}}</h2>
+          <p class="consultor-cargo">Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</p>
+          <p class="consultor-local">{{REP_CIDADE}}</p>
+        </div>
+        <a class="btn-whats" id="cta-consultor"
+           href="https://wa.me/{{REP_WHATSAPP}}?text={{MSG_CONSULTOR}}"
+           target="_blank" rel="noopener">Falar com {{REP_PRIMEIRO_NOME}}</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- FORMULÁRIO DE LEAD -->
+  <section id="quero-simular">
+    <div class="container">
+      <div class="lead-form-card">
+        <div>
+          <h2>Prefere que a gente te chame?</h2>
+          <p>Deixe seus dados que entramos em contato, sem compromisso.</p>
+        </div>
+        <form id="lead-form" class="lead-form" name="lead-{{PRODUTO_SLUG}}-{{REP_ID}}" method="POST" novalidate>
+          <p class="hp-field" aria-hidden="true"><label>Não preencha isto: <input name="empresa" tabindex="-1" autocomplete="off"></label></p>
+
+          <div class="lead-field">
+            <label for="lead-nome">Nome</label>
+            <input type="text" id="lead-nome" name="nome" required autocomplete="name" placeholder="Seu nome">
+          </div>
+          <div class="lead-field" id="telefone-field">
+            <label for="lead-telefone">Telefone</label>
+            <input type="tel" id="lead-telefone" name="telefone" required autocomplete="tel" inputmode="tel"
+                   placeholder="(11) 98888-7777" maxlength="16"
+                   pattern="\(\d{2}\)\s\d{4,5}-\d{4}" title="Formato: (11) 98888-7777"
+                   aria-describedby="telefone-hint">
+            <p class="field-hint" id="telefone-hint" aria-live="polite"></p>
+          </div>
+          <div class="lead-field">
+            <label for="lead-veiculo">Modelo e ano do carro <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-veiculo" name="veiculo" placeholder="Ex: Onix 2021">
+          </div>
+          <div class="lead-field">
+            <label for="lead-cidade">Cidade / Estado <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-cidade" name="cidade" autocomplete="address-level2" placeholder="Ex: Curitiba/PR">
+          </div>
+          <button type="submit" class="btn-whats lead-submit">Quero simular meu seguro</button>
+          <p class="lead-status" id="lead-status" role="status" aria-live="polite"></p>
+          <p class="lead-privacy">Seus dados são usados apenas para entrarmos em contato sobre a simulação. Nada de spam.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="container">
+      <div class="section-head">
+        <h2>Como funciona, em 4 passos</h2>
+        <p>Simples como uma assinatura de streaming — só que para o seu carro.</p>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3>Você contrata</h3>
+          <p>Escolhe o plano ideal pro seu perfil, direto pelo WhatsApp.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3>Paga a mensalidade</h3>
+          <p>Sem entrada alta, sem anuidade fechada no cartão.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3>Seu carro já está protegido</h3>
+          <p>Cobertura ativa assim que o pagamento é confirmado.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">4</div>
+          <h3>Renova todo mês</h3>
+          <p>Automático. Quer cancelar? Sem multa e sem burocracia, quando quiser.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OS 4 PILARES -->
+  <section class="section-alt">
+    <div class="container">
+      <div class="section-head">
+        <h2>O que você está contratando</h2>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <h3>Segurança</h3>
+          <p>Cobertura real e regulamentada contra roubo, colisão e danos da natureza.</p>
+        </div>
+        <div class="step-card">
+          <h3>Assistência</h3>
+          <p>Suporte 24h para o dia a dia: guincho, pane seca, troca de pneu e chaveiro.</p>
+        </div>
+        <div class="step-card">
+          <h3>Controle</h3>
+          <p>Renovação automática mensal e cancelamento simples, sem letra miúda.</p>
+        </div>
+        <div class="step-card">
+          <h3>Economia</h3>
+          <p>Mensalidade acessível, sem o peso de anuidades e taxas de adesão.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ASSISTÊNCIA 24H -->
+  <section id="assistencia">
+    <div class="container">
+      <div class="section-head">
+        <h2>Assistência 24 horas, todo mês</h2>
+        <p>Você usa no dia a dia, sem precisar de um sinistro grave.</p>
+      </div>
+      <ul class="elig-list">
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Guincho</strong> até a oficina credenciada mais próxima.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Pane seca</strong> — combustível de emergência até o posto mais próximo.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Troca de pneu</strong> furado pelo estepe, no local.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span><strong>Chaveiro</strong> em caso de chave perdida, quebrada ou travada dentro do carro.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section-alt" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>Perguntas frequentes</h2>
+        <p>As dúvidas que mais recebemos, respondidas direto.</p>
+      </div>
+      <div class="faq">
+        <details class="faq-item">
+          <summary>Isso é um seguro de verdade?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim. É um seguro no modelo por assinatura, comercializado pela iGreen Seguros, com apólice, cobertura real e garantia da BP Seguradora S.A.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Se roubarem meu carro, eu recebo mesmo?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim, conforme a cobertura contratada. Após a análise padrão do sinistro, a indenização de perda total é calculada com base na Tabela FIPE vigente na data da ocorrência (e não na data em que o seguro foi contratado).</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Posso cancelar quando quiser?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim. Não há fidelidade nem multa por cancelamento — é mês a mês, como uma assinatura.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Tem franquia?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim, em <strong>colisão parcial</strong> — a franquia é a participação do cliente no conserto. Ela pode ser calculada como percentual da Tabela FIPE, respeitando um valor mínimo definido na apólice (se o percentual der abaixo desse mínimo, vale o mínimo).</p><p>Em <strong>roubo, furto sem recuperação ou perda total não há cobrança de franquia</strong>. O valor exato da sua franquia aparece na proposta, antes de você contratar.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Precisa de vistoria?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim. A vistoria faz parte do processo de aceitação e o pagamento é feito antes dela — se o veículo não for aceito, o valor é estornado. Veículos com passagem por leilão são analisados caso a caso e precisam ser aprovados em vistoria; nesses casos há redução percentual sobre a FIPE no cálculo de indenização.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>A assistência 24h vale desde o primeiro dia?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>O direito ao guincho e demais assistências começa a partir do <strong>primeiro dia útil após a ativação</strong>. O tempo médio estimado de atendimento é de cerca de 60 minutos, podendo variar em feriados ou locais remotos.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>O valor da mensalidade é igual para todo mundo?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. O valor varia conforme o perfil do veículo, forma de uso e região. Você recebe o valor exato na sua simulação pelo WhatsApp.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>O seguro cobre qualquer situação?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não — nenhum seguro do mercado cobre absolutamente tudo. A cobertura segue as Condições Gerais da apólice, com exclusões previstas em contrato (por exemplo, situações de fraude comprovada). Os detalhes completos são apresentados antes da contratação.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Já tenho cotação em outra seguradora, dá pra usar?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Sim. A proposta é anexada e enviada para análise da BP Seguradora, com retorno em até 24 horas — a cobertura da oferta depende dessa análise e não é automática. <strong>Propostas de proteção veicular não são cobertas</strong>, apenas de seguradoras.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section>
+    <div class="container">
+      <div class="cta-final">
+        <h2>Fale agora e descubra o valor do seu seguro em poucos minutos</h2>
+        <p>É só chamar no WhatsApp. Sem compromisso, sem letras miúdas.</p>
+        <a class="btn-whats" id="cta-final" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20o%20valor%20do%20meu%20seguro%20por%20assinatura."
+           target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+          Falar no WhatsApp agora
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>iGreen Auto Mensal é comercializado pela iGreen Seguros, tendo a BP Seguradora S.A. como parceira garantidora. Indenizações sujeitas a análise e calculadas conforme a Tabela FIPE vigente na data do sinistro, nos termos das Condições Gerais da apólice.</p>
+    <p>Site produzido por <strong>{{REP_NOME}}</strong> — Licenciado Autorizado iGreen Energy (ID: <strong>{{REP_ID}}</strong>). Este não é um site oficial da iGreen Energy.</p>
+    <p class="footer-privacy">Seus dados (nome, WhatsApp, veículo e cidade) são usados apenas para contato sobre a simulação do seguro, em conformidade com a LGPD (Lei nº 13.709/2018), e não são compartilhados com terceiros. <a href="politica-privacidade.html">Política de Privacidade</a></p>
+  </div>
+</footer>
+
+<!-- Botão flutuante para mobile -->
+<a class="btn-whats float-whats" id="cta-flutuante" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20o%20seguro%20por%20assinatura."
+   target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:24px;height:24px;"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+</a>
+
+<script>
+  // ===== Toggle interativo entre os planos =====
+  const NUM_WHATS = '{{REP_WHATSAPP}}';
+
+  const PLANOS = {
+    compreensivo: {
+      nome: 'Compreensivo',
+      itens: [
+        'Colisão e perda total',
+        'Furto e roubo',
+        'Danos da natureza',
+        'RCF (danos a terceiros)',
+        'Assistência 24h (guincho, pane seca, chaveiro)'
+      ]
+    },
+    furtoroubo: {
+      nome: 'Furto e Roubo',
+      itens: [
+        'Furto e roubo',
+        'RCF (danos a terceiros)',
+        'Assistência 24h (guincho, pane seca, chaveiro)'
+      ]
+    }
+  };
+
+  const planList = document.getElementById('plan-list');
+  const planCta  = document.getElementById('plan-cta');
+  const btnCompreensivo = document.getElementById('btn-compreensivo');
+  const btnFurtoRoubo   = document.getElementById('btn-furtoroubo');
+
+  function renderPlano(chave){
+    const plano = PLANOS[chave];
+    if(!planList || !plano) return;
+
+    planList.innerHTML = plano.itens.map(item =>
+      `<li><span class="check" aria-hidden="true">✓</span><span>${item}</span></li>`
+    ).join('');
+
+    const mensagem = `Olá! Quero simular o plano ${plano.nome} do seguro por assinatura.`;
+    if(planCta){
+      planCta.href = 'https://wa.me/' + NUM_WHATS + '?text=' + encodeURIComponent(mensagem);
+      planCta.textContent = 'Simular o plano ' + plano.nome;
+    }
+
+    btnCompreensivo.classList.toggle('active', chave === 'compreensivo');
+    btnFurtoRoubo.classList.toggle('active', chave === 'furtoroubo');
+    btnCompreensivo.setAttribute('aria-selected', chave === 'compreensivo');
+    btnFurtoRoubo.setAttribute('aria-selected', chave === 'furtoroubo');
+  }
+
+  if(btnCompreensivo) btnCompreensivo.addEventListener('click', () => renderPlano('compreensivo'));
+  if(btnFurtoRoubo) btnFurtoRoubo.addEventListener('click', () => renderPlano('furtoroubo'));
+
+  renderPlano('compreensivo');
+
+  // ===== Rastreamento de cliques nos botões de WhatsApp (GA4 + Meta Pixel) =====
+  document.querySelectorAll('.btn-whats').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if(typeof gtag === 'function'){
+        gtag('event', 'contato_whatsapp', { event_category: 'lead', event_label: btn.id || 'whatsapp_cta' });
+      }
+      if(typeof fbq === 'function'){
+        fbq('track', 'Contact');
+      }
+    });
+  });
+
+  // ===== Máscara e validação do WhatsApp =====
+  // Normaliza o que o visitante cola: "+55 41 9...", "041 9..." e variações
+  // chegavam antes como número inválido que PASSAVA na validação — o lead
+  // entrava com um telefone inexistente e se perdia silenciosamente.
+  const DDDS = new Set([11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,
+    41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,
+    81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99]);
+
+  function normalizeDigits(value){
+    let d = String(value).replace(/\D/g, '');
+    if(d.length > 11 && d.startsWith('55')) d = d.slice(2);
+    if(d.length > 11 && d.startsWith('0'))  d = d.replace(/^0+/, '');
+    if(d.length === 11 && d.startsWith('0')) d = d.slice(1);
+    return d.slice(0, 11);
+  }
+
+  function maskPhone(value){
+    const d = normalizeDigits(value);
+    if(!d.length) return '';
+    if(d.length <= 2) return '(' + d;
+    const ddd = d.slice(0,2), resto = d.slice(2);
+    if(resto.length <= 4) return `(${ddd}) ${resto}`;
+    if(resto.length <= 8) return `(${ddd}) ${resto.slice(0,4)}-${resto.slice(4)}`;
+    return `(${ddd}) ${resto.slice(0,5)}-${resto.slice(5,9)}`;
+  }
+
+  function validaTelefone(value){
+    const d = normalizeDigits(value);
+    if(d.length !== 10 && d.length !== 11) return { ok:false, erro:'Digite DDD + número' };
+    if(!DDDS.has(Number(d.slice(0,2))))    return { ok:false, erro:'DDD inválido' };
+    if(d.length === 11 && d[2] !== '9')    return { ok:false, erro:'Celular deve começar com 9 após o DDD' };
+    if(d.length === 10 && d[2] === '9')    return { ok:false, erro:'Falta 1 dígito no celular' };
+    if(/^(\d)\1+$/.test(d.slice(2)))       return { ok:false, erro:'Número inválido' };
+    return { ok:true, e164:'55' + d };
+  }
+
+  const leadTelefoneInput = document.getElementById('lead-telefone');
+  const telefoneField = document.getElementById('telefone-field');
+  const telefoneHint  = document.getElementById('telefone-hint');
+
+  function validatePhoneLive(){
+    const bruto = leadTelefoneInput.value;
+    const digits = normalizeDigits(bruto);
+    telefoneField.classList.remove('field-valid', 'field-invalid');
+    if(digits.length === 0){ telefoneHint.textContent = ''; return; }
+    const v = validaTelefone(bruto);
+    if(v.ok){
+      telefoneField.classList.add('field-valid');
+      telefoneHint.textContent = 'Número válido ✓';
+    } else if(digits.length < 10){
+      telefoneHint.textContent = 'Faltam ' + (10 - digits.length) + ' dígitos';
+    } else {
+      telefoneField.classList.add('field-invalid');
+      telefoneHint.textContent = v.erro;
+    }
+  }
+
+  if(leadTelefoneInput){
+    leadTelefoneInput.addEventListener('input', () => {
+      leadTelefoneInput.value = maskPhone(leadTelefoneInput.value);
+      validatePhoneLive();
+    });
+  }
+
+  // ===== Envio do lead para a API do SETNAR =====
+  // O lead precisa entrar no pipeline da plataforma (evento LeadCaptured),
+  // não num painel externo que o licenciado nunca abre. O honeypot continua:
+  // se vier preenchido, respondemos como sucesso e descartamos silenciosamente.
+  const leadForm = document.getElementById('lead-form');
+  const leadStatus = document.getElementById('lead-status');
+
+  if(leadForm){
+    leadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const v = validaTelefone(leadTelefoneInput.value);
+      if(!v.ok){
+        telefoneField.classList.remove('field-valid');
+        telefoneField.classList.add('field-invalid');
+        telefoneHint.textContent = v.erro;
+        leadStatus.textContent = 'Confira o número de telefone antes de enviar.';
+        leadStatus.style.color = '#B33A3A';
+        leadTelefoneInput.focus();
+        return;
+      }
+
+      const dados = Object.fromEntries(new FormData(leadForm).entries());
+      if(dados.empresa || dados.empresa2){        // honeypot preenchido = bot
+        window.location.href = '/obrigado.html';
+        return;
+      }
+      delete dados.empresa; delete dados.empresa2;
+
+      const payload = {
+        representative_id: '{{REP_ID}}',
+        produto: '{{PRODUTO_SLUG}}',
+        origem: window.location.href,
+        referrer: document.referrer || null,
+        telefone_e164: v.e164,
+        campos: dados
+      };
+
+      leadStatus.style.color = '';
+      leadStatus.textContent = 'Enviando...';
+
+      const submitBtn = leadForm.querySelector('[type="submit"]');
+      if(submitBtn) submitBtn.disabled = true;
+
+      fetch('{{LEADS_ENDPOINT}}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then((r) => {
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        if(typeof gtag === 'function'){
+          gtag('event', 'generate_lead', {
+            representative_id: '{{REP_ID}}', produto: '{{PRODUTO_SLUG}}'
+          });
+        }
+        window.location.href = '/obrigado.html';
+      })
+      .catch(() => {
+        if(submitBtn) submitBtn.disabled = false;
+        leadStatus.innerHTML = 'Não foi possível enviar agora. Tente novamente ou ' +
+          '<a href="https://wa.me/{{REP_WHATSAPP}}" target="_blank" rel="noopener">chame direto no WhatsApp</a>.';
+        leadStatus.style.color = '#B33A3A';
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

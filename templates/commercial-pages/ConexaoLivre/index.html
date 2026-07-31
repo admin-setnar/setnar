@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conexão Livre | Migração para o Mercado Livre de Energia — Grupo A</title>
+<meta name="description" content="Sua empresa é Grupo A (média ou alta tensão, com demanda contratada)? Migre para o Mercado Livre de Energia e reduza o custo da sua conta de luz.">
+
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Conexão Livre | Migração para o Mercado Livre de Energia — Grupo A">
+<meta property="og:description" content="Sua empresa é Grupo A? Migre para o Mercado Livre de Energia e reduza o custo da sua conta de luz.">
+<meta property="og:image" content="{{OG_IMAGE}}">
+<meta property="og:url" content="{{PAGE_URL}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Conexão Livre | Mercado Livre de Energia para Grupo A">
+<meta name="twitter:description" content="Migração especializada para empresas de média e alta tensão.">
+<meta name="twitter:image" content="{{OG_IMAGE}}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="{{PAGE_URL}}">
+<link rel="stylesheet" href="style.css">
+
+<!-- ===== ANALYTICS DA PLATAFORMA =====
+     Uma única propriedade GA4, da SETNAR. Cada evento carrega representative_id
+     e produto como parâmetros, o que permite segmentar por licenciado sem que
+     ele precise configurar nada — e sem misturar visitantes de licenciados
+     diferentes numa mesma propriedade pessoal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{GA4_ID}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{GA4_ID}}', {
+    representative_id: '{{REP_ID}}',
+    produto: '{{PRODUTO_SLUG}}'
+  });
+</script>
+
+<!-- Estilos específicos deste produto: quiz de elegibilidade Grupo A -->
+<style>
+  .quiz-q{ position:relative; z-index:1; margin-bottom:16px; }
+  .quiz-q p{ font-weight:700; color:var(--verde-profundo); margin-bottom:8px; font-size:0.95rem; }
+  .quiz-opts{ display:flex; gap:10px; }
+  .quiz-opts button{ flex:1; border:1px solid var(--borda); background:var(--fundo); padding:10px; border-radius:10px; font-family:'Inter',sans-serif; font-weight:700; color:var(--cinza-texto); cursor:pointer; }
+  .quiz-opts button.selected-yes{ background:var(--verde-vivo); color:#fff; border-color:var(--verde-vivo); }
+  .quiz-opts button.selected-no{ background:#F3E7E7; color:#B33A3A; border-color:#D96B6B; }
+  .quiz-result{ position:relative; z-index:1; padding:14px; border-radius:10px; margin:16px 0; font-weight:700; text-align:center; display:none; }
+  .quiz-result.ok{ background:var(--faixa-sage); color:var(--verde-vivo-escuro); display:block; }
+  .quiz-result.no{ background:#F3E7E7; color:#B33A3A; display:block; }
+</style>
+</head>
+<body>
+
+<a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+<header>
+  <div class="header-inner">
+    <a href="#topo" class="logo">
+      <span class="logo-dot" aria-hidden="true"></span>
+      <span class="logo-text">
+        Conexão Livre
+        <small class="logo-sub">
+          <span class="full">{{REP_NOME}} · Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</span>
+          <span class="short">{{REP_NOME}} · Licenciado iGreen · ID {{REP_ID}}</span>
+        </small>
+      </span>
+    </a>
+    <a class="btn-whats" id="cta-header" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20a%20migra%C3%A7%C3%A3o%20para%20o%20Mercado%20Livre%20de%20Energia."
+       target="_blank" rel="noopener" aria-label="Falar agora no WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+      <span class="full">Falar no WhatsApp</span>
+    </a>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="hero" id="topo">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Exclusivo para Grupo A</span>
+        <h1>Sua empresa é Grupo A? Migre para o Mercado Livre de Energia e reduza o custo da sua conta.</h1>
+        <p class="subhead">Se sua unidade tem transformador próprio e demanda contratada junto à distribuidora, você pode comprar energia diretamente no mercado livre — pagando menos do que no mercado cativo.</p>
+        <div class="hero-ctas">
+          <a class="btn-whats" id="cta-hero" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20simular%20a%20migra%C3%A7%C3%A3o%20da%20minha%20empresa%20para%20o%20Mercado%20Livre."
+             target="_blank" rel="noopener">
+            Quero simular minha migração
+          </a>
+        </div>
+        <p class="hero-note">Análise sem custo · Consultoria especializada para média e alta tensão</p>
+      </div>
+
+      <div>
+        <div class="bill-card" id="quiz-card">
+          <div class="bill-header">
+            <span>Sua empresa se encaixa?</span>
+            <span class="badge-desconto">Teste rápido</span>
+          </div>
+
+          <div class="quiz-q">
+            <p>1. Sua unidade tem transformador próprio?</p>
+            <div class="quiz-opts">
+              <button type="button" data-q="1" data-a="sim">Sim</button>
+              <button type="button" data-q="1" data-a="nao">Não</button>
+            </div>
+          </div>
+          <div class="quiz-q">
+            <p>2. Você tem demanda contratada junto à distribuidora?</p>
+            <div class="quiz-opts">
+              <button type="button" data-q="2" data-a="sim">Sim</button>
+              <button type="button" data-q="2" data-a="nao">Não</button>
+            </div>
+          </div>
+          <div class="quiz-q">
+            <p>3. Sua unidade é de média ou alta tensão (Grupo A)?</p>
+            <div class="quiz-opts">
+              <button type="button" data-q="3" data-a="sim">Sim</button>
+              <button type="button" data-q="3" data-a="nao">Não</button>
+            </div>
+          </div>
+
+          <div class="quiz-result" id="quiz-result"></div>
+
+          <a class="btn-whats bill-cta" id="quiz-cta"
+             href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Fiz%20o%20teste%20de%20elegibilidade%20e%20quero%20simular%20minha%20migra%C3%A7%C3%A3o%20para%20o%20Mercado%20Livre."
+             target="_blank" rel="noopener">
+            Falar com um especialista
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAIXA DE CONFIANÇA -->
+  <div class="trust-strip">
+    <div class="container">
+      <span>Amparado pela regulamentação ANEEL/MME</span>
+      <span>Sem trocar de distribuidora</span>
+      <span>Consultoria especializada em Grupo A</span>
+    </div>
+  </div>
+
+  <!-- QUEM ATENDE — identidade do licenciado.
+       Cumpre a exigência de identificação clara da Política de Uso da Marca e
+       é o que diferencia esta página do site institucional: quem chega aqui
+       está decidindo se manda mensagem para uma pessoa, não para uma empresa. -->
+  <section id="consultor">
+    <div class="container">
+      <div class="consultor-card">
+        {{REP_AVATAR}}
+        <div class="consultor-info">
+          <span class="consultor-eyebrow">Quem vai te atender</span>
+          <h2>{{REP_NOME}}</h2>
+          <p class="consultor-cargo">Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</p>
+          <p class="consultor-local">{{REP_CIDADE}}</p>
+        </div>
+        <a class="btn-whats" id="cta-consultor"
+           href="https://wa.me/{{REP_WHATSAPP}}?text={{MSG_CONSULTOR}}"
+           target="_blank" rel="noopener">Falar com {{REP_PRIMEIRO_NOME}}</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- FORMULÁRIO DE LEAD -->
+  <section id="quero-simular">
+    <div class="container">
+      <div class="lead-form-card">
+        <div>
+          <h2>Prefere que a gente te chame?</h2>
+          <p>Deixe seus dados que entramos em contato, sem compromisso.</p>
+        </div>
+        <form id="lead-form" class="lead-form" name="lead-{{PRODUTO_SLUG}}-{{REP_ID}}" method="POST" novalidate>
+          <p class="hp-field" aria-hidden="true"><label>Não preencha isto: <input name="empresa2" tabindex="-1" autocomplete="off"></label></p>
+
+          <div class="lead-field">
+            <label for="lead-nome">Nome</label>
+            <input type="text" id="lead-nome" name="nome" required autocomplete="name" placeholder="Seu nome">
+          </div>
+          <div class="lead-field" id="telefone-field">
+            <label for="lead-telefone">Telefone</label>
+            <input type="tel" id="lead-telefone" name="telefone" required autocomplete="tel" inputmode="tel"
+                   placeholder="(11) 98888-7777" maxlength="16"
+                   pattern="\(\d{2}\)\s\d{4,5}-\d{4}" title="Formato: (11) 98888-7777"
+                   aria-describedby="telefone-hint">
+            <p class="field-hint" id="telefone-hint" aria-live="polite"></p>
+          </div>
+          <div class="lead-field">
+            <label for="lead-empresa">Nome da empresa <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-empresa" name="nome_empresa" placeholder="Razão social ou nome fantasia">
+          </div>
+          <div class="lead-field">
+            <label for="lead-cidade">Cidade / Estado <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-cidade" name="cidade" autocomplete="address-level2" placeholder="Ex: Curitiba/PR">
+          </div>
+          <button type="submit" class="btn-whats lead-submit">Quero simular minha migração</button>
+          <p class="lead-status" id="lead-status" role="status" aria-live="polite"></p>
+          <p class="lead-privacy">Seus dados são usados apenas para entrarmos em contato sobre a análise de migração. Nada de spam.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="container">
+      <div class="section-head">
+        <h2>Como funciona a migração</h2>
+        <p>Um processo conduzido por especialistas, do início ao fim.</p>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3>Análise do seu perfil</h3>
+          <p>Avaliamos seu histórico de consumo e enquadramento no Grupo A.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3>Simulação de economia</h3>
+          <p>Você recebe uma estimativa de quanto pode economizar migrando.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3>Formalização da migração</h3>
+          <p>Cuidamos da documentação e dos trâmites junto à distribuidora e à CCEE.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">4</div>
+          <h3>Você passa a comprar no mercado livre</h3>
+          <p>Mesma infraestrutura elétrica, energia contratada com condições melhores.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ELEGIBILIDADE -->
+  <section class="section-alt" id="elegibilidade">
+    <div class="container">
+      <div class="section-head">
+        <h2>Quem pode migrar</h2>
+        <p>A Conexão Livre é exclusiva para clientes do Grupo A.</p>
+      </div>
+      <ul class="elig-list">
+        <li><span class="check" aria-hidden="true">✓</span><span>Unidades com <strong>transformador próprio</strong> e <strong>demanda contratada</strong> junto à distribuidora.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span>Clientes de <strong>média ou alta tensão</strong> (Grupo A).</span></li>
+        <li><span class="check" aria-hidden="true">✗</span><span>Clientes de <strong>baixa tensão</strong> (Grupo B) não migram para o Mercado Livre — para esse perfil, existe a <a href="#" style="color:var(--verde-vivo-escuro);font-weight:700;">Conexão Green</a>.</span></li>
+        <li><span class="check" aria-hidden="true">i</span><span>Cliente <strong>B Optante</strong> (transformador de até 112kVA, sem demanda contratada)? Fale com a gente — pode ser necessário migrar para o Grupo A antes.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>Perguntas frequentes</h2>
+        <p>As dúvidas que mais recebemos sobre o Mercado Livre de Energia.</p>
+      </div>
+      <div class="faq">
+        <details class="faq-item">
+          <summary>O que é um cliente do Grupo A?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>É um cliente que tem transformador próprio e demanda contratada junto à distribuidora de energia — ou seja, uma unidade de média ou alta tensão.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Um cliente de baixa tensão pode migrar para o Mercado Livre?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. Por ora, apenas clientes de média ou alta tensão (Grupo A) podem usufruir do Mercado Livre de Energia. Clientes de baixa tensão contam com a Conexão Green.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>O que é um cliente B Optante? Ele pode migrar?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>É o cliente que adquiriu transformador próprio de até 112kVA, mas optou por não ser tarifado como Grupo A (geralmente para não pagar demanda contratada). Esse perfil não se enquadra na energia por assinatura (limitada a até 2.300V) nem no Mercado Livre diretamente. Para migrar, ele precisa passar a ser tarifado como Grupo A, escolhendo entre a modalidade Verde ou Azul — fale com a gente para entender qual faz mais sentido pro seu caso.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Isso é seguro? É regulamentado?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer">
+            <p>Sim. A abertura do Mercado Livre de Energia para todo o Grupo A foi viabilizada pela Portaria Normativa MME nº 50/2022, e o setor é regulamentado pela ANEEL, agência federal responsável por fiscalizar o mercado elétrico brasileiro.</p>
+            <ul class="legal-links">
+              <li><a href="https://www.gov.br/aneel/pt-br/assuntos/noticias/2023/aneel-aprova-norma-que-aprimora-a-comercializacao-varejista-a-partir-da-flexibilizacao-dos-requisitos-de-migracao-para-o-ambiente-de-contratacao-livre" target="_blank" rel="noopener">Ver nota oficial da ANEEL sobre migração para o ACL ↗</a></li>
+              <li><a href="https://www.mercadolivredeenergia.com.br/e-necessaria-uma-legislacao-para-a-abertura-do-mercado-livre/" target="_blank" rel="noopener">Entenda a abertura do Mercado Livre por grupo tarifário ↗</a></li>
+            </ul>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>Preciso trocar de distribuidora?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. A distribuidora continua responsável pela rede elétrica da sua região (fio). O que muda é de quem você compra a energia (o produto em si), que passa a ser negociado no mercado livre.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section>
+    <div class="container">
+      <div class="cta-final">
+        <h2>Fale com um especialista e descubra se sua empresa pode migrar</h2>
+        <p>Análise inicial sem custo. Sem compromisso, sem letras miúdas.</p>
+        <a class="btn-whats" id="cta-final" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20falar%20com%20um%20especialista%20sobre%20a%20Conex%C3%A3o%20Livre."
+           target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+          Falar no WhatsApp agora
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Conexão Livre — consultoria de migração para o Mercado Livre de Energia comercializada por licenciados autorizados iGreen Energy. A iGreen não possui vínculo com distribuidoras de energia; a distribuidora local continua responsável pela rede elétrica. Condições de contratação de energia constam no contrato assinado com o fornecedor.</p>
+    <p>Site produzido por <strong>{{REP_NOME}}</strong> — Licenciado Autorizado iGreen Energy (ID: <strong>{{REP_ID}}</strong>). Este não é um site oficial da iGreen Energy.</p>
+    <p class="footer-privacy">Seus dados (nome, WhatsApp, empresa e cidade) são usados apenas para contato sobre a análise de migração, em conformidade com a LGPD (Lei nº 13.709/2018), e não são compartilhados com terceiros. <a href="politica-privacidade.html">Política de Privacidade</a></p>
+  </div>
+</footer>
+
+<a class="btn-whats float-whats" id="cta-flutuante" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20a%20Conex%C3%A3o%20Livre."
+   target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:24px;height:24px;"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+</a>
+
+<script>
+  const NUM_WHATS = '{{REP_WHATSAPP}}';
+  const respostas = { 1:null, 2:null, 3:null };
+
+  const quizButtons = document.querySelectorAll('.quiz-opts button');
+  const quizResult = document.getElementById('quiz-result');
+  const quizCta = document.getElementById('quiz-cta');
+
+  function avaliar(){
+    const valores = Object.values(respostas);
+    if(valores.some(v => v === null)) { quizResult.className = 'quiz-result'; return; }
+    const elegivel = valores.every(v => v === 'sim');
+    if(elegivel){
+      quizResult.textContent = 'Sua empresa parece se encaixar no perfil Grupo A. Vamos confirmar os detalhes no WhatsApp!';
+      quizResult.className = 'quiz-result ok';
+      quizCta.href = 'https://wa.me/' + NUM_WHATS + '?text=' + encodeURIComponent('Olá! Fiz o teste de elegibilidade da Conexão Livre e me encaixo no perfil Grupo A. Quero simular minha migração.');
+    } else {
+      quizResult.textContent = 'Pelo perfil informado, sua empresa pode não se enquadrar como Grupo A ainda. Fale com a gente para confirmar — às vezes existe um caminho de migração.';
+      quizResult.className = 'quiz-result no';
+      quizCta.href = 'https://wa.me/' + NUM_WHATS + '?text=' + encodeURIComponent('Olá! Fiz o teste de elegibilidade da Conexão Livre e não tenho certeza se me encaixo no Grupo A. Pode me ajudar?');
+    }
+  }
+
+  quizButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const q = btn.dataset.q;
+      const a = btn.dataset.a;
+      respostas[q] = a;
+      document.querySelectorAll(`.quiz-opts button[data-q="${q}"]`).forEach(b => {
+        b.classList.remove('selected-yes', 'selected-no');
+      });
+      btn.classList.add(a === 'sim' ? 'selected-yes' : 'selected-no');
+      avaliar();
+    });
+  });
+
+  // ===== Rastreamento de cliques nos botões de WhatsApp (GA4) =====
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-whats');
+    if(btn && typeof gtag === 'function'){
+      gtag('event', 'contato_whatsapp', { event_category: 'lead', event_label: btn.id || 'whatsapp_cta' });
+    }
+  });
+
+  // ===== Máscara e validação do WhatsApp =====
+  // Normaliza o que o visitante cola: "+55 41 9...", "041 9..." e variações
+  // chegavam antes como número inválido que PASSAVA na validação — o lead
+  // entrava com um telefone inexistente e se perdia silenciosamente.
+  const DDDS = new Set([11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,
+    41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,
+    81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99]);
+
+  function normalizeDigits(value){
+    let d = String(value).replace(/\D/g, '');
+    if(d.length > 11 && d.startsWith('55')) d = d.slice(2);
+    if(d.length > 11 && d.startsWith('0'))  d = d.replace(/^0+/, '');
+    if(d.length === 11 && d.startsWith('0')) d = d.slice(1);
+    return d.slice(0, 11);
+  }
+
+  function maskPhone(value){
+    const d = normalizeDigits(value);
+    if(!d.length) return '';
+    if(d.length <= 2) return '(' + d;
+    const ddd = d.slice(0,2), resto = d.slice(2);
+    if(resto.length <= 4) return `(${ddd}) ${resto}`;
+    if(resto.length <= 8) return `(${ddd}) ${resto.slice(0,4)}-${resto.slice(4)}`;
+    return `(${ddd}) ${resto.slice(0,5)}-${resto.slice(5,9)}`;
+  }
+
+  function validaTelefone(value){
+    const d = normalizeDigits(value);
+    if(d.length !== 10 && d.length !== 11) return { ok:false, erro:'Digite DDD + número' };
+    if(!DDDS.has(Number(d.slice(0,2))))    return { ok:false, erro:'DDD inválido' };
+    if(d.length === 11 && d[2] !== '9')    return { ok:false, erro:'Celular deve começar com 9 após o DDD' };
+    if(d.length === 10 && d[2] === '9')    return { ok:false, erro:'Falta 1 dígito no celular' };
+    if(/^(\d)\1+$/.test(d.slice(2)))       return { ok:false, erro:'Número inválido' };
+    return { ok:true, e164:'55' + d };
+  }
+
+  const leadTelefoneInput = document.getElementById('lead-telefone');
+  const telefoneField = document.getElementById('telefone-field');
+  const telefoneHint  = document.getElementById('telefone-hint');
+
+  function validatePhoneLive(){
+    const bruto = leadTelefoneInput.value;
+    const digits = normalizeDigits(bruto);
+    telefoneField.classList.remove('field-valid', 'field-invalid');
+    if(digits.length === 0){ telefoneHint.textContent = ''; return; }
+    const v = validaTelefone(bruto);
+    if(v.ok){
+      telefoneField.classList.add('field-valid');
+      telefoneHint.textContent = 'Número válido ✓';
+    } else if(digits.length < 10){
+      telefoneHint.textContent = 'Faltam ' + (10 - digits.length) + ' dígitos';
+    } else {
+      telefoneField.classList.add('field-invalid');
+      telefoneHint.textContent = v.erro;
+    }
+  }
+
+  if(leadTelefoneInput){
+    leadTelefoneInput.addEventListener('input', () => {
+      leadTelefoneInput.value = maskPhone(leadTelefoneInput.value);
+      validatePhoneLive();
+    });
+  }
+
+  // ===== Envio do lead para a API do SETNAR =====
+  // O lead precisa entrar no pipeline da plataforma (evento LeadCaptured),
+  // não num painel externo que o licenciado nunca abre. O honeypot continua:
+  // se vier preenchido, respondemos como sucesso e descartamos silenciosamente.
+  const leadForm = document.getElementById('lead-form');
+  const leadStatus = document.getElementById('lead-status');
+
+  if(leadForm){
+    leadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const v = validaTelefone(leadTelefoneInput.value);
+      if(!v.ok){
+        telefoneField.classList.remove('field-valid');
+        telefoneField.classList.add('field-invalid');
+        telefoneHint.textContent = v.erro;
+        leadStatus.textContent = 'Confira o número de telefone antes de enviar.';
+        leadStatus.style.color = '#B33A3A';
+        leadTelefoneInput.focus();
+        return;
+      }
+
+      const dados = Object.fromEntries(new FormData(leadForm).entries());
+      if(dados.empresa || dados.empresa2){        // honeypot preenchido = bot
+        window.location.href = '/obrigado.html';
+        return;
+      }
+      delete dados.empresa; delete dados.empresa2;
+
+      const payload = {
+        representative_id: '{{REP_ID}}',
+        produto: '{{PRODUTO_SLUG}}',
+        origem: window.location.href,
+        referrer: document.referrer || null,
+        telefone_e164: v.e164,
+        campos: dados
+      };
+
+      leadStatus.style.color = '';
+      leadStatus.textContent = 'Enviando...';
+
+      const submitBtn = leadForm.querySelector('[type="submit"]');
+      if(submitBtn) submitBtn.disabled = true;
+
+      fetch('{{LEADS_ENDPOINT}}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then((r) => {
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        if(typeof gtag === 'function'){
+          gtag('event', 'generate_lead', {
+            representative_id: '{{REP_ID}}', produto: '{{PRODUTO_SLUG}}'
+          });
+        }
+        window.location.href = '/obrigado.html';
+      })
+      .catch(() => {
+        if(submitBtn) submitBtn.disabled = false;
+        leadStatus.innerHTML = 'Não foi possível enviar agora. Tente novamente ou ' +
+          '<a href="https://wa.me/{{REP_WHATSAPP}}" target="_blank" rel="noopener">chame direto no WhatsApp</a>.';
+        leadStatus.style.color = '#B33A3A';
+      });
+    });
+  }
+</script>
+
+</body>
+</html>

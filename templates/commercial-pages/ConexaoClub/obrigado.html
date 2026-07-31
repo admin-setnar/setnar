@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recebemos seus dados | Conexão Club</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<!-- ===== ANALYTICS DA PLATAFORMA =====
+     Uma única propriedade GA4, da SETNAR. Cada evento carrega representative_id
+     e produto como parâmetros, o que permite segmentar por licenciado sem que
+     ele precise configurar nada — e sem misturar visitantes de licenciados
+     diferentes numa mesma propriedade pessoal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{GA4_ID}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{GA4_ID}}', {
+    representative_id: '{{REP_ID}}',
+    produto: 'conexao-club'
+  });
+</script>
+
+<style>
+  .obrigado-wrap{ min-height:calc(100vh - 80px); display:flex; align-items:center; justify-content:center; padding:48px 24px; }
+  .obrigado-card{ background:var(--fundo-card); border:1px solid var(--borda); border-radius:var(--radius); box-shadow:var(--sombra); max-width:560px; width:100%; padding:40px 36px; text-align:center; }
+  .obrigado-check{ width:64px; height:64px; border-radius:50%; background:var(--faixa-sage); color:var(--verde-vivo-escuro); font-size:2rem; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; }
+  .obrigado-card .btn-whats{ margin-top:8px; }
+  .obrigado-sub{ color:var(--cinza-texto); margin-bottom:24px; }
+  .obrigado-voltar{ display:inline-block; margin-top:20px; font-size:0.9rem; color:var(--cinza-texto); }
+  @media (max-width:480px){ .obrigado-card{ padding:32px 22px; } .obrigado-card .btn-whats{ width:100%; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo"><span class="logo-dot" aria-hidden="true"></span> Conexão Club</a>
+  </div>
+</header>
+
+<main class="obrigado-wrap">
+  <div class="obrigado-card">
+    <div class="obrigado-check" aria-hidden="true">check</div>
+    <h1 style="font-size:1.8rem;">Recebido! Vamos te chamar no WhatsApp.</h1>
+    <p class="obrigado-sub">Nossa equipe entra em contato em breve para ativar seu acesso ao clube de benefícios, sem compromisso.</p>
+    <p><strong>Quer agilizar?</strong> Chame a gente agora:</p>
+    <a class="btn-whats" id="cta-obrigado" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Acabei%20de%20preencher%20o%20formul%C3%A1rio%20e%20quero%20agilizar%20minha%20ativa%C3%A7%C3%A3o%20do%20Conex%C3%A3o%20Club."
+       target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:22px;height:22px;"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+      Falar no WhatsApp agora
+    </a>
+    <br>
+    <a href="/" class="obrigado-voltar">Voltar para a página inicial</a>
+  </div>
+</main>
+
+<script>
+  document.querySelectorAll('.btn-whats').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if(typeof gtag === 'function'){
+        gtag('event', 'contato_whatsapp', { event_category: 'lead', event_label: btn.id || 'whatsapp_cta' });
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conexão Solar | Energia solar com análise personalizada e acompanhamento dedicado</title>
+<meta name="description" content="Da análise de documentos até a instalação: a Conexão Solar te acompanha em cada etapa do seu projeto de energia solar, com central de atendimento dedicada.">
+
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" href="favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:title" content="Conexão Solar | Energia solar com análise personalizada">
+<meta property="og:description" content="Central de atendimento dedicada, do envio de documentos até a instalação do seu sistema solar.">
+<meta property="og:image" content="{{OG_IMAGE}}">
+<meta property="og:url" content="{{PAGE_URL}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Conexão Solar | Energia solar com análise personalizada">
+<meta name="twitter:description" content="Acompanhamento dedicado do início ao fim do seu projeto solar.">
+<meta name="twitter:image" content="{{OG_IMAGE}}">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="canonical" href="{{PAGE_URL}}">
+<link rel="stylesheet" href="style.css">
+
+<!-- ===== ANALYTICS DA PLATAFORMA =====
+     Uma única propriedade GA4, da SETNAR. Cada evento carrega representative_id
+     e produto como parâmetros, o que permite segmentar por licenciado sem que
+     ele precise configurar nada — e sem misturar visitantes de licenciados
+     diferentes numa mesma propriedade pessoal. -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={{GA4_ID}}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', '{{GA4_ID}}', {
+    representative_id: '{{REP_ID}}',
+    produto: '{{PRODUTO_SLUG}}'
+  });
+</script>
+
+<!-- Estilos específicos deste produto: checklist de documentos -->
+<style>
+  .doc-list{ list-style:none; margin:0; padding:0; position:relative; z-index:1; }
+  .doc-list li{ display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-bottom:1px solid var(--borda); font-size:0.92rem; color:var(--cinza-texto); }
+  .doc-list li:last-child{ border-bottom:none; }
+  .doc-list .check{ width:20px; height:20px; font-size:0.75rem; flex-shrink:0; }
+  .aviso-box{ background:#FFF8E8; border:1px solid #F2D68A; border-radius:12px; padding:18px 20px; margin-top:16px; font-size:0.9rem; color:#6B5417; }
+  .aviso-box strong{ color:#4a3a10; }
+</style>
+</head>
+<body>
+
+<a href="#conteudo" class="skip-link">Pular para o conteúdo</a>
+
+<header>
+  <div class="header-inner">
+    <a href="#topo" class="logo">
+      <span class="logo-dot" aria-hidden="true"></span>
+      <span class="logo-text">
+        Conexão Solar
+        <small class="logo-sub">
+          <span class="full">{{REP_NOME}} · Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</span>
+          <span class="short">{{REP_NOME}} · Licenciado iGreen · ID {{REP_ID}}</span>
+        </small>
+      </span>
+    </a>
+    <a class="btn-whats" id="cta-header" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20a%20Conex%C3%A3o%20Solar."
+       target="_blank" rel="noopener" aria-label="Falar agora no WhatsApp">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+      <span class="full">Falar no WhatsApp</span>
+    </a>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- HERO -->
+  <section class="hero" id="topo">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">Análise personalizada</span>
+        <h1>Energia solar com 50% de desconto na primeira fatura e uma central dedicada do início ao fim.</h1>
+        <p class="subhead">Do envio da documentação até a instalação, a Conexão Solar conduz seu processo com atendimento especializado — passo a passo, sem surpresas.</p>
+        <div class="hero-ctas">
+          <a class="btn-whats" id="cta-hero" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20iniciar%20minha%20an%C3%A1lise%20na%20Conex%C3%A3o%20Solar."
+             target="_blank" rel="noopener">
+            Quero iniciar minha análise
+          </a>
+        </div>
+        <p class="hero-note">Bônus de boas-vindas sujeito às condições do contrato · Sujeito a análise de crédito e documental · Aprovação não garantida</p>
+      </div>
+
+      <div>
+        <div class="bill-card">
+          <div class="bill-header">
+            <span>O que você recebe</span>
+            <span class="badge-desconto">Sem custo</span>
+          </div>
+          <ul class="doc-list">
+            <li><span class="check" aria-hidden="true">✓</span><span>Análise do seu perfil e da sua conta de energia</span></li>
+            <li><span class="check" aria-hidden="true">✓</span><span>Simulação do seu projeto, sem compromisso</span></li>
+            <li><span class="check" aria-hidden="true">✓</span><span>Visita técnica antes de qualquer instalação</span></li>
+            <li><span class="check" aria-hidden="true">✓</span><span>Uma pessoa acompanhando cada etapa, do início ao fim</span></li>
+          </ul>
+          <a class="btn-whats bill-cta" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20iniciar%20minha%20an%C3%A1lise%20na%20Conex%C3%A3o%20Solar." target="_blank" rel="noopener">
+            Quero minha análise
+          </a>
+          <p class="bill-cta-note">Leva 2 minutos para começar — a documentação vem depois.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAIXA DE CONFIANÇA -->
+  <div class="trust-strip">
+    <div class="container">
+      <span>Bônus de 50% na 1ª fatura</span>
+      <span>Central de atendimento dedicada</span>
+      <span>Visita técnica antes da instalação</span>
+    </div>
+  </div>
+
+  <!-- QUEM ATENDE — identidade do licenciado.
+       Cumpre a exigência de identificação clara da Política de Uso da Marca e
+       é o que diferencia esta página do site institucional: quem chega aqui
+       está decidindo se manda mensagem para uma pessoa, não para uma empresa. -->
+  <section id="consultor">
+    <div class="container">
+      <div class="consultor-card">
+        {{REP_AVATAR}}
+        <div class="consultor-info">
+          <span class="consultor-eyebrow">Quem vai te atender</span>
+          <h2>{{REP_NOME}}</h2>
+          <p class="consultor-cargo">Licenciado Autorizado iGreen Energy · ID {{REP_ID}}</p>
+          <p class="consultor-local">{{REP_CIDADE}}</p>
+        </div>
+        <a class="btn-whats" id="cta-consultor"
+           href="https://wa.me/{{REP_WHATSAPP}}?text={{MSG_CONSULTOR}}"
+           target="_blank" rel="noopener">Falar com {{REP_PRIMEIRO_NOME}}</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- FORMULÁRIO DE LEAD -->
+  <section id="quero-simular">
+    <div class="container">
+      <div class="lead-form-card">
+        <div>
+          <h2>Prefere que a gente te chame?</h2>
+          <p>Deixe seus dados que entramos em contato, sem compromisso.</p>
+        </div>
+        <form id="lead-form" class="lead-form" name="lead-{{PRODUTO_SLUG}}-{{REP_ID}}" method="POST" novalidate>
+          <p class="hp-field" aria-hidden="true"><label>Não preencha isto: <input name="empresa" tabindex="-1" autocomplete="off"></label></p>
+
+          <div class="lead-field">
+            <label for="lead-nome">Nome</label>
+            <input type="text" id="lead-nome" name="nome" required autocomplete="name" placeholder="Seu nome">
+          </div>
+          <div class="lead-field" id="telefone-field">
+            <label for="lead-telefone">Telefone</label>
+            <input type="tel" id="lead-telefone" name="telefone" required autocomplete="tel" inputmode="tel"
+                   placeholder="(11) 98888-7777" maxlength="16"
+                   pattern="\(\d{2}\)\s\d{4,5}-\d{4}" title="Formato: (11) 98888-7777"
+                   aria-describedby="telefone-hint">
+            <p class="field-hint" id="telefone-hint" aria-live="polite"></p>
+          </div>
+          <div class="lead-field">
+            <label for="lead-email">E-mail</label>
+            <input type="email" id="lead-email" name="email" autocomplete="email" placeholder="seu@email.com">
+          </div>
+          <div class="lead-field">
+            <label for="lead-cidade">Cidade / Estado <span class="opcional">(opcional)</span></label>
+            <input type="text" id="lead-cidade" name="cidade" autocomplete="address-level2" placeholder="Ex: Curitiba/PR">
+          </div>
+          <button type="submit" class="btn-whats lead-submit">Quero iniciar minha análise</button>
+          <p class="lead-status" id="lead-status" role="status" aria-live="polite"></p>
+          <p class="lead-privacy">Seus dados são usados apenas para entrarmos em contato sobre sua análise. Nada de spam.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMO FUNCIONA -->
+  <section id="como-funciona">
+    <div class="container">
+      <div class="section-head">
+        <h2>Como funciona, etapa por etapa</h2>
+        <p>Um processo conduzido com atendimento dedicado, do início ao fim.</p>
+      </div>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">1</div>
+          <h3>Envio de documentos</h3>
+          <p>Você envia o checklist inicial para a central Conexão Solar dar início à sua análise.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">2</div>
+          <h3>Análise de crédito</h3>
+          <p>Se necessário, pode ser solicitado comprovante de renda, declaração de IR ou outras fontes de renda.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">3</div>
+          <h3>Formalização</h3>
+          <p>Com CNH/RG e documentos do imóvel (IPTU, RGI, escritura ou contrato de compra e venda), o contrato é enviado.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num" aria-hidden="true">4</div>
+          <h3>Visita técnica e instalação</h3>
+          <p>Uma visita avalia telhado, sombreamento e padrão de energia antes da instalação final.</p>
+        </div>
+      </div>
+      <div class="aviso-box">
+        <strong>Importante:</strong> se a visita técnica identificar necessidade de adequações, um aditivo de contrato é apresentado com os ajustes, e o custo dessas adequações é do cliente. Os prazos de entrega e instalação começam a contar após a assinatura desse aditivo.
+      </div>
+    </div>
+  </section>
+
+
+  <!-- CHECKLIST — movido para depois do "como funciona": pedir documento antes
+       de entregar valor era a maior fricção da página. -->
+  <section id="checklist" class="section-alt">
+    <div class="container">
+      <div class="section-head">
+        <h2>O que separar quando você decidir avançar</h2>
+        <p>Nada disso é necessário para tirar dúvidas — só para iniciar a análise.</p>
+      </div>
+      <ul class="elig-list">
+        <li><span class="check" aria-hidden="true">✓</span><span>Fatura de energia (em PDF)</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span>Nome completo, CPF, telefone e e-mail</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span>Renda aproximada e endereço completo</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span>Informar se o imóvel é próprio ou alugado</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- BÔNUS -->
+  <section class="section-alt">
+    <div class="container">
+      <div class="section-head">
+        <h2>Bônus de boas-vindas</h2>
+        <p>50% de desconto na primeira fatura, pago 30 dias após a assinatura do aditivo de contrato (pós-visita técnica).</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ELEGIBILIDADE -->
+  <section id="elegibilidade">
+    <div class="container">
+      <div class="section-head">
+        <h2>Quem pode participar</h2>
+        <p>Por ora, a Conexão Solar é destinada a pessoas físicas.</p>
+      </div>
+      <ul class="elig-list">
+        <li><span class="check" aria-hidden="true">✓</span><span>Pessoas físicas, com imóvel próprio ou alugado.</span></li>
+        <li><span class="check" aria-hidden="true">✓</span><span>Sujeito à análise de crédito e de documentação pessoal e do imóvel.</span></li>
+        <li><span class="check" aria-hidden="true">✗</span><span>Não atendemos, por ora, <strong>condomínios, igrejas ou pessoas jurídicas</strong>.</span></li>
+        <li><span class="check" aria-hidden="true">i</span><span>A aprovação final depende da análise de crédito e da visita técnica — não é garantida antes dessas etapas.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section-alt" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <h2>Perguntas frequentes</h2>
+        <p>As dúvidas que mais recebemos, respondidas direto.</p>
+      </div>
+      <div class="faq">
+        <details class="faq-item">
+          <summary>A aprovação é garantida?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Não. O processo passa por análise de crédito e, em alguns casos, análise documental adicional (comprovante de renda, declaração de IR). A aprovação depende do resultado dessas análises.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Atende condomínios ou empresas?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Por ora, não. A Conexão Solar atende apenas pessoas físicas — condomínios, igrejas e pessoas jurídicas não são atendidos temporariamente.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Preciso ser dono do imóvel?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>O imóvel pode ser próprio ou alugado — isso é informado logo no início da análise. A documentação exata solicitada varia conforme o seu caso.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>Como funciona o bônus de 50% na primeira fatura?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Após a visita técnica e a assinatura do aditivo de contrato (quando aplicável), o bônus de 50% sobre a primeira fatura é pago 30 dias depois dessa assinatura.</p></div>
+        </details>
+        <details class="faq-item">
+          <summary>E se a visita técnica pedir alguma adequação?<span class="faq-icon" aria-hidden="true">+</span></summary>
+          <div class="faq-answer"><p>Nesse caso, você recebe um aditivo de contrato explicando o que foi identificado e o custo da adequação, que fica por conta do cliente. Nada é feito sem sua confirmação.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section>
+    <div class="container">
+      <div class="cta-final">
+        <h2>Fale com a nossa central e dê o primeiro passo</h2>
+        <p>Atendimento especializado, sem compromisso, sem letras miúdas.</p>
+        <a class="btn-whats" id="cta-final" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20falar%20com%20a%20central%20Conex%C3%A3o%20Solar."
+           target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+          Falar no WhatsApp agora
+        </a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>Conexão Solar — processo de análise e instalação de sistema de energia solar comercializado por licenciados autorizados iGreen Energy. Sujeito a análise de crédito e documental; aprovação não garantida. Condições completas, prazos e eventuais custos de adequação constam no contrato e no aditivo apresentados durante o processo. Não atendemos, por ora, condomínios, igrejas ou pessoas jurídicas.</p>
+    <p>Site produzido por <strong>{{REP_NOME}}</strong> — Licenciado Autorizado iGreen Energy (ID: <strong>{{REP_ID}}</strong>). Este não é um site oficial da iGreen Energy.</p>
+    <p class="footer-privacy">Seus dados (nome, WhatsApp, e-mail e cidade) são usados apenas para contato sobre sua análise, em conformidade com a LGPD (Lei nº 13.709/2018), e não são compartilhados com terceiros, exceto com as instituições responsáveis pela análise de crédito quando você avança no processo. <a href="politica-privacidade.html">Política de Privacidade</a></p>
+  </div>
+</footer>
+
+<a class="btn-whats float-whats" id="cta-flutuante" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20saber%20mais%20sobre%20a%20Conex%C3%A3o%20Solar."
+   target="_blank" rel="noopener" aria-label="Falar no WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="width:24px;height:24px;"><path d="M17.47 14.38c-.29-.15-1.71-.85-1.98-.94-.27-.1-.46-.15-.66.15-.2.29-.76.94-.93 1.13-.17.2-.34.22-.63.07-.29-.15-1.22-.45-2.32-1.43-.86-.77-1.44-1.71-1.61-2-.17-.29-.02-.45.13-.6.13-.13.29-.34.44-.51.15-.17.2-.29.29-.49.1-.2.05-.37-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.57-.48-.5-.66-.5-.17 0-.37-.02-.56-.02-.2 0-.51.07-.78.37s-1.03 1.01-1.03 2.46 1.06 2.86 1.2 3.06c.15.2 2.09 3.19 5.07 4.47.71.31 1.26.49 1.69.62.71.23 1.35.2 1.86.12.57-.08 1.71-.7 1.95-1.37.24-.68.24-1.26.17-1.37-.07-.12-.27-.2-.56-.35z"/><path d="M12.02 2C6.5 2 2 6.48 2 12c0 1.85.5 3.58 1.36 5.07L2 22l5.08-1.33A9.96 9.96 0 0 0 12.02 22C17.53 22 22 17.52 22 12S17.53 2 12.02 2zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.19-3.02.79.81-2.94-.21-.31A8.18 8.18 0 0 1 3.8 12c0-4.53 3.7-8.2 8.22-8.2 4.53 0 8.2 3.67 8.2 8.2 0 4.53-3.67 8.2-8.2 8.2z"/></svg>
+</a>
+
+<script>
+  // ===== Rastreamento de cliques nos botões de WhatsApp (GA4) =====
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-whats');
+    if(btn && typeof gtag === 'function'){
+      gtag('event', 'contato_whatsapp', { event_category: 'lead', event_label: btn.id || 'whatsapp_cta' });
+    }
+  });
+
+  // ===== Máscara e validação do WhatsApp =====
+  // Normaliza o que o visitante cola: "+55 41 9...", "041 9..." e variações
+  // chegavam antes como número inválido que PASSAVA na validação — o lead
+  // entrava com um telefone inexistente e se perdia silenciosamente.
+  const DDDS = new Set([11,12,13,14,15,16,17,18,19,21,22,24,27,28,31,32,33,34,35,37,38,
+    41,42,43,44,45,46,47,48,49,51,53,54,55,61,62,63,64,65,66,67,68,69,71,73,74,75,77,79,
+    81,82,83,84,85,86,87,88,89,91,92,93,94,95,96,97,98,99]);
+
+  function normalizeDigits(value){
+    let d = String(value).replace(/\D/g, '');
+    if(d.length > 11 && d.startsWith('55')) d = d.slice(2);
+    if(d.length > 11 && d.startsWith('0'))  d = d.replace(/^0+/, '');
+    if(d.length === 11 && d.startsWith('0')) d = d.slice(1);
+    return d.slice(0, 11);
+  }
+
+  function maskPhone(value){
+    const d = normalizeDigits(value);
+    if(!d.length) return '';
+    if(d.length <= 2) return '(' + d;
+    const ddd = d.slice(0,2), resto = d.slice(2);
+    if(resto.length <= 4) return `(${ddd}) ${resto}`;
+    if(resto.length <= 8) return `(${ddd}) ${resto.slice(0,4)}-${resto.slice(4)}`;
+    return `(${ddd}) ${resto.slice(0,5)}-${resto.slice(5,9)}`;
+  }
+
+  function validaTelefone(value){
+    const d = normalizeDigits(value);
+    if(d.length !== 10 && d.length !== 11) return { ok:false, erro:'Digite DDD + número' };
+    if(!DDDS.has(Number(d.slice(0,2))))    return { ok:false, erro:'DDD inválido' };
+    if(d.length === 11 && d[2] !== '9')    return { ok:false, erro:'Celular deve começar com 9 após o DDD' };
+    if(d.length === 10 && d[2] === '9')    return { ok:false, erro:'Falta 1 dígito no celular' };
+    if(/^(\d)\1+$/.test(d.slice(2)))       return { ok:false, erro:'Número inválido' };
+    return { ok:true, e164:'55' + d };
+  }
+
+  const leadTelefoneInput = document.getElementById('lead-telefone');
+  const telefoneField = document.getElementById('telefone-field');
+  const telefoneHint  = document.getElementById('telefone-hint');
+
+  function validatePhoneLive(){
+    const bruto = leadTelefoneInput.value;
+    const digits = normalizeDigits(bruto);
+    telefoneField.classList.remove('field-valid', 'field-invalid');
+    if(digits.length === 0){ telefoneHint.textContent = ''; return; }
+    const v = validaTelefone(bruto);
+    if(v.ok){
+      telefoneField.classList.add('field-valid');
+      telefoneHint.textContent = 'Número válido ✓';
+    } else if(digits.length < 10){
+      telefoneHint.textContent = 'Faltam ' + (10 - digits.length) + ' dígitos';
+    } else {
+      telefoneField.classList.add('field-invalid');
+      telefoneHint.textContent = v.erro;
+    }
+  }
+
+  if(leadTelefoneInput){
+    leadTelefoneInput.addEventListener('input', () => {
+      leadTelefoneInput.value = maskPhone(leadTelefoneInput.value);
+      validatePhoneLive();
+    });
+  }
+
+  // ===== Envio do lead para a API do SETNAR =====
+  // O lead precisa entrar no pipeline da plataforma (evento LeadCaptured),
+  // não num painel externo que o licenciado nunca abre. O honeypot continua:
+  // se vier preenchido, respondemos como sucesso e descartamos silenciosamente.
+  const leadForm = document.getElementById('lead-form');
+  const leadStatus = document.getElementById('lead-status');
+
+  if(leadForm){
+    leadForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const v = validaTelefone(leadTelefoneInput.value);
+      if(!v.ok){
+        telefoneField.classList.remove('field-valid');
+        telefoneField.classList.add('field-invalid');
+        telefoneHint.textContent = v.erro;
+        leadStatus.textContent = 'Confira o número de telefone antes de enviar.';
+        leadStatus.style.color = '#B33A3A';
+        leadTelefoneInput.focus();
+        return;
+      }
+
+      const dados = Object.fromEntries(new FormData(leadForm).entries());
+      if(dados.empresa || dados.empresa2){        // honeypot preenchido = bot
+        window.location.href = '/obrigado.html';
+        return;
+      }
+      delete dados.empresa; delete dados.empresa2;
+
+      const payload = {
+        representative_id: '{{REP_ID}}',
+        produto: '{{PRODUTO_SLUG}}',
+        origem: window.location.href,
+        referrer: document.referrer || null,
+        telefone_e164: v.e164,
+        campos: dados
+      };
+
+      leadStatus.style.color = '';
+      leadStatus.textContent = 'Enviando...';
+
+      const submitBtn = leadForm.querySelector('[type="submit"]');
+      if(submitBtn) submitBtn.disabled = true;
+
+      fetch('{{LEADS_ENDPOINT}}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then((r) => {
+        if(!r.ok) throw new Error('HTTP ' + r.status);
+        if(typeof gtag === 'function'){
+          gtag('event', 'generate_lead', {
+            representative_id: '{{REP_ID}}', produto: '{{PRODUTO_SLUG}}'
+          });
+        }
+        window.location.href = '/obrigado.html';
+      })
+      .catch(() => {
+        if(submitBtn) submitBtn.disabled = false;
+        leadStatus.innerHTML = 'Não foi possível enviar agora. Tente novamente ou ' +
+          '<a href="https://wa.me/{{REP_WHATSAPP}}" target="_blank" rel="noopener">chame direto no WhatsApp</a>.';
+        leadStatus.style.color = '#B33A3A';
+      });
+    });
+  }
+</script>
+
+</body>
+</html>
