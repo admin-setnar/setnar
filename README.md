@@ -1211,6 +1211,146 @@ invalidating every QR code, business card, and WhatsApp bio link already
 distributed by licensed representatives. The team accepts that cost
 consciously; this is not modeled as cheap to change later.
 
+### ADR-027 — Company e Representative como entidades reais; nome público do representante vive em `representatives`, não em `profiles`
+**Decisão.** Tabelas `companies` e `representatives`
+(`supabase/migrations/20260731000000_create_representative_domain.sql`),
+com `representatives.profile_id` referenciando `profiles(id)` — réplica da
+distinção User/Representative de `DOMAIN_MODEL.md` §7.1/§7.3. O nome
+público exibido na Commercial Page é `representatives.display_name`
+(`20260731000000_create_representative_domain.sql:175`), não um join com
+`profiles.full_name`: `profiles_select_own`
+(`20260728000000_create_profiles.sql:27-29`, `auth.uid() = id`) nunca
+permitiu leitura pública, e abrir essa policy exporia a linha inteira de
+`profiles` (`tenant_id`/`terms_accepted_at`/`terms_version` junto), mais
+superfície que o necessário pra expor um nome. Todo outro campo público
+(`phone`/`city`/`avatar_url`/`license_id`,
+`20260731000000_create_representative_domain.sql:176-179`) já vivia em
+`representatives` — o join era a única exceção, agora deixa de ser.
+`profiles.full_name` continua existindo como o nome "de cadastro" (usado
+em `/app`). **Alternativas rejeitadas.** Ampliar `profiles_select_own` ou
+criar uma função `SECURITY DEFINER` só pra esse campo — rejeitadas por
+abrir mais superfície do que denormalizar uma coluna que já seguia esse
+padrão em todo o resto da tabela. **Custo de reversão.** Médio — sem dado
+real de produção ainda, mas uma migração de dados de verdade seria
+necessária mais tarde.
+
+### ADR-028 — Product e Product Activation reais; Catalog fica conceitual, não uma tabela própria
+**Decisão.** `products` (`company_id`, `slug`, `name`) e
+`product_activations` (`representative_id`, `product_id`, `status`
+draft/published/unpublished —
+`supabase/migrations/20260731000000_create_representative_domain.sql:204-240`)
+— o ciclo de vida de publicação da página vive na mesma linha da
+Activation, não em duas tabelas separadas. **Por quê não uma tabela
+`catalogs` literal.** Com uma Company só, um Catalog por Company é
+exatamente `products.company_id` — uma tabela `catalogs` seria uma
+tabela de uma linha, sem comportamento próprio. Generalizar isso agora
+seria a categoria exata de complexidade prematura que o projeto evita
+até validar um segundo nicho/Company. **Custo de reversão.** Baixo para
+separar `catalogs` depois, se um dia uma segunda Company existir.
+
+### ADR-029 — Uma Commercial Page por (Representative × Product); sem hub público — o hub é o `/app` privado
+**Decisão.** Cada produto ativado tem sua própria página
+(`<slug>.setnar.com/<produto>`), não uma página unificada — confirmado
+pelos 7 templates de origem em `templates/commercial-pages/`
+(ConexaoClub, ConexaoGreen, ConexaoLivre, ConexaoPlacas, ConexaoSolar,
+GreenSeguros, Telecom), cada um falando de um produto só. O "hub" de
+gerenciamento (links ativos, cliques, KPIs) vive no `/app` autenticado,
+não numa página pública no root do subdomínio — `docs/ROADMAP.md` já
+separa isso em dois recursos distintos do Stage 1 ("Commercial Pages",
+linha 119, vs. "Dashboard", linha 145) — essa decisão só confirma o que
+já estava implícito. **Consequência.** `/app`
+(`src/app/app/page.tsx`, 53 linhas), hoje um stub mínimo (Sprint B), é o
+lugar natural pra crescer — inclusive é onde `DOMAIN_MODEL.md`'s "AI
+Content Suggestion Service" (Stage 4, linha 605) vai precisar viver,
+quando existir: superfície autenticada, com acesso agregado a
+KPIs/analytics/páginas ativas, já é o desenho certo sem construir nada
+de IA agora. **Custo de reversão.** Baixo — nenhuma URL pública depende
+dessa escolha.
+
+### ADR-030 — Página de representante não resolvível: `notFound()` padrão, mesma URL — não redirect cross-origin
+**Decisão.** Quando `resolveRepresentativeActivation` retorna null (host
+não é subdomínio de representante válido, produto não existe, ou
+activation não está `published`), a rota
+(`src/app/[productSlug]/page.tsx:58-60`) chama `notFound()` — reaproveita
+`src/app/not-found.tsx`, mantém `<slug>.setnar.com/<produto>` na barra.
+Mesma resposta genérica pros três motivos, sem diferenciar — mesmo
+princípio anti-enumeração já aplicado nas mensagens de erro de login
+deste projeto (ADR-018): alguém testando subdomínios não descobre se um
+slug existe, nunca foi publicado, ou está suspenso. **Alternativa
+rejeitada.** Redirect cross-origin pra `setnar.com` — destoa do resto do
+produto, que evita qualquer coisa que pareça sequestrar a navegação de
+alguém (mesma cautela do aviso "não é canal oficial" no rodapé dos
+templates). **Custo de reversão.** Baixo.
+
+### ADR-031 — Resolução de Representative é um port novo (`RepresentativeRepository`), distinto do `TenantRepository` do ADR-001
+**Decisão.** `TenantRepository` (ADR-001) continua resolvendo Company. Um
+port novo, `RepresentativeRepository`
+(`src/modules/representatives/domain/representative-repository.ts`),
+resolve subdomínio de Representative — `extractRepresentativeSlug`
+(`src/modules/representatives/application/resolve-representative.ts:89-110`)
+extrai o label antes do domínio conhecido do `Host`, consulta
+`representatives`/`product_activations` no Supabase (RLS já filtra pra
+linhas públicas, ver ADR-027/028). Resolução de Company é sempre tentada
+primeiro; só tenta Representative se isso não bater — cobre
+`setnar.com`, `www.setnar.com`, `localhost`
+(`src/modules/tenancy/infrastructure/tenants/setnar.tenant.ts:16`) e
+previews `*.vercel.app` por construção, sem precisar excluí-los
+individualmente no parsing. **Por quê dois ports, não um.** Naturezas
+diferentes — lista pequena e fixa em memória vs. dinâmica e ilimitada em
+banco. **Custo de reversão.** Baixo — isolado atrás do port, como o
+próprio ADR-001 já previa.
+
+### ADR-032 — Rota de produto vive no root (`src/app/[productSlug]/page.tsx`), não atrás de rewrite em middleware
+**Decisão.** Rota dinâmica no nível raiz de `src/app/`, resolução dentro
+do Server Component — mesmo padrão de `layout.tsx` (ADR-001), sem tocar
+`middleware.ts`. Confirmado contra o código-fonte do Next.js instalado
+(`node_modules/next/dist/shared/lib/router/utils/sorted-routes.js`,
+`_smoosh`): rotas estáticas sempre vencem uma dinâmica irmã pro mesmo
+path, em qualquer Host — o router do Next não tem conceito de virtual
+host, então não existe risco de uma rota estática existente (`/entrar`,
+`/app` etc.) ser "roubada" pela rota dinâmica de produto. **Alternativa
+rejeitada.** Path aninhado com rewrite condicional no middleware —
+eliminaria por completo o risco (estreito, hipotético) de colisão futura
+entre um slug de produto e uma rota estática nova, mas reintroduziria
+resolução em middleware numa base que tem o ADR-001 explicitamente
+contra isso, só pra mitigar uma colisão que ainda não existe.
+**Mitigação do risco aceito.** `tests/route-collision-guard.test.ts` lê
+os slugs de produto direto do comentário da migration e falha o CI se
+algum colidir com um nome de rota em `src/app/`. **Lacuna conhecida,
+documentada, não resolvida aqui.** Rotas estáticas do root continuam
+respondendo em qualquer Host, incluindo subdomínio de representante
+(`joao-silva.setnar.com/entrar` renderiza o login do próprio Setnar) —
+decisão consciente de não bloquear isso agora, não esquecida
+(`src/app/[productSlug]/page.tsx:29-35`). **Custo de reversão.** Baixo —
+a URL pública não muda; só o arquivo se move internamente se a colisão
+virar problema real.
+
+### ADR-033 — Identificação do licenciado é componente estrutural; Subscription é tabela própria desde já, gerenciada manualmente até o gateway existir
+**Decisão.** `LicenseeIdentificationBlock`
+(`src/modules/representatives/presentation/licensee-identification-block.tsx`)
+é um componente próprio, não conteúdo inlined na página — o próprio
+comentário do arquivo documenta por quê: é o único bloco que os 7
+templates de origem repetem (`grep -rn "Quem vai te atender"
+templates/commercial-pages/`), então nasce pronto pra virar layout
+compartilhado assim que existir mais de uma página de produto, sem
+precisar ser tocado — mesmo raciocínio de denormalizar em vez de
+duplicar que motivou ADR-027. `subscriptions`
+(`supabase/migrations/20260731000000_create_representative_domain.sql:274-292`,
+status active/past_due/suspended/canceled, provider,
+external_subscription_id, current_period_end) já nasce no vocabulário
+que um gateway real usaria — gerenciada manualmente (`provider =
+'manual'` por padrão) até a cobrança automatizada existir, sem RLS
+policy nenhuma (mesmo padrão de `login_attempts`: acessível só por
+função `SECURITY DEFINER` futura, que ainda não existe — ver o
+comentário da migration nas linhas 79-91). **Correção ao texto
+original.** Não encontrei, no repositório, nenhum bug documentado de "ID
+hardcoded" nos templates originais — os 7 templates usam `{{REP_ID}}`
+como placeholder (`templates/commercial-pages/ConexaoGreen/index.html`,
+linhas 45/61-62/145/164/352/564/587), não um valor fixo. Essa alegação
+foi removida; a justificativa de denormalização (ADR-027) já sustenta a
+decisão sem depender dela. **Custo de reversão.** Baixo — a tabela já
+nasce no formato que o gateway real vai preencher.
+
 ---
 
 ## Accessibility
