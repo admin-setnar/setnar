@@ -4,9 +4,9 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as três
+## 1. Aplicar as migrations, nesta ordem, todas as quatro
 
-São cumulativas — aplique as três, em ordem, nunca só a primeira. Cole cada
+São cumulativas — aplique as quatro, em ordem, nunca só a primeira. Cole cada
 arquivo no SQL Editor do projeto e execute, ou rode `supabase db push` se
 preferir a CLI.
 
@@ -41,6 +41,28 @@ preferir a CLI.
    real aberta de novo (a `20260730` não reintroduz o parâmetro
    caller-controlled, mas assume a correção anterior como base — aplique-as
    em ordem, não isoladamente).
+4. `supabase/migrations/20260731000000_create_representative_domain.sql` —
+   cria as tabelas do domínio do Representante (Sprint C, ver
+   `docs/DOMAIN_MODEL.md` §7): `companies`, `representatives`, `products`,
+   `product_activations`, `subscriptions`, `leads`. Schema apenas — sem seed
+   data, sem código de aplicação. Todas as seis tabelas têm RLS habilitado,
+   sem exceção; `companies` e `products` têm SELECT público (`using
+   (true)`) — nome/slug sem sensibilidade por request. `representatives` só
+   expõe via SELECT público as linhas com `status = 'active'` **e** que
+   tenham ao menos uma `product_activations` com `status = 'published'` —
+   nunca a tabela inteira, para não permitir um único `GET` sem sessão
+   vazando telefone/cidade/license_id de representantes que ainda não têm
+   página pública. `product_activations` segue o mesmo princípio, expondo
+   só `status = 'published'`, nunca `draft`/`unpublished`. `subscriptions`
+   fica com RLS habilitado e **zero policies** — mesmo padrão de
+   `login_attempts` (passo 1 acima): só alcançável por uma função
+   `SECURITY DEFINER` futura, ainda não escrita nesta migration. `leads` tem
+   SELECT restrito ao representante dono (via `profile_id = auth.uid()`,
+   mesmo formato de `profiles_select_own`) e nenhuma policy de INSERT — a
+   captura de lead é trabalho futuro, via API route com rate limiting. Ver
+   o comentário no topo do próprio arquivo para o raciocínio completo de
+   cada policy, incluindo por que `representatives_select_public` só pôde
+   ser criada depois de `product_activations` existir no arquivo.
 
 ## 2. Confirm email — decidido: DESLIGADO
 
