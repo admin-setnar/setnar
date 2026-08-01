@@ -4,11 +4,17 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as seis
+## 1. Aplicar as migrations, nesta ordem, todas as nove
 
-São cumulativas — aplique as seis, em ordem, nunca só a primeira. Cole cada
+São cumulativas — aplique as nove, em ordem, nunca só a primeira. Cole cada
 arquivo no SQL Editor do projeto e execute, ou rode `supabase db push` se
 preferir a CLI.
+
+> **Parar no passo 8 deixa o banco quebrado, não incompleto.** A `20260804000000`
+> fecha um ciclo de RLS entre `representatives` e `product_activations` que faz
+> as duas tabelas responderem `42P17 infinite recursion detected in policy` para
+> **qualquer** chamador da chave publicável — anônimo inclusive. O passo 9 é a
+> correção; não é opcional e não é uma melhoria. Detalhes no item 9 abaixo.
 
 1. `supabase/migrations/20260728000000_create_profiles.sql` — cria
    `profiles`, `login_attempts`, as funções `current_terms_version()`,
@@ -96,6 +102,69 @@ preferir a CLI.
    corretamente. `supabase-lead-gateway.ts` foi atualizado no mesmo commit
    para a assinatura nova (9 parâmetros, sem os dois removidos) — nenhum
    outro chamador de `submit_lead` existe.
+7. `supabase/migrations/20260803000000_seed_igreen_catalog.sql` — **a única
+   migration deste diretório que insere dado, não schema.** Semeia a Company
+   iGreen Energy (slug `igreen`) e os 7 Products do Stage 1 (`conexao-green`,
+   `conexao-club`, `conexao-livre`, `conexao-placas`, `conexao-solar`,
+   `green-seguros`, `telecom`) — as linhas que a `20260731000000` (passo 4)
+   deliberadamente não criou ("Schema only — no seed data"). Sem isso, **o
+   catálogo está vazio e nenhuma Commercial Page pode existir**: tanto
+   `[productSlug]/page.tsx` quanto `submit_lead` dependem de uma linha de
+   `products` existir. É seed por migration, e não por script, porque
+   `companies`/`products` não têm policy de INSERT e este projeto não tem
+   service role key — um script precisaria de uma chave que ignore RLS; o SQL
+   Editor já conecta como dono das tabelas. Ver ADR-037 no `README.md`
+   principal para o raciocínio completo, incluindo por que os 8 UUIDs são
+   literais fixos (documentados no cabeçalho da própria migration) e por que
+   `green-seguros` foi semeado como "iGreen Seguros" e não "iGreen Auto
+   Mensal". Reaplicar é seguro: `on conflict ... do nothing` nos dois inserts.
+   A migration termina com um bloco `do $$` que levanta exceção se a contagem
+   final não for exatamente 7 produtos — se você vir esse erro, a Company não
+   foi semeada antes dos produtos; releia o cabeçalho do arquivo.
+   **Verificação:** `select p.slug, p.name from products p join companies c on
+   c.id = p.company_id where c.slug = 'igreen' order by p.slug;` — devem vir
+   as 7 linhas acima, e nenhuma a mais.
+8. `supabase/migrations/20260804000000_add_own_row_select_policies.sql` — só
+   policies, nenhum dado, nenhuma tabela. Cria `representatives_select_own` e
+   `product_activations_select_own`, fechando uma lacuna real: **antes desta
+   migration, um representante autenticado não conseguia ler a própria linha
+   de `representatives`.** A única policy de SELECT daquela tabela
+   (`representatives_select_public`, passo 4) exige `status = 'active'` **e**
+   uma ativação já `published` — um representante recém-criado não satisfaz
+   isso, então a consulta devolvia zero linhas para ele mesmo. O mesmo vale
+   para as próprias ativações em `draft`. Não afrouxa nada do que já era
+   público: policies permissivas se somam com OR, e sem sessão `auth.uid()` é
+   null, então nenhuma das duas casa com linha nenhuma para o visitante
+   anônimo. Ver ADR-038 no `README.md` principal. **Verificação manual
+   obrigatória — as duas pontas, na seção própria mais abaixo neste arquivo.**
+   **Não pare aqui: aplicada sozinha, esta migration quebra as duas tabelas —
+   ver o passo 9.**
+9. `supabase/migrations/20260805000000_fix_rls_policy_cycle.sql` — **corrige um
+   bug real introduzido pelo passo 8, não é opcional.** `product_activations_select_own`
+   (passo 8) consulta `representatives` dentro do seu `exists`, e
+   `representatives_select_public` (passo 4) já consultava `product_activations`
+   dentro do dela: cada tabela passou a ter uma policy de SELECT que depende da
+   outra. RLS **é** aplicada dentro da subconsulta de uma policy, então o
+   Postgres detecta o ciclo e aborta. Reproduzido no projeto de teste com os
+   passos 1-8 aplicados, via PostgREST com a chave publicável (nunca o SQL
+   Editor, que conecta como dono e ignora RLS): `GET /rest/v1/representatives`
+   → HTTP 500 `{"code":"42P17","message":"infinite recursion detected in policy
+   for relation \"representatives\""}`, e o mesmo em `product_activations` e em
+   `leads` (cuja `leads_select_own` também consulta `representatives`). Vale
+   para o visitante **anônimo** tanto quanto para o autenticado — ou seja,
+   **toda Commercial Page para de resolver**, e de forma silenciosa:
+   `SupabaseRepresentativeRepository` descarta o `error` e
+   `[productSlug]/page.tsx` serve um 404 comum, sem erro e sem log (confirmado
+   com `curl -H 'Host: joao-silva.setnar.com' localhost:3000/conexao-green` →
+   HTTP 404). A correção quebra o ciclo movendo o `exists` do passo 8 para
+   `is_own_representative(uuid)`, `security definer` — o mesmo mecanismo de
+   ADR-011/ADR-012 — e recria a policy sobre ela; nada do comportamento
+   pretendido pelo passo 8 muda. O cabeçalho da migration também registra a
+   correção de uma afirmação errada no comentário da `20260804000000` (linhas
+   76-80), que dizia que RLS não se aplica dentro do `exists` de uma policy.
+   **Verificação:** `tests/rls-policy-cycle.integration.test.ts` (roda em
+   `npm run test` com `.env.local` configurado) — vermelho antes desta
+   migration, verde depois.
 
 ## 2. Confirm email — decidido: DESLIGADO
 
@@ -227,6 +296,43 @@ trocar invalida silenciosamente o rate limiting de tentativas já registradas
 Confirmar que o projeto Vercel está configurado para rodar as funções em
 `gru1` (São Paulo) — mesma região do projeto Supabase, para latência mínima
 entre a aplicação e o banco.
+
+## Verificação manual obrigatória — policies de leitura própria (passo 8)
+
+Nenhum teste automatizado deste repositório exercita RLS contra um banco real
+(a chave anon não consegue nem criar o fixture: `representatives` e
+`product_activations` não têm policy de INSERT — é a mesma limitação que
+`tests/lead-submission.integration.test.ts` já documenta ao pular sozinho
+quando não encontra um par publicado). Este roteiro é a verificação real do
+passo 8, e **tem duas pontas: a segunda é a que importa.** Uma policy que
+funciona para o dono mas vaza para o vizinho passa na primeira ponta sem
+problema nenhum.
+
+**Fixture** (SQL Editor, que ignora RLS — é assim que se cria o cenário; o
+provisionamento pelo produto é o passo D3 do `docs/SPRINT_D_PLAN.md`, ainda
+não implementado): crie duas contas de teste pela aplicação (`/criar-conta`),
+e insira uma linha em `representatives` para cada uma — **A** e **B** —,
+ambas com `status = 'active'` e **nenhuma** `product_activations`. Anote os
+dois `profile_id` e os dois `id`.
+
+1. Autenticado como **A** (sessão real da aplicação, chave publicável — não o
+   SQL Editor), consulte `representatives`.
+   **Observar:** volta exatamente uma linha, a de A. Antes desta migration
+   este mesmo passo voltava **zero** — é isso que ela conserta.
+2. Ainda como **A**, consulte `representatives` filtrando pelo `id` de **B**.
+   **Observar:** **zero linhas.** Esta é a ponta que prova que
+   `representatives_select_own` não vazou entre representantes. Se voltar a
+   linha de B, a policy está errada — pare aqui.
+3. Crie, pelo SQL Editor, uma `product_activations` com `status = 'draft'`
+   para **A** e outra para **B** (qualquer produto do passo 7).
+4. Como **A**, consulte `product_activations`.
+   **Observar:** só a ativação de A, e ela aparece **mesmo em `draft`** (antes
+   desta migration, `product_activations_select_published` escondia tudo que
+   não fosse `published`). A de B não aparece.
+5. Sem sessão nenhuma (chave publicável, sem login), consulte as duas tabelas.
+   **Observar:** zero linhas nas duas — nenhum dos representantes tem ativação
+   publicada, então nada mudou para o visitante anônimo. Confirma que as
+   policies novas não abriram leitura pública por acidente.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 
