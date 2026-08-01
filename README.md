@@ -1351,6 +1351,227 @@ foi removida; a justificativa de denormalização (ADR-027) já sustenta a
 decisão sem depender dela. **Custo de reversão.** Baixo — a tabela já
 nasce no formato que o gateway real vai preencher.
 
+### ADR-034 — Captura de lead via `submit_lead` (SECURITY DEFINER), reaproveitando o padrão e o salt de `login_attempts` — não um novo esquema
+**Decisão.** `submit_lead`
+(`supabase/migrations/20260801000000_add_lead_submission.sql`), uma função
+`SECURITY DEFINER` sobre uma tabela nova `lead_submission_attempts` (RLS
+habilitado, zero policies) — o mesmo formato de `is_login_blocked`/
+`record_login_failure`/`clear_login_attempts` sobre `login_attempts`
+(ADR-012), reaproveitado deliberadamente, não reinventado: essa era
+exatamente a lacuna que a nota de design de RLS no topo de
+`20260731000000_create_representative_domain.sql` já deixava documentada
+("a captura de lead é trabalho futuro, via API route com rate limiting").
+`POST /api/leads` (`src/app/api/leads/route.ts`) é a única porta de entrada
+— `leads` continua sem policy de INSERT, como antes.
+**Por que uma função só, não três.** Login separa leitura
+(`is_login_blocked`) de escrita (`record_login_failure`) porque só
+tentativas *falhas* contam contra o limite — um login bem-sucedido não pode
+ser penalizado. Uma submissão de lead não tem essa distinção: toda
+submissão (aceita ou rejeitada) é o próprio evento sendo limitado, então
+`submit_lead` checa e grava atomicamente numa função só — o que também
+fecha a janela de corrida check-then-act que o split em duas chamadas do
+login deixa aberta (uma lacuna já aceita e documentada lá; aqui nem existe,
+por construção).
+**Por que só IP, sem um segundo eixo de identidade.** Login tem limite por
+e-mail *e* por IP porque credential stuffing mira uma conta a partir de
+várias origens. Lead não tem um eixo equivalente antes da submissão — o
+telefone é o payload sendo enviado, não uma identidade (um visitante real
+pode legitimamente submeter o telefone de um familiar a partir do próprio
+dispositivo) — então só IP é limitado.
+**Reaproveitar `LOGIN_ATTEMPT_SALT`, não criar um segundo salt.** O hash do
+IP usa o mesmo `sha256(salt:valor)` de `login-rate-limiter.ts`, lendo a
+mesma variável `LOGIN_ATTEMPT_SALT` — nenhuma variável de ambiente nova foi
+introduzida. **Consequência aceita conscientemente.** Rotacionar
+`LOGIN_ATTEMPT_SALT` no futuro invalida os dois rate limiters ao mesmo
+tempo, não só o de login (mesmo efeito que ADR-018 já registra pra
+`login_attempts` isoladamente, agora compartilhado). A função de hash em si
+não foi extraída pra um util compartilhado — duplicada como uma função
+privada de 5 linhas em `supabase-lead-gateway.ts`, pra não acoplar o módulo
+de leads ao de auth por tão pouco código; extrair vira a decisão certa se
+um terceiro chamador aparecer.
+**`representative_id`/`product_id` nunca vêm do corpo da requisição.**
+`app/api/leads/route.ts` resolve o representante a partir do header `Host`
+da própria requisição, reaproveitando `resolveRepresentativeActivation`
+— a mesma função que `[productSlug]/page.tsx` já usa (ADR-031) — em vez de
+confiar em IDs enviados pelo cliente. Sem isso, qualquer chamador direto da
+rota poderia atribuir um lead a um representante arbitrário. `submit_lead`
+ainda valida de novo, no banco, que existe uma `product_activations`
+`published` ligando o par (defesa em profundidade, não confiança cega no
+resultado da rota).
+**Anti-enumeração no retorno.** `submit_lead` retorna `boolean` — `false`
+tanto pra "rate limited" quanto pra "representante/produto inválido", sem
+distinguir os dois casos, mesmo princípio já aplicado em ADR-018 e ADR-030.
+Um par inválido também consome uma unidade do limite por IP (grava em
+`lead_submission_attempts` mesmo quando rejeita por esse motivo), pra que
+sondar pares válidos não seja um oráculo de tentativas ilimitadas.
+**Honeypot reaproveitado do template original, não inventado.** O campo
+oculto `empresa` (`aria-hidden`, `tabindex="-1"`,
+`templates/commercial-pages/ConexaoGreen/index.html:165`) virou
+`LEAD_HONEYPOT_FIELD` — se vier preenchido, a rota responde exatamente como
+sucesso (`200 { ok: true }`), sem nunca chamar `submit_lead`, pra não dar
+sinal a um bot de que foi pego.
+**Threshold escolhido.** 5 submissões por IP a cada 60 minutos — janela mais
+longa e limite mais apertado que o de login, porque preencher o mesmo
+formulário várias vezes rápido é comportamento de spam, não o
+compartilhamento de IP por CGNAT que motivou o limite de 30/15min do login
+(ADR-012) — um lead não tem o mesmo risco de bloquear usuários legítimos
+vizinhos. **Correção ao texto original, ver ADR-036.** Este parágrafo
+originalmente apontava `LEAD_MAX_SUBMISSIONS_PER_IP`/`LEAD_RATE_LIMIT_WINDOW_MS`
+(`modules/leads/domain/lead-rules.ts`) como a fonte desses dois números,
+passados por `submit_lead` como parâmetros do chamador. `20260802000000_fix_submit_lead_rate_limit.sql`
+removeu essa passagem — os dois números acima são hoje literais fixos dentro
+da própria função, sem parâmetro nenhum governando-os; as duas constantes em
+`lead-rules.ts` foram removidas. O valor do threshold não mudou, só onde ele
+vive — ver ADR-036 para o porquê.
+**Verificado manualmente contra o projeto de teste, não só com testes
+automatizados.** Uma submissão real inseriu uma linha em `leads` (`ok:true`
+— só alcançável depois do `insert` bem-sucedido dentro de `submit_lead`,
+confirmado lendo a própria função); a 6ª submissão da mesma origem em menos
+de uma hora voltou `429`; uma origem diferente não foi afetada pelo mesmo
+limite; o honeypot preenchido voltou `200` sem inserir; um representante
+inexistente voltou `404`. Rodado via `curl` com `Host` forjado, não pelo
+navegador do sandbox de preview — esse não resolve subdomínios
+`*.localhost`, limitação do ambiente de teste, não do código. **Essa
+verificação, como ADR-036 documenta, provou o comportamento de `POST
+/api/leads`, não de `submit_lead` chamado direto — a distinção importa, ver
+ADR-036.**
+**Alternativas rejeitadas.** Uma segunda variável de ambiente de salt
+(`LEAD_SUBMISSION_SALT` ou similar) — rejeitada por criar um segundo
+segredo pra rotacionar/vazar sem necessidade, quando reaproveitar
+`LOGIN_ATTEMPT_SALT` cobre o mesmo objetivo (nunca guardar IP em texto
+puro) sem esse custo. Separar `is_lead_blocked`/`record_lead_submission`
+em duas chamadas, espelhando login literalmente — rejeitada porque lead não
+tem a distinção sucesso/falha que motiva esse split em login (ver acima).
+**Custo de reversão.** Baixo — uma função e uma tabela novas, sem tocar
+`leads`/`login_attempts`; removível sem afetar nenhum outro fluxo.
+
+### ADR-035 — Link de WhatsApp construído a partir de `representative.phone`, sem novo campo/formato
+**Decisão.** `WhatsappCta`
+(`src/modules/representatives/presentation/whatsapp-cta.tsx`) monta um link
+`https://wa.me/<dígitos>?text=<mensagem>` a partir de
+`representative.phone` — a mesma URL que todo template original já usava
+(`https://wa.me/{{REP_WHATSAPP}}?text=...`,
+`templates/commercial-pages/ConexaoGreen/index.html`), só trocando o
+placeholder pelo dado real. Nenhuma coluna nova: `representatives.phone`
+(`20260731000000_create_representative_domain.sql`) já existia e já era
+lido por `LicenseeIdentificationBlock` (ADR-033).
+**Por que normalizar os dígitos em vez de assumir um formato salvo.**
+`representatives.phone` é `text` livre, sem constraint de formato — `wa.me`
+exige só dígitos, com código do país, sem `+`/espaços/pontuação. Assume
+Brasil (+55), mesma suposição que `formatPhoneToE164` já faz pro telefone
+do formulário de lead (ADR-034) e que o resto do projeto já faz em outros
+lugares (janela de CGNAT em ADR-012, copy só em português).
+**Não depende do endpoint de leads.** É renderizado direto de
+`representative.phone`, já disponível em `RepresentativeActivation`
+(ADR-031) — nenhuma chamada de rede adicional, nenhuma dependência de
+`submit_lead`/ADR-034.
+**Consequência.** Se `representative.phone` for `null`, o componente não
+renderiza nada (`if (!representative.phone) return null`) — uma página de
+representante sem telefone cadastrado simplesmente não mostra o botão, em
+vez de mostrar um link quebrado.
+**Custo de reversão.** Baixo — um componente sem estado, sem tabela nova.
+
+### ADR-036 — `submit_lead` parava de aplicar seu próprio rate limit para qualquer chamador direto do RPC; corrigido removendo os parâmetros, não flooram com `greatest()`
+**Decisão.** `20260802000000_fix_submit_lead_rate_limit.sql` remove
+`p_max_attempts_ip` e `p_window_seconds` da assinatura de `submit_lead`
+(`supabase/migrations/20260801000000_add_lead_submission.sql`, ADR-034) — os
+dois números (5 tentativas / 3600s) viram literais fixos dentro da própria
+função, sem parâmetro nenhum governando-os. Adicionalmente, `submit_lead`
+ganhou validação mínima de formato/tamanho (telefone, e-mail, nome) — ver
+"Validação adicionada" abaixo. Nenhuma outra migration já aplicada foi
+editada (regra do README, acima); esta é uma migration nova.
+**A vulnerabilidade, e por que o texto original do ADR-034 não a pegou.**
+ADR-034 documentou uma verificação manual real (curl, rate limit 429 na 6ª
+tentativa) — mas contra `POST /api/leads`, que sempre chamava `submit_lead`
+com `p_max_attempts_ip: LEAD_MAX_SUBMISSIONS_PER_IP` e `p_window_seconds:
+LEAD_RATE_LIMIT_WINDOW_MS / 1000` fixos (`supabase-lead-gateway.ts`). Essa
+verificação nunca testou o que acontece quando o CHAMADOR escolhe esses dois
+valores — e `submit_lead` é `grant execute to anon`, então qualquer portador
+da chave publicável (pública por natureza) pode chamar o RPC direto, sem
+passar por `/api/leads`, sem o Zod de `leadSubmissionSchema`, sem o
+honeypot. Mesma classe de bug que `20260729000000_fix_login_attempts_cleanup.sql`
+já corrigiu em `record_login_failure` — um parâmetro controlado pelo
+chamador governando um limite dentro de uma função `SECURITY DEFINER`
+concedida a `anon` — mas aqui pior: `submit_lead` também faz o `insert` em
+`leads`, então bypassar o rate limit aqui não é só "ler um estado errado", é
+inserir dados de negócio ilimitadamente.
+**Reproduzido contra o projeto de teste antes de escrever a correção**
+(mesmo processo que `20260729000000` documenta no próprio cabeçalho, agora
+repetido para este caso): chamando `submit_lead` direto via
+`@supabase/supabase-js` com a chave anon, `p_window_seconds: 1,
+p_max_attempts_ip: 999999` em toda chamada, de um `p_ip_hash` fixo, contra um
+par (representative_id, product_id) real com ativação publicada — 8
+chamadas seguidas, 8 `data: true` (linha inserida todas as vezes). O piso
+`greatest(p_window_seconds, 1)`/`greatest(p_max_attempts_ip, 1)` que
+`submit_lead` já tinha (espelhando `is_login_blocked`) não ajuda aqui: ele só
+rejeita valor zero/negativo, e este ataque nunca precisou de um valor
+degenerado, só de um valor grande — que `greatest()` não limita por cima.
+Ver o cabeçalho da migration para o repro completo, incluindo o segundo
+achado abaixo.
+**Por que remover o parâmetro, não flooram com `greatest()` como
+`is_login_blocked` (ADR-012/ADR-018).** `is_login_blocked` é só leitura — um
+chamador direto pode, no máximo, ler "não bloqueado" para si mesmo com um
+threshold inflado, um risco já aceito e documentado (ADR-012: "a defesa fina
+continua sendo o rate limiter por e-mail"). `submit_lead` não é só leitura:
+decide E grava, na mesma chamada, numa tabela de negócio (`leads`). Um
+threshold inflado aqui não engana uma leitura, ele desliga a escrita
+protegida. `auth-rules.ts` continua sendo a fonte de verdade pros
+thresholds de login (leitura, ADR-012) — mas não existe justificativa
+equivalente para `submit_lead` aceitar um threshold do chamador, já que
+ninguém legítimo tem motivo pra querer escolher o próprio limite numa função
+que insere em nome dele. `LEAD_MAX_SUBMISSIONS_PER_IP`/
+`LEAD_RATE_LIMIT_WINDOW_MS` (`lead-rules.ts`) foram removidas no mesmo commit
+— nada mais as lia depois que `supabase-lead-gateway.ts` parou de passar
+esses dois parâmetros — deixar as constantes órfãs no lugar seria o mesmo
+risco de duas-fontes-de-verdade que esta correção existe para fechar.
+**Validação adicionada — segundo achado do mesmo repro, defesa em
+profundidade.** Mesma sessão de teste: uma chamada direta com
+`p_telefone_e164` = string de 200+ caracteres sem formato de telefone,
+`p_nome`/`p_cidade` = 5000 caracteres, `p_email` sem `@`: `data: true`,
+linha inserida como veio. `leadSubmissionSchema`
+(`modules/leads/presentation/schemas/lead.schema.ts`) rejeitaria tudo isso,
+mas um chamador direto do RPC nunca passa por ali. `submit_lead` ganhou
+checagem de formato/tamanho própria — deliberadamente NÃO uma cópia dos
+limites exatos do Zod (`LEAD_NAME_MIN_LENGTH`/`MAX_LENGTH`/
+`LEAD_CITY_MAX_LENGTH`), pra não recriar a mesma duas-fontes-de-verdade que
+acabou de ser fechada no rate limit: telefone precisa bater o formato E.164
+em si (padrão externo, `^\+[1-9]\d{6,14}$`), e-mail precisa ter `@`/`.` e
+caber no limite do RFC 5321 (320 caracteres, também um padrão externo), nome
+não pode ser vazio e tem um teto largo de 500 caracteres — acima de qualquer
+bound de negócio real, só pra barrar payload patológico, não pra duplicar
+regra de negócio que já vive no Zod. Ver o cabeçalho da migration para o
+raciocínio completo.
+**Verificado de novo, depois da correção, contra o mesmo projeto de teste.**
+As mesmas 8 chamadas do repro acima, agora contra a versão corrigida:
+chamadas 1–5 retornaram `true`, chamadas 6–8 retornaram `false` — o limite de
+5 é aplicado independente do que o chamador tentar passar (a assinatura nem
+aceita mais `p_max_attempts_ip`/`p_window_seconds`; uma chamada usando o
+formato antigo falha com erro de função inexistente, não silenciosamente
+ignora os parâmetros extras). O payload malformado do segundo achado agora
+retorna `false` sem inserir.
+**Teste automatizado.** `tests/lead-submission.integration.test.ts` — não
+existia teste nenhum pro módulo `leads` antes desta correção. Cobre: a
+assinatura antiga falhando (não apenas ignorando os parâmetros removidos), o
+limite de 5/hora sendo respeitado com um `ip_hash` fresco a cada chamada,
+uma origem não afetar outra, o caminho feliz, e os três formatos malformados
+(telefone/e-mail/nome) sendo rejeitados mesmo com um par
+representative/product válido. Descobre um par (representative, product)
+publicado em tempo de execução via as mesmas policies de SELECT público
+(ADR-030) em vez de fixar IDs do projeto de teste no código — a chave anon
+não tem como criar esse fixture (sem policy de INSERT em `representatives`/
+`product_activations`), então os testes que precisam de um par real
+pulam-se sozinhos (não falham) quando nenhum existe no projeto configurado.
+**O que NÃO foi feito.** Uma segunda variável de ambiente ou segredo — não
+precisava, nada aqui envolve salt/hash, só remoção de parâmetro e validação
+adicional. Reintroduzir os parâmetros com `greatest()` como piso (o padrão
+de `is_login_blocked`) — rejeitado pelo raciocínio acima: o piso não fecha o
+ataque real, que usa um valor grande, não degenerado. Espelhar exatamente os
+bounds do Zod na validação SQL — rejeitado para não recriar duas fontes de
+verdade duplicadas sobre o mesmo número.
+**Custo de reversão.** Baixo — mesma tabela e mesma função de antes, só a
+assinatura e o corpo mudaram; nenhum outro chamador de `submit_lead` existe
+além de `supabase-lead-gateway.ts`, já atualizado no mesmo commit.
+
 ---
 
 ## Accessibility

@@ -1,10 +1,13 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 
+import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
 import { LicenseeIdentificationBlock } from '@/modules/representatives/presentation/licensee-identification-block';
+import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
 import { Container } from '@/shared/layout/container';
+import { Card } from '@/shared/ui/card';
 import { Text } from '@/shared/ui/typography';
 
 /**
@@ -72,6 +75,22 @@ export default async function ProductPage({
         <div className="mt-8">
           <LicenseeIdentificationBlock representative={representative} />
         </div>
+
+        <div className="mt-6">
+          <WhatsappCta representative={representative} product={product} />
+        </div>
+
+        <Card variant="outlined" padding="lg" className="mt-8">
+          <Text as="h2" variant="title">
+            Prefere que a gente te chame?
+          </Text>
+          <Text as="p" variant="caption" className="mt-1">
+            Deixe seus dados que entramos em contato, sem compromisso.
+          </Text>
+          <div className="mt-4">
+            <LeadForm productSlug={productSlug} />
+          </div>
+        </Card>
       </Container>
     </main>
   );

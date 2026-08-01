@@ -4,9 +4,9 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as quatro
+## 1. Aplicar as migrations, nesta ordem, todas as seis
 
-São cumulativas — aplique as quatro, em ordem, nunca só a primeira. Cole cada
+São cumulativas — aplique as seis, em ordem, nunca só a primeira. Cole cada
 arquivo no SQL Editor do projeto e execute, ou rode `supabase db push` se
 preferir a CLI.
 
@@ -63,6 +63,39 @@ preferir a CLI.
    o comentário no topo do próprio arquivo para o raciocínio completo de
    cada policy, incluindo por que `representatives_select_public` só pôde
    ser criada depois de `product_activations` existir no arquivo.
+5. `supabase/migrations/20260801000000_add_lead_submission.sql` — cria
+   `lead_submission_attempts` (RLS habilitado, zero policies) e a função
+   `submit_lead()`, `SECURITY DEFINER`, mesmo padrão de
+   `is_login_blocked`/`record_login_failure` (passo 1 acima): checa o
+   rate limit por IP, valida que existe uma `product_activations`
+   `published` pro par (representative, product) recebido, insere em
+   `leads` e registra a tentativa — tudo numa função só, atomicamente. Não
+   introduz uma segunda variável de salt: reaproveita `LOGIN_ATTEMPT_SALT`
+   (seção "Variáveis de ambiente na Vercel" abaixo) pro hash do IP. Ver
+   ADR-034 no `README.md` principal
+   para o raciocínio completo, incluindo por que é uma função só (não três,
+   como no login) e por que só IP é limitado (não um segundo eixo de
+   identidade). **A versão criada aqui tem uma vulnerabilidade real, corrigida
+   no próximo passo — não pare nesta migration.**
+6. `supabase/migrations/20260802000000_fix_submit_lead_rate_limit.sql` —
+   **corrige uma vulnerabilidade real, não é opcional**, mesma classe da
+   corrigida no passo 2 acima: a versão de `submit_lead()` criada no passo 5
+   aceitava `p_max_attempts_ip`/`p_window_seconds` como parâmetros do
+   chamador, e a função é `grant execute to anon`. Qualquer portador da chave
+   publicável podia chamar o RPC direto (sem passar por `/api/leads`, sem o
+   Zod, sem o honeypot) com um threshold inflado (`p_max_attempts_ip:
+   999999`) e inserir em `leads` sem limite nenhum — pior que o bug do passo
+   2 porque, além de burlar um limite, insere dados de negócio direto.
+   Reproduzido pelos autores da migration contra um projeto descartável antes
+   de escrever a correção: 8 chamadas diretas seguidas, mesma origem, 8
+   inserções bem-sucedidas — ver o cabeçalho do próprio arquivo e ADR-036 no
+   `README.md` principal para o repro completo, incluindo um segundo achado
+   (nenhuma validação de formato/tamanho a nível SQL) corrigido na mesma
+   migration. **Um ambiente que aplicar só o passo 5 acima fica com essa
+   vulnerabilidade aberta**, mesmo que todo o resto deste README seja seguido
+   corretamente. `supabase-lead-gateway.ts` foi atualizado no mesmo commit
+   para a assinatura nova (9 parâmetros, sem os dois removidos) — nenhum
+   outro chamador de `submit_lead` existe.
 
 ## 2. Confirm email — decidido: DESLIGADO
 
