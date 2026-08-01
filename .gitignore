@@ -4,10 +4,30 @@ out
 build
 .DS_Store
 *.pem
-.env*.local
+
+# Todo arquivo de ambiente, não só os terminados em `.local`. O padrão
+# anterior era `.env*.local`, que deixava `.env`, `.env.production`,
+# `.env.development` e `.env.test` de fora — e o Next.js carrega todos eles,
+# então um `.env.production` criado por engano (o mesmo conteúdo de um
+# `.env.production.local`, só sem o sufixo) ia para o repositório com a URL e
+# as chaves do Supabase dentro. `.env.example` é a única exceção: é o template
+# de valores vazios que o README manda copiar, e é rastreado de propósito.
+.env*
+!.env.example
+
 .vercel
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# Artefatos de SO e de editor. `desktop.ini` não é hipotético aqui: este
+# repositório vive dentro de uma pasta do OneDrive, que o cria sozinho.
+desktop.ini
+Thumbs.db
+.idea/
+
+# Saídas de ferramenta que nunca devem ser versionadas.
+*.log
+coverage/
 
 # Editor settings are shared on purpose: they keep the CSS linter and the
 # TypeScript version consistent for everyone on the project.
