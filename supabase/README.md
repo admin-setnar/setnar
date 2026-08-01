@@ -315,10 +315,22 @@ e insira uma linha em `representatives` para cada uma — **A** e **B** —,
 ambas com `status = 'active'` e **nenhuma** `product_activations`. Anote os
 dois `profile_id` e os dois `id`.
 
+**As asserções abaixo são sobre presença/ausência das linhas de A e de B —
+nunca sobre contagem total.** Policies permissivas se somam com OR: se o
+projeto já tiver algum representante público de verdade (ex.: um fixture
+`joao-silva` usado por outro teste, com ativação `published`), ele também
+aparece nas consultas abaixo por conta própria — isso é
+`representatives_select_public`/`product_activations_select_published`
+funcionando, não vazamento das policies novas. Contar linhas só funciona num
+projeto onde nada além de A/B é público; a asserção real, que sobrevive a
+qualquer estado do projeto, é "a linha de A está presente" e "a linha de B
+está ausente".
+
 1. Autenticado como **A** (sessão real da aplicação, chave publicável — não o
    SQL Editor), consulte `representatives`.
-   **Observar:** volta exatamente uma linha, a de A. Antes desta migration
-   este mesmo passo voltava **zero** — é isso que ela conserta.
+   **Observar:** a linha de A está entre as retornadas. Antes desta migration
+   este mesmo passo não a retornava **de jeito nenhum** — é isso que ela
+   conserta.
 2. Ainda como **A**, consulte `representatives` filtrando pelo `id` de **B**.
    **Observar:** **zero linhas.** Esta é a ponta que prova que
    `representatives_select_own` não vazou entre representantes. Se voltar a
@@ -326,13 +338,23 @@ dois `profile_id` e os dois `id`.
 3. Crie, pelo SQL Editor, uma `product_activations` com `status = 'draft'`
    para **A** e outra para **B** (qualquer produto do passo 7).
 4. Como **A**, consulte `product_activations`.
-   **Observar:** só a ativação de A, e ela aparece **mesmo em `draft`** (antes
-   desta migration, `product_activations_select_published` escondia tudo que
-   não fosse `published`). A de B não aparece.
+   **Observar:** a ativação de A está entre as retornadas, **mesmo em
+   `draft`** (antes desta migration, `product_activations_select_published`
+   escondia tudo que não fosse `published`). A de B não aparece em nenhuma
+   linha.
 5. Sem sessão nenhuma (chave publicável, sem login), consulte as duas tabelas.
-   **Observar:** zero linhas nas duas — nenhum dos representantes tem ativação
-   publicada, então nada mudou para o visitante anônimo. Confirma que as
-   policies novas não abriram leitura pública por acidente.
+   **Observar:** nenhum traço de A nem de B em nenhuma das duas — nem a linha,
+   nem o `id`, nem o `slug`. Confirma que as policies novas não abriram
+   leitura pública por acidente.
+
+**Executado e confirmado em 2026-08-01**, no projeto de teste, com um
+`joao-silva` (representante público real, ativação `published`) já presente —
+exatamente o cenário acima: os passos 1 e 5 retornaram linhas extras
+pertencentes a `joao-silva`, e as cinco asserções de presença/ausência de A e
+B passaram sem exceção. Ver também o item 9 abaixo: foi rodando o passo 1
+deste roteiro que o ciclo de RLS entre `representatives` e
+`product_activations` foi descoberto, antes de qualquer uma destas policies
+chegar a produção.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 

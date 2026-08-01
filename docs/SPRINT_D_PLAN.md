@@ -292,6 +292,12 @@ licenciado.
 Se a decisão for A mesmo assim, o plano do §4 continua válido: só o passo D3
 muda de forma, e D3.A está descrito com o mesmo nível de detalhe que D3.B.
 
+**Decisão fechada (2026-08-01): Opção B.** Confirmado pelo Pedro, seguindo a
+recomendação acima. D3 prossegue pelos sub-passos de D3.B (§4) —
+`register_representative()` como onboarding explícito pós-login, mesmo
+formato `SECURITY DEFINER` do `submit_lead`. D3.A fica registrado como
+alternativa não escolhida, não como trabalho pendente.
+
 ---
 
 # 4. Plano de implementação, em passos pequenos
