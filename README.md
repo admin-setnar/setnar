@@ -1715,6 +1715,430 @@ segunda prova que ela não vazou (a sessão de um representante continua vendo
 zero linhas do outro). A segunda é a que importa e é a que um teste de
 caminho feliz não pegaria.
 **Custo de reversão.** Baixo — duas policies, `drop policy` desfaz.
+**Correção posterior.** O corpo de `product_activations_select_own` criado
+aqui foi substituído por `20260805000000_fix_rls_policy_cycle.sql` — ver
+ADR-039. Esta migration continua exatamente como foi aplicada; nada aqui foi
+editado.
+
+### ADR-039 — Ciclo de RLS entre `representatives` e `product_activations`; quebrado com `is_own_representative()` `SECURITY DEFINER`
+**Decisão.** `supabase/migrations/20260805000000_fix_rls_policy_cycle.sql`
+cria `is_own_representative(p_representative_id uuid)`, `security definer`,
+`stable`, `set search_path = public` — encapsula exatamente o `exists`
+(`representatives.profile_id = auth.uid()`) que estava inline em
+`product_activations_select_own` (ADR-038) — e recria essa policy sobre a
+função. Nenhuma migration já aplicada foi editada (regra do topo desta
+seção); `20260804000000` permanece intacta.
+**O bug, reproduzido nas duas pontas antes de qualquer linha desta migration
+ser escrita.** Depois de `20260803000000` + `20260804000000` aplicadas,
+consultas via PostgREST com a chave publicável (RLS de verdade — nunca o SQL
+Editor, que conecta como dono e ignora RLS) devolveram `HTTP 500`,
+`{"code":"42P17", "message":"infinite recursion detected in policy for
+relation \"representatives\""}` em `GET /rest/v1/representatives` e o mesmo
+código em `product_activations`. Reproduzido tanto **anônimo** (sem sessão,
+só a chave publicável) quanto **autenticado** (JWT real de um usuário criado
+pelo fluxo de signup) — os dois caminhos batem no mesmo 42P17; controles na
+mesma sessão (`profiles`, `products`/`companies`) continuaram `200`, então o
+erro é do ciclo, não da sessão nem da chave. `leads` também falhava, por
+tabela vizinha: `leads_select_own` consulta `representatives`, que arrasta o
+ciclo inteiro junto.
+**O ciclo.** `representatives_select_public` (`20260731000000:257-267`) já
+consultava `product_activations` dentro do seu `exists`;
+`product_activations_select_own` (`20260804000000`) passou a consultar
+`representatives` dentro do dela — cada tabela ganhou uma policy de SELECT
+que depende da outra, e o Postgres aborta com `42P17` em vez de expandir
+para sempre. `representatives_select_public` já estava em produção e
+funcionava sozinha; `product_activations_select_own` é a metade nova, então é
+ela que sai do caminho.
+**Correção de documentação — `20260804000000` (ADR-038) estava errada num
+ponto.** O comentário daquela migration (linhas 76-80) afirmava que "RLS não
+se aplica dentro do `exists` de uma policy (a subconsulta roda com os
+privilégios da própria policy)". Isso é falso — o próprio 42P17 é a prova
+direta: a única forma de a expansão da policy de `representatives` alcançar a
+de `product_activations` (e voltar) é RLS **sendo** aplicada dentro da
+subconsulta. RLS se aplica a toda tabela referenciada na expressão de uma
+policy, recursivamente, para qualquer papel sem `BYPASSRLS`. Consequência de
+segunda ordem, registrada porque é real e não hipotética: `leads_select_own`
+(`20260731000000:314-323`) nunca funcionou como aquele comentário supunha —
+antes de `20260804000000`, um representante sem ativação publicada não
+satisfazia `representatives_select_public` e por isso não conseguia ler os
+próprios leads; `representatives_select_own` fechou essa lacuna de lado, por
+acidente. Nada foi alterado em `leads` por causa disso — só registrado,
+porque o comportamento resultante já é o desejado.
+**Por que uma função `SECURITY DEFINER` quebra o ciclo.** `SECURITY DEFINER`
+roda como o dono da função — o mesmo dono das tabelas — e o dono não está
+sujeito a RLS (nenhuma tabela aqui usa `force row level security`). A
+checagem em `representatives` deixa de ser uma referência a `representatives`
+DENTRO da expressão da policy de `product_activations`: some do plano da
+consulta, e com ela o ciclo. Mesmo mecanismo de ADR-011/ADR-012, usado
+deliberadamente. Quebrar UM dos dois lados basta. `language plpgsql`
+(não `sql`) segue a consistência já usada em `submit_lead`/`handle_new_user`
+— deliberadamente sem apoiar essa escolha na alegação (falsa, verificada
+contra este mesmo banco: `is_login_blocked` é `language sql` + `security
+definer` sobre uma tabela com RLS e zero policies, e os testes de
+ADR-017/ADR-018 provam que ela bloqueia) de que uma função `language sql`
+seria inlined pelo planner e perderia o bypass — o planner recusa inline de
+função `prosecdef`, então essa justificativa não se sustentaria de qualquer
+forma.
+**Regra operacional que sai daqui, e que vale para D4 em diante.** Nenhuma
+policy nova pode ter `USING`/`WITH CHECK` que consulte uma tabela cujas
+próprias policies consultem de volta a tabela original. Se a checagem
+precisar atravessar essa aresta, encapsule em uma função `SECURITY DEFINER`
+— nunca inline o `exists` cruzado direto na policy.
+**Verificação.** `tests/rls-policy-cycle.integration.test.ts` — vermelho
+antes desta migration, verde depois. Deliberadamente só o caminho anônimo
+(42P17 é levantado na expansão do plano, antes de qualquer linha ser
+casada — `auth.uid()` nulo não enfraquece a checagem), para não criar uma
+linha descartável em `auth.users` a cada rodada de CI.
+**Custo de reversão.** Baixo — uma função e uma policy recriada sobre ela;
+o efeito pretendido por ADR-038 não muda.
+
+### ADR-040 — `register_representative()`, primeira escrita self-service em `representatives`; grant só a `authenticated`, nunca a `anon`
+**Decisão.** `supabase/migrations/20260806000000_add_register_representative.sql`
+cria `register_representative(p_slug, p_display_name, p_license_id, p_phone,
+p_city)`, `security definer`, `set search_path = public`, `language
+plpgsql`, `returns table (status text, representative_id uuid)`, mais a
+CHECK constraint `representatives_slug_not_reserved` sobre
+`representatives.slug`. Passo D3.B.1 de `docs/SPRINT_D_PLAN.md`
+(Opção B do §3, onboarding explícito pós-login, fechada em 2026-08-01).
+Nenhuma migration já aplicada foi editada.
+**A lacuna que fecha.** Até aqui, a única forma de criar uma linha em
+`representatives` era o SQL Editor manual (`representatives`/
+`product_activations` não têm policy de INSERT, e este projeto não tem
+service role key). Esta função é o primeiro caminho de escrita self-service
+do domínio do Representative — o passo que faz "criar conta" e "ter uma
+página comercial" deixarem de exigir intervenção manual entre os dois.
+**Por que `grant execute ... to authenticated`, nunca `anon` — ao contrário
+de `submit_lead`.** `submit_lead` é `anon` porque o chamador real é um
+visitante sem sessão. Aqui a lógica inteira depende de `auth.uid()` ser uma
+identidade real: "este usuário já tem representante?" e "a quem pertence a
+nova linha?" não fazem sentido sem uma. Concedida a `anon`, uma chamada sem
+sessão teria `auth.uid()` nulo — a pré-checagem de "já registrado" nunca
+casaria, e o INSERT bateria de frente na constraint `not null` de
+`representatives.profile_id`, vazando um erro cru de Postgres pelo RPC em
+vez de um resultado tipado. Não há caminho anônimo legítimo; a porta fica
+fechada na concessão (`revoke ... from public` + `grant ... to
+authenticated`), não numa checagem que poderia ter um furo.
+**Dois desvios do plano original de `docs/SPRINT_D_PLAN.md` §4/D3.B.1,
+registrados aqui porque são desvios, não uma leitura literal do plano:**
+1. **`p_display_name` é um quinto parâmetro**, não previsto na assinatura
+   original (`p_slug, p_license_id, p_phone, p_city`). O plano previa copiar
+   `display_name` de `profiles.full_name` dentro da função — descartado
+   porque `signUpSchema` só exige `NAME_MIN_LENGTH = 2` caracteres
+   (`auth-rules.ts:10`, "João" passa no cadastro) e a política de uso da
+   marca da iGreen exige "nome e sobrenome" no bloco de identificação
+   (`licensee-identification-block.tsx:40`). A alternativa — copiar de
+   `full_name` e rejeitar quando tiver menos de duas palavras — empurraria
+   esse usuário para um beco sem saída: `docs/SPRINT_D_PLAN.md`'s D5b (tela
+   de edição de perfil) nem lista `full_name` entre os campos que ganharão
+   UI de escrita. `p_display_name` chega pré-preenchido no formulário de
+   onboarding (D3.B.4) com `full_name`, mas é validado e gravado como o
+   valor que o usuário efetivamente confirmou — que pode divergir do nome de
+   cadastro. **Isto estende ADR-027**, não só o cita por analogia: aquele
+   ADR justifica `display_name` viver numa coluna própria em vez de um join
+   com `profiles.full_name`, mas assumia implicitamente que o valor seria
+   uma CÓPIA; esta migration aceita também DIVERGÊNCIA DE CONTEÚDO entre os
+   dois, uma extensão do precedente, não uma aplicação direta dele.
+2. **A correção de TOCTOU no INSERT** (ver abaixo) não estava prevista na
+   investigação original (Task 1, item 1.6, que listou a corrida como lacuna
+   conhecida e não resolvida) — o Pedro pediu explicitamente para fechá-la
+   nesta migration, não deixá-la para depois.
+**TOCTOU fechado no INSERT, não só na pré-checagem.** A pré-checagem "já
+tenho representante" e a pré-checagem de slug livre têm uma janela de
+corrida real entre duas chamadas concorrentes da mesma conta (duplo clique,
+retry de rede) — comum, não exótico. O INSERT roda dentro de um bloco
+`begin/exception` que captura `unique_violation`, usa `get stacked
+diagnostics ... constraint_name` para disambiguar QUAL das duas constraints
+UNIQUE de `representatives` foi violada (`representatives_profile_id_key`
+vs. `representatives_slug_key` — auto-geradas pelas duas colunas `unique`
+inline, `20260731000000:160,162`), e traduz cada uma para o status tipado
+correto (`already_registered` vs. `slug_taken`). Colapsar as duas num status
+genérico estaria errado: uma corrida de slug entre duas contas diferentes
+não é a mesma coisa que "você já tem representante", e reportar a causa
+errada confundiria quem perdeu a corrida de slug. Qualquer outra
+`unique_violation` (inesperada pelo schema atual) é relançada, nunca
+escondida atrás de um status genérico — mesmo espírito de "nunca vazar
+exceção não tratada" que `safeAuthCall`/ADR-020 já aplicam na camada de
+Server Actions.
+**Resultado tipado, não booleano.** Diferente de `submit_lead` (anti-
+enumeração deliberada, ADR-018/ADR-030/ADR-036), aqui o chamador já precisa
+estar autenticado — uma barra mais alta — e o dado mais sensível que uma
+rejeição poderia vazar (que um slug já existe) tem destino público por
+construção (regra 12, `DOMAIN_MODEL.md:565`; `representatives_select_public`
+já expõe publicamente o slug de todo representante ativo com ativação
+publicada). Vocabulário: `created`, `company_not_found`,
+`already_registered`, `slug_invalid` (formato ou palavra reservada — uma
+propriedade do INPUT), `slug_taken` (uma propriedade do ESTADO do banco),
+`display_name_invalid`, `license_id_invalid`, `phone_invalid`,
+`city_invalid`. `slug_invalid` e `slug_taken` são deliberadamente estados
+diferentes, não colapsados — ver o cabeçalho da migration.
+**Palavras reservadas — lista auditada, não a lista de exemplo do comentário
+original.** `20260731000000:136-139` citava "www, api, app, admin" como
+EXEMPLO. A lista real, auditada contra `src/app/*` e `setnar.tenant.ts`:
+`www, app, api, auth, admin, entrar, criar-conta, esqueci-senha,
+redefinir-senha, termos, privacidade, setnar, igreen`. Só `www` tem colisão
+FUNCIONAL (`www.setnar.com` já é hostname literal do tenant SETNAR —
+`extractRepresentativeSlug` nunca chegaria a resolver esse slug, então sem a
+reserva o INSERT teria sucesso mesmo assim, deixando um registro
+permanentemente inalcançável); o resto é prudência de marca/confusão
+(`app`/`api`/`auth` são rotas reais do domínio raiz sem colisão técnica —
+hosts diferentes —, mas confusas; `admin` não tem rota real hoje, reserva
+preventiva alinhada ao Stage 5; `setnar`/`igreen` são a marca do tenant e da
+Company semeada, e um representante com esses slugs resolveria em
+`setnar.setnar.com`/`igreen.setnar.com`, nada bloqueia isso hoje na
+resolução). Implementada como CHECK constraint (backstop de qualquer escrita
+futura, inclusive SQL Editor manual) **e** checagem redundante dentro da
+função — nunca como parâmetro do chamador (ADR-036). A função ADICIONALMENTE
+checa `p_slug` contra `companies.slug` dinamicamente, mais ampla que o CHECK
+(que não pode fazer subquery entre tabelas): cobre qualquer Company futura
+do Stage 5 sem exigir uma migration nova só para atualizar a lista estática.
+**`p_license_id` — BLOQUEADOR DE LANÇAMENTO, decisão do Pedro.** Validação
+só de FORMATO (não vazio, teto de 100 caracteres, sem regex de
+dígitos/checksum/prefixo) porque não existe, neste repositório, fonte
+confirmada do formato real do ID de licenciado exigido pela política de uso
+da marca da iGreen. Abrir cadastro público antes de confirmar esse formato
+com a iGreen arrisca publicar "Licenciado Autorizado iGreen Energy · ID
+{qualquer string}" sem garantia de correspondência a uma licença real — a
+exata falha de compliance que a política existe para evitar. Registrado em
+destaque no cabeçalho da migration; não resolvido, nem resolvível dentro de
+uma função Postgres (não há registro externo da iGreen para confirmar
+autenticidade).
+**`p_phone`/`p_city` — validação de forma, formato já precedente na camada
+SQL.** Telefone reaproveita o E.164 que `submit_lead` já valida
+(`^\+[1-9]\d{6,14}$`), não `BR_PHONE_PATTERN` (`lead-rules.ts`, máscara de
+input HTML, nunca antes aplicada a nível de banco) — escolhido por já ser o
+padrão estabelecido nesta camada (funções SQL) para o mesmo conceito de
+campo, em vez de inventar um terceiro formato.
+`representatives.phone` continua `text` livre sem CHECK de coluna (ADR-035
+é deliberado sobre isso); a validação vive só dentro da função. Cidade usa o
+mesmo teto de 500 caracteres que `submit_lead` já usa para `p_cidade` — sem
+formato externo, só um teto contra payload patológico. Ambos opcionais,
+string vazia normalizada para `null`.
+**Teste automatizado, e o que ele NÃO cobre.**
+`tests/register-representative.integration.test.ts` automatiza só a
+rejeição anônima — a função é autenticada por natureza, e sem service role
+key não há forma de criar uma conta descartável por rodada de CI e depois
+apagá-la (`representatives` não tem policy de DELETE). O caminho
+autenticado é um roteiro manual (`supabase/README.md`, passo 10): caminho
+feliz, colisão de slug entre duas contas reais, rejeição de palavra
+reservada, "já registrado" numa segunda chamada da mesma conta, e uma
+simulação (não uma prova real) de concorrência via `Promise.all` — o próprio
+roteiro documenta que duas chamadas "quase juntas" no mesmo processo não
+garantem sobreposição real de transações no Postgres; um teste de
+concorrência de verdade fica fora do escopo do D3.B.1.
+**Custo de reversão.** Baixo enquanto nenhum representante real existir —
+`drop function` mais `alter table ... drop constraint` desfazem; médio
+depois que houver linhas reais em `representatives` criadas por este
+caminho (mesma classe de custo que ADR-037 já registra para os UUIDs
+literais do catálogo).
+
+### ADR-041 — `RepresentativeOnboardingGateway` é uma porta nova, não um método a mais em `RepresentativeRepository`
+**Decisão.** D3.B.2: `register_representative()` (ADR-040) é consumido por
+uma porta própria,
+`src/modules/representatives/domain/representative-onboarding-gateway.ts`
+(`RepresentativeOnboardingGateway.register()`), não por um método novo em
+`RepresentativeRepository`. Adapter em
+`infrastructure/supabase-representative-onboarding-gateway.ts`, mapeamento
+puro do resultado do RPC em `infrastructure/map-register-representative-result.ts`
+(mesmo formato de `map-supabase-auth-error.ts` — tipo estrutural estreito, sem
+`server-only`, testável com objeto plano), factory em
+`infrastructure/representative-onboarding-gateway-factory.ts` (cópia do
+padrão de `getLeadGateway()`: `server-only`, cliente novo por chamada, nunca
+cacheado).
+**Por quê porta nova.** `RepresentativeRepository`'s próprio doc comment se
+declara a porta de resolução PÚBLICA (leitura anônima, para a Commercial
+Page) — mesmo raciocínio de "naturezas diferentes merecem portas
+diferentes" que o ADR-031 já usou para não dobrar `RepresentativeRepository`
+dentro de `TenantRepository`. Aqui o eixo é leitura-anônima vs.
+escrita-autenticada, não tamanho-da-lista, mas o raciocínio é o mesmo.
+Reforça uma convenção de nomenclatura que já existia sem estar documentada:
+neste projeto, "Repository" é sempre porta de leitura
+(`RepresentativeRepository`, `TenantRepository`) e "Gateway" é sempre porta
+de escrita/ação (`AuthGateway`, `LeadGateway`) — estender
+`RepresentativeRepository` com um método de escrita quebraria essa
+convenção e forçaria `InMemoryRepresentativeRepository` (usado pelos testes
+de resolução) a implementar um método de onboarding que nunca usa.
+**Resultado tipado, não anti-enumeração.** `RegisterRepresentativeResult`
+distingue `'created'` / `'rejected'` (com `reason`, os 8 literais exatos do
+`status` SQL, reaproveitados verbatim — não uma segunda tabela de tradução
+que pudesse divergir, mesma lição do ADR-036) / `'error'` (falha de
+infraestrutura ou uma forma de resposta que o mapeador não reconhece).
+Diferente de `SubmitLeadResult`, que colapsa toda rejeição de propósito —
+aqui o chamador já é autenticado (barra mais alta) e a Tarefa 1 do D3.B.1 já
+pediu a distinção entre os 8 motivos, então colapsá-los desfaria esse
+trabalho.
+**Teste.** `tests/map-register-representative-result.test.ts` cobre os 8
+motivos de rejeição, o caminho de sucesso, `status` desconhecido → `error`
+(nunca fabrica um resultado a partir de uma forma inesperada), e `data`
+nulo/vazio ou `error` não-nulo → `error`, sem precisar de um Supabase real.
+**Custo de reversão.** Baixo — dois arquivos de porta/adapter a mais;
+`RepresentativeRepository` não foi tocado.
+
+### ADR-042 — `/app` ramifica entre onboarding e hub por uma terceira porta, `RepresentativeAccountRepository`; sucesso do cadastro passa a navegar, não a renderizar
+**Decisão.** D3.B.5: `src/modules/representatives/domain/representative-account-repository.ts`
+(`findByProfileId(profileId): Promise<Representative | null>`), adapter
+`infrastructure/supabase-representative-account-repository.ts` e factory
+`infrastructure/representative-account-repository-factory.ts` (mesmo padrão
+`server-only`/cliente-por-chamada das outras duas). `src/app/app/page.tsx`
+usa o resultado para escolher entre `OnboardingForm` (null) e
+`RepresentativeHubPlaceholder` (não-null) — o hub de verdade (produtos
+ativados, link/QR Code, leads) é D5, e este componente é explicitamente um
+marcador mínimo, não ele. Nenhuma migration nova: `representatives_select_own`
+(`20260804000000:61-63`, ADR-038) já escopa essa leitura por
+`profile_id = auth.uid()`.
+**Por quê uma terceira porta, e não um método em `RepresentativeRepository`.**
+Mesmo raciocínio de ADR-031 e ADR-041, aplicado uma terceira vez:
+`RepresentativeRepository` se declara a porta de resolução PÚBLICA/anônima;
+`findByProfileId` é leitura autenticada da própria linha. Dobrá-la ali
+obrigaria `InMemoryRepresentativeRepository`
+(usado por `resolve-representative.test.ts`) a implementar um método que
+nunca usa — a mesma objeção que já valeu contra pendurar `register()` naquela
+porta. A convenção do módulo se mantém: "Repository" para leitura, "Gateway"
+para escrita.
+**Sem filtro de `status`, ao contrário da porta pública.**
+`findPublishedActivation` esconde representante não-`active` porque serve um
+visitante anônimo; aqui é o dono lendo o próprio registro, e um `suspended`
+é precisamente o que ele precisa enxergar — esconder seria mentir para o
+dono sobre o próprio estado. `.maybeSingle()`, não `.single()`: zero linhas é
+o resultado legítimo "ainda não se cadastrou", não um erro.
+**`registerRepresentativeAction` passa a `redirect('/app')`.** Com os dois
+estados existindo, sucesso tem para onde navegar — então segue a convenção
+que toda Server Action de auth já estabelece (retorno normal = falha; sucesso
+= navegação), com o `redirect()` DENTRO do callback do `safeOnboardingCall`
+para o `NEXT_REDIRECT` ser relançado e não engolido (ADR-020). O branch
+`'created'` de `OnboardingForm` morreu junto e foi removido, não deixado
+inalcançável.
+**Correção de tipo encontrada ao implementar isto, não antes.**
+`safeOnboardingCall` declarava `Promise<T | RegisterRepresentativeResult>` —
+unindo com o union INTEIRO, incluindo `'created'`. `safeAuthCall` só funciona
+como estreitador porque une com `AuthFailure`, que é UMA variante de
+`AuthResult`, não o union todo. Com o union inteiro, `'created'` voltava ao
+tipo de retorno de qualquer chamador por mais que `T` estreitasse, impedindo
+`registerRepresentativeAction` de declarar
+`Promise<RegisterRepresentativeFailure>`. Corrigido para
+`Promise<T | Extract<RegisterRepresentativeResult, { status: 'error' }>>` —
+o shape que o `catch` de fato devolve. Pego pelo `npm run typecheck`, não em
+revisão.
+**Custo de reversão.** Baixo — uma porta/adapter/factory a mais e um branch
+em `/app`; nada existente foi reescrito.
+
+### ADR-043 — Caminho de escrita da ativação de produto por duas funções `SECURITY DEFINER`, não por policies de INSERT/UPDATE
+**Decisão.** `supabase/migrations/20260807000000_add_product_activation_write_path.sql`
+cria `activate_product(p_product_id uuid)` e
+`set_activation_status(p_product_id uuid, p_status text)`, ambas
+`security definer`, `set search_path = public`, `language plpgsql`,
+`returns table (...)`, `revoke ... from public` + `grant ... to authenticated`
+(nunca `anon`). Nenhuma policy nova, nenhuma tabela, nenhuma coluna. Passo D4
+de `docs/SPRINT_D_PLAN.md`. Do lado do TypeScript: porta
+`ProductActivationGateway`, mapeadores puros
+(`map-product-activation-result.ts`), adapter e factory, mesmo formato do
+ADR-041.
+**A lacuna que fecha.** `product_activations` tinha RLS habilitado e SOMENTE
+policies de SELECT — nenhum INSERT, UPDATE ou DELETE por caminho nenhum, e
+este projeto não tem service role key. Sem isto, quem terminava o onboarding
+(D3.B) não conseguia colocar página pública no ar por meio nenhum.
+**Por que função e não policy — o argumento que decide.** O plano
+(`SPRINT_D_PLAN.md:500-503`) inclinava pela policy "porque o caso não tem o
+motivo que gerou as funções anteriores (acesso anônimo)". Isso é razão para a
+função não ser obrigatória, não razão para a policy ser melhor. O que decide
+é **quem nomeia o representante**: com policy, o cliente TEM que enviar
+`representative_id` no corpo do INSERT e a correção depende inteiramente de o
+`WITH CHECK` pegar um valor forjado; com função, a assinatura é
+`activate_product(p_product_id)` e o representante é derivado de `auth.uid()`
+por dentro — o chamador não tem como sequer nomear outro. Mesmo princípio do
+`tenant_id` em `handle_new_user()` (ADR-011) e do `company_id` em
+`register_representative()` (ADR-040). Três motivos secundários (policy não
+expressa transição, porque `USING` vê a linha antiga e `WITH CHECK` a nova sem
+que nenhuma veja as duas; policy não mantém `published_at` sem trigger; e ler
+`representatives` de dentro de uma policy de `product_activations` é a forma
+que a regra operacional do ADR-039 proíbe) estão detalhados no cabeçalho da
+migration, junto da contagem de objetos que cada rota exigiria.
+**Reconciliação registrada antes de desenhar qualquer checagem.**
+`DOMAIN_MODEL.md` descreve dois ciclos que parecem concorrentes e o schema
+materializa um só: §8.5 "Product Activation" (linha 357) tem
+"Activated → Deactivated", enquanto Draft/Published/Unpublished é de §8.6
+"Commercial Page" (linha 368) e §14.1. Ou seja, `product_activations.status`
+materializa a máquina de estados da **Commercial Page** sobre a linha da
+**Product Activation**: **neste código, uma Commercial Page É uma linha de
+`product_activations` com `status = 'published'`** — não existe tabela
+`commercial_pages`, e `findPublishedActivation` resolve a página direto de uma
+linha. Consequência que economiza uma checagem: a precondição "ao menos um
+Product ativado" (regra 10, `DOMAIN_MODEL.md:371`) é satisfeita por
+construção, porque a linha publicada É a ativação. A leitura errada teria
+produzido um `exists` inútil.
+**Máquina de transições.** `activate_product` é o único caminho que cria
+linha, sempre em `draft`; `set_activation_status` só aceita `published` ou
+`unpublished` como alvo. `draft → published` e `unpublished → published`
+passam pelo gate; `published → unpublished` é sempre permitida;
+`draft → unpublished` é rejeitada (`invalid_transition`, seguindo
+`DOMAIN_MODEL.md:649`); qualquer destino `draft` é rejeitado
+(`invalid_status`). Mesmo-estado é **sucesso idempotente sem escrita**, não
+erro — mesma razão do trabalho de TOCTOU do ADR-040: duplo clique e retry de
+rede são comuns. `activate_product` é idempotente pela mesma lógica e, quando
+a linha já existe, **não toca em `status`** — reativar um produto já
+publicado não pode rebaixá-lo para `draft` e tirar a página do ar.
+**Gate de publicação, granular e em ordem deliberada.** Três precondições,
+verificadas nesta ordem, e a primeira que falhar é a reportada:
+`representatives.status = 'active'` → `representative_not_active`;
+`display_name` não vazio após trim → `display_name_required`; `phone` não
+vazio após trim → `phone_required`. Razão própria por precondição, e não um
+"não é possível publicar" genérico, porque a UI de D5.2 precisa saber
+exatamente o que pedir ao representante para corrigir. A ordem importa: um
+representante suspenso não deve receber "preencha seu telefone" como
+orientação. `phone` é exigido porque sem ele `WhatsappCta` não renderiza
+(ADR-035) e uma Commercial Page sem CTA não é uma Commercial Page.
+**Dois desvios conscientes no gate**, registrados aqui e não descobertos
+depois: `avatar_url` NÃO é exigido, desvio explícito da regra 7 — não existe
+Storage, não existe upload e nada renderiza esse campo, então exigir uma foto
+que ninguém consegue enviar tornaria a publicação impossível; e Subscription
+ativa NÃO é checada (regra 21, `DOMAIN_MODEL.md:650`) — é D7, e publicar aqui
+ignora cobrança por completo, que é o estado conhecido de hoje e não uma
+regressão desta migration.
+**Regra 4 (Retired Product) é inaplicável, não esquecida.**
+`DOMAIN_MODEL.md:348` diz que um Product retirado não pode ser ativado, mas
+`products` não tem coluna de status e `20260731000000:70-77` registra que esse
+ciclo foi deliberadamente não modelado. `activate_product` não checa isso
+porque não há o que checar; criar a coluna é decisão de outra migration.
+**`published_at`: primeira publicação, nunca sobrescrito, nunca anulado.**
+Setado no primeiro `→ published` (via `coalesce`); republicar não o atualiza;
+despublicar não o anula. Sem precedente no projeto, então o raciocínio fica
+registrado: isso torna `published_at is not null` um fato durável ("já foi
+pública alguma vez"), que é exatamente o que a regra 12 (`DOMAIN_MODEL.md:565`,
+o slug não deve mudar depois de publicado) precisa para algum dia ser
+exequível, e nada mais no schema o registra. Sobrescrever destruiria
+informação de forma irreversível; manter perde apenas um "no ar desde X", que
+uma migration futura pode adicionar como coluna própria. Entre uma escolha
+reversível e uma irreversível, sem consumidor para nenhuma das duas hoje, a
+reversível ganha. Também é coerente com `activated_at` ao lado, que é carimbo
+de criação e nunca é atualizado.
+**Quarta porta do módulo, com o limiar declarado.**
+`ProductActivationGateway` mora em `src/modules/representatives/` porque
+`DOMAIN_MODEL.md` §7.3 (linhas 222-223) atribui Product Activation a
+Representative Management — Catalog Management (§7.4) é dona de Catalog e
+Product, não de Activation — e nenhum módulo `catalog` existe. A convenção do
+módulo se mantém: "Repository" lê, "Gateway" escreve. Isso leva o módulo a
+**quatro portas**, o que é aceitável agora (cada uma tem chamador e postura de
+autenticação distintos), mas o limiar fica registrado: **se aparecer um módulo
+`catalog` de verdade ou a superfície de administração do Stage 5, esta porta é
+a primeira coisa a sair de `representatives/`.** A porta é deliberadamente só
+de escrita — ler "minhas ativações" (que o D5 vai precisar) pertence a uma
+porta de leitura, e `product_activations_select_own` já desbloqueia esse
+acesso.
+**Nota de implementação que não deve ser "limpa".** As duas funções são
+`returns table (status text, ...)` e `status` também é nome de coluna em
+`representatives` e em `product_activations`; o parâmetro OUT sombreia o nome,
+e uma referência não qualificada levantaria "column reference is ambiguous"
+**em tempo de execução**, não na criação. Por isso toda coluna aparece
+qualificada por alias e todo retorno passa por `return query select`.
+**Teste.** `tests/map-product-activation-result.test.ts` cobre os dois
+mapeadores: sucesso, cada motivo de rejeição, `status` desconhecido → `error`,
+`data` nulo/vazio → `error`, `error` não-nulo → `error`, e sucesso com id
+ausente → `error` (nunca fabrica id). Também afirma que cada mapeador rejeita
+o status de sucesso **do outro** — as duas strings mais plausíveis de vazarem
+entre eles por copy-paste. As funções SQL em si não têm teste automatizado,
+mesma lacuna aceita do ADR-040: verificação manual em `supabase/README.md`,
+passo 11.
+**Custo de reversão.** Baixo — `drop function` nas duas; nenhuma policy,
+tabela ou coluna foi tocada, e nenhuma linha existente é migrada.
 
 ---
 

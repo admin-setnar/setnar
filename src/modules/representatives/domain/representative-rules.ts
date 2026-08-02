@@ -1,0 +1,95 @@
+/**
+ * Representative onboarding business rules.
+ *
+ * These constants are the single source of truth for the presentation layer
+ * (Zod schema, form copy) — no framework imports allowed. Same spirit as
+ * `modules/auth/domain/auth-rules.ts`.
+ */
+
+/**
+ * Slug format — lowercase letters/digits/hyphens, no leading/trailing/
+ * consecutive hyphen. The single source of truth for this shape in
+ * TypeScript: `application/resolve-representative.ts` imports this constant
+ * rather than keeping its own private copy (a real duplication removed by
+ * this file's introduction, not a preexisting convention).
+ *
+ * This is NOT the only place this exact pattern lives — the CHECK constraint
+ * `representatives_slug_format` and the same regex inline in
+ * `register_representative()`
+ * (`supabase/migrations/20260731000000_create_representative_domain.sql`,
+ * `20260806000000_add_register_representative.sql`) enforce it again in SQL.
+ * That copy is deliberately NOT unified with this one — SQL cannot import
+ * TypeScript, same reasoning already recorded in `20260806000000`'s header
+ * for why its own literals (E.164 phone, city length, ...) are not imported
+ * from this module either. Keep the two in sync by hand if this shape ever
+ * changes.
+ */
+export const REPRESENTATIVE_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/**
+ * "Nome e sobrenome" — the minimum shape the iGreen brand usage policy
+ * requires for the licensee identification block
+ * (`presentation/licensee-identification-block.tsx`). See ADR-040 for why
+ * this is a form field (`p_display_name`) rather than copied unchecked from
+ * `profiles.full_name`.
+ */
+export const DISPLAY_NAME_MIN_WORDS = 2;
+
+/**
+ * Same number as `auth-rules.ts`'s `NAME_MAX_LENGTH` (80) — coincidence of
+ * ceiling, not a shared source of truth. Declared as its own literal here,
+ * not imported from the `auth` module, to avoid coupling `representatives`
+ * to `auth` over a number that may drift over time — same reasoning already
+ * recorded in `20260806000000_add_register_representative.sql`'s header for
+ * why `p_display_name`'s SQL-level ceiling is a literal, not an import.
+ */
+export const DISPLAY_NAME_MAX_LENGTH = 80;
+
+/**
+ * `license_id` — format validation only. No pattern is declared here on
+ * purpose: there is no confirmed source, anywhere in this repository, for
+ * the real shape of an iGreen licensee id. See the "BLOQUEADOR DE
+ * LANÇAMENTO" warning in `20260806000000_add_register_representative.sql`'s
+ * header — this ceiling is a placeholder, not a validated format, and must
+ * not grow a regex here without that confirmation landing first.
+ */
+export const LICENSE_ID_MAX_LENGTH = 100;
+
+/** Same ceiling `submit_lead` already uses for `p_cidade` — no external format exists for a city name, just a ceiling against pathological input. */
+export const CITY_MAX_LENGTH = 500;
+
+/**
+ * Matches the mask `templates/commercial-pages/ConexaoGreen/index.html`'s
+ * own `telefone` input already validates client-side
+ * (`pattern="\(\d{2}\)\s\d{4,5}-\d{4}"`) — duplicated from
+ * `modules/leads/domain/lead-rules.ts`, not imported: `leads` and
+ * `representatives` do not import from each other today, and importing one
+ * constant across that boundary for a four-character regex would introduce
+ * exactly the kind of cross-module coupling this project's port-per-module
+ * shape avoids elsewhere. Keep the two definitions in sync by hand if the
+ * mask ever changes.
+ */
+export const BR_PHONE_PATTERN = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
+
+/**
+ * Converts the masked BR phone the form collects ("(11) 98888-7777") into
+ * the E.164 shape `register_representative`'s `p_phone` expects. Assumes
+ * Brazil (+55) — same assumption `lead-rules.ts`'s own `formatPhoneToE164`
+ * makes, duplicated here for the same reason `BR_PHONE_PATTERN` is above.
+ */
+export function formatPhoneToE164(rawPhone: string): string {
+  const digits = rawPhone.replace(/\D/g, '');
+  return `+55${digits}`;
+}
+
+/**
+ * "Nome e sobrenome" in its most permissive shape: at least two
+ * whitespace-separated non-empty tokens after trimming. Deliberately does
+ * not reject single-character tokens or hyphenated/compound names — this is
+ * a shape check for the brand policy's minimum, not a name-validity opinion.
+ */
+export function hasAtLeastTwoWords(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) return false;
+  return trimmed.split(/\s+/).length >= DISPLAY_NAME_MIN_WORDS;
+}

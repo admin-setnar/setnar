@@ -4,9 +4,9 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as nove
+## 1. Aplicar as migrations, nesta ordem, todas as onze
 
-São cumulativas — aplique as nove, em ordem, nunca só a primeira. Cole cada
+São cumulativas — aplique as onze, em ordem, nunca só a primeira. Cole cada
 arquivo no SQL Editor do projeto e execute, ou rode `supabase db push` se
 preferir a CLI.
 
@@ -165,6 +165,54 @@ preferir a CLI.
    **Verificação:** `tests/rls-policy-cycle.integration.test.ts` (roda em
    `npm run test` com `.env.local` configurado) — vermelho antes desta
    migration, verde depois.
+10. `supabase/migrations/20260806000000_add_register_representative.sql` —
+    passo D3.B.1 (`docs/SPRINT_D_PLAN.md` §4/D3.B, Opção B): cria
+    `register_representative(p_slug, p_display_name, p_license_id, p_phone,
+    p_city)`, `SECURITY DEFINER`, `grant execute` só para `authenticated`
+    (**nunca** `anon` — ao contrário de `submit_lead`; ver o cabeçalho da
+    migration), e a CHECK constraint `representatives_slug_not_reserved`
+    sobre `representatives.slug`. É a primeira escrita self-service em
+    `representatives`: resolve `company_id` no servidor (nunca aceito do
+    chamador), rejeita com resultado tipado se `auth.uid()` já tiver
+    representante (pré-checagem e uma corrida de fato coberta por captura de
+    `unique_violation`, não só a pré-checagem), valida `p_slug` contra o
+    mesmo regex do CHECK `representatives_slug_format` e contra a lista de
+    palavras reservadas, e valida forma (não regra de negócio) de
+    `p_display_name`/`p_license_id`/`p_phone`/`p_city`. Ver ADR-040 no
+    `README.md` principal para o raciocínio completo, incluindo os dois
+    desvios do plano original (`p_display_name` como parâmetro novo; o
+    aviso de bloqueador de lançamento sobre o formato de `license_id`).
+    **Verificação:** `tests/register-representative.integration.test.ts`
+    cobre só a rejeição anônima — o caminho autenticado (a maior parte do
+    que esta função faz) é só manual, seção própria mais abaixo neste
+    arquivo (**passo 10**).
+11. `supabase/migrations/20260807000000_add_product_activation_write_path.sql`
+    — passo D4 (`docs/SPRINT_D_PLAN.md` §4/D4): cria `activate_product(p_product_id)`
+    e `set_activation_status(p_product_id, p_status)`, as duas `SECURITY
+    DEFINER` e `grant execute` só para `authenticated` (**nunca** `anon`,
+    mesma lógica de concessão do passo 10). Nenhuma policy nova, nenhuma
+    tabela, nenhuma coluna. É o caminho de escrita que faltava: até esta
+    migration, `product_activations` tinha RLS habilitado e **somente**
+    policies de SELECT — nenhum INSERT/UPDATE/DELETE por caminho nenhum —,
+    então quem terminava o onboarding do passo 10 **não conseguia colocar
+    nenhuma página pública no ar**. `activate_product` cria a ativação em
+    `draft` derivando o representante de `auth.uid()` (o chamador nunca nomeia
+    `representative_id`) e recusa produto fora do catálogo da própria company
+    (regra 6); `set_activation_status` aplica a máquina de transições
+    (`draft`/`unpublished` → `published` passam pelo gate de publicação;
+    `published` → `unpublished` sempre permitida; `draft` → `unpublished`
+    rejeitada; qualquer destino `draft` rejeitado; mesmo-estado é sucesso
+    idempotente) e mantém `published_at` (setado só na primeira publicação,
+    nunca sobrescrito, nunca anulado). Gate de publicação, na ordem em que é
+    avaliado: `representatives.status = 'active'`, `display_name` não vazio,
+    `phone` não vazio — cada falha com razão própria, não um erro genérico.
+    Ver ADR-043 no `README.md` principal para o raciocínio completo, incluindo
+    por que são funções e não policies de INSERT/UPDATE, e os dois desvios
+    conscientes do gate (foto não exigida; Subscription não checada — D7).
+    **Verificação:** os dois mapeadores têm teste unitário
+    (`tests/map-product-activation-result.test.ts`), mas **as funções SQL em
+    si não têm teste automatizado nenhum** — a verificação é manual, seção
+    própria mais abaixo neste arquivo (**passo 11**).
 
 ## 2. Confirm email — decidido: DESLIGADO
 
@@ -355,6 +403,151 @@ B passaram sem exceção. Ver também o item 9 abaixo: foi rodando o passo 1
 deste roteiro que o ciclo de RLS entre `representatives` e
 `product_activations` foi descoberto, antes de qualquer uma destas policies
 chegar a produção.
+
+## Verificação manual obrigatória — registro de representante (passo 10)
+
+`tests/register-representative.integration.test.ts` cobre só a rejeição de
+um chamador anônimo — `register_representative` é `grant execute` só para
+`authenticated`, e a lógica real (já ter representante, colisão de slug,
+palavra reservada, a corrida do TOCTOU) só existe para uma sessão de verdade.
+Sem service role key, não há como criar uma conta descartável por rodada de
+CI e depois apagá-la (`representatives` não tem policy de DELETE — só as de
+SELECT do ADR-038), então este roteiro é a verificação real do passo 10, à
+mão, contra contas de teste reais — mesma disciplina do passo 8.
+
+**Fixture**: crie duas contas de teste pela aplicação (`/criar-conta`) que
+ainda não tenham representante — **A** e **B**. Nenhum SQL Editor aqui: o
+ponto é exercitar a função pela sessão real de cada conta.
+
+1. Autenticado como **A**, chame `register_representative` com um `p_slug`
+   livre, `p_display_name` com duas palavras (ex. `"Ana Teste"`),
+   `p_license_id` qualquer não-vazio, `p_phone`/`p_city` nulos.
+   **Observar:** `status = 'created'`, `representative_id` preenchido.
+   Confirme com um SELECT em `representatives` (sessão de A, cobre também o
+   passo 8) que a linha existe com os valores enviados.
+2. Ainda como **A**, chame `register_representative` de novo, com um `p_slug`
+   diferente (livre) mas a mesma sessão.
+   **Observar:** `status = 'already_registered'`, `representative_id` nulo —
+   é a pré-checagem funcionando, não ainda a corrida do passo 5.
+3. Autenticado como **B**, chame `register_representative` com o MESMO
+   `p_slug` que A usou no passo 1.
+   **Observar:** `status = 'slug_taken'`. Prova que a pré-checagem de slug
+   funciona entre contas diferentes, não só a de "já registrado" da mesma
+   conta.
+4. Ainda como **B** (ainda sem representante), chame `register_representative`
+   com `p_slug = 'admin'` (ou qualquer outra da lista em
+   `20260806000000`'s cabeçalho).
+   **Observar:** `status = 'slug_invalid'`.
+5. Ainda como **B**, dispare duas chamadas de `register_representative` "quase
+   juntas" (dois `await` em paralelo via `Promise.all`, mesmo `p_slug` livre,
+   no console do navegador ou num script) na mesma sessão.
+   **Observar:** uma retorna `'created'`, a outra `'already_registered'` — e
+   nenhuma das duas trava ou devolve um erro cru de Postgres.
+   **Limitação deste passo, registrada e não resolvida:** duas chamadas
+   `fetch`/`rpc` disparadas "quase juntas" no mesmo processo Node/browser não
+   são uma prova de concorrência de verdade — não há garantia de que as duas
+   transações cheguem ao Postgres sobrepostas o bastante para de fato disputar
+   a mesma UNIQUE. Este roteiro manual não consegue fazer melhor que isso; um
+   teste de concorrência de verdade exigiria dois processos/conexões
+   independentes disparados por fora deste roteiro, fora do escopo do
+   D3.B.1.
+
+**Executado e confirmado em: 2026-08-01**, contra o projeto de teste, com
+três contas reais (A, B reaproveitada de uma tentativa anterior — descartada
+do roteiro por já ter representante —, e C usada para os passos 3–5). Os 5
+passos passaram sem exceção. Observação registrada: a checagem de palavra
+reservada roda antes da checagem de "já registrado" na ordem interna da
+função — uma conta já registrada ainda recebe `slug_invalid` para uma
+palavra reservada, não `already_registered`.
+
+## Verificação manual obrigatória — ativação de produto (passo 11)
+
+`tests/map-product-activation-result.test.ts` cobre os dois mapeadores de
+TypeScript, mas **nenhum teste automatizado exercita `activate_product` ou
+`set_activation_status` contra um banco real** — e, ao contrário do passo 10,
+aqui nem a rejeição anônima está automatizada. Toda a lógica (regra 6, máquina
+de transições, gate de publicação, `published_at`) só existe para uma sessão
+autenticada, e sem service role key não há como criar e depois limpar uma
+conta descartável por rodada de CI. Este roteiro é a verificação real do
+passo 11.
+
+**Fixture**: use uma conta de teste que já tenha completado o onboarding do
+passo 10 (representante **R**), e anote o `id` de dois produtos do catálogo do
+passo 7 — chame de **P1** e **P2**. Todas as chamadas abaixo são RPC pela
+sessão real da aplicação (chave publicável), nunca pelo SQL Editor — o SQL
+Editor conecta como dono e ignora tanto RLS quanto a concessão que este passo
+existe para verificar.
+
+1. **Sem sessão nenhuma** (chave publicável, sem login), chame
+   `activate_product` e depois `set_activation_status`.
+   **Observar:** as duas chamadas **falham** — a função nunca foi concedida a
+   `anon`. Se qualquer uma responder com um resultado tipado em vez de erro, a
+   concessão está errada; pare aqui. Mesma checagem que o passo 10 faz para
+   `register_representative`, porque a lógica de concessão é idêntica.
+2. Autenticado como **R**, chame `activate_product(P1)`.
+   **Observar:** `status = 'activated'`, `activation_id` preenchido. Confirme
+   com um SELECT em `product_activations` (sessão de R, coberto pelo passo 8)
+   que a linha existe com `status = 'draft'` e `published_at` nulo.
+3. Ainda como **R**, chame `activate_product(P1)` de novo.
+   **Observar:** `status = 'activated'` com **o mesmo `activation_id`** —
+   idempotente, sem linha nova e sem erro.
+4. Como **R**, chame `activate_product` com um UUID que não existe em
+   `products`.
+   **Observar:** `status = 'product_not_found'`. (A regra 6 —
+   `product_not_in_catalog` — só é observável com uma segunda Company semeada
+   à mão, que este ambiente não tem; **não coberto por este roteiro**, ver a
+   nota no fim.)
+5. Como **R**, chame `set_activation_status(P2, 'published')` — um produto que
+   **não** foi ativado.
+   **Observar:** `status = 'not_activated'`, distinto de `product_not_found`.
+6. Como **R**, chame `set_activation_status(P1, 'draft')`.
+   **Observar:** `status = 'invalid_status'` — nunca um erro cru de violação
+   do CHECK da coluna.
+7. Como **R**, chame `set_activation_status(P1, 'unpublished')` com P1 ainda
+   em `draft`.
+   **Observar:** `status = 'invalid_transition'`.
+8. **Gate de publicação.** Garanta, pelo SQL Editor, que `R.phone` está nulo
+   ou vazio, e chame `set_activation_status(P1, 'published')`.
+   **Observar:** `status = 'phone_required'` — a razão exata, não um erro
+   genérico. Repita com `R.status = 'suspended'`: **observar**
+   `representative_not_active`, e note que ele vem **antes** de
+   `phone_required` mesmo com o telefone ainda vazio — é a ordem deliberada do
+   gate. Restaure `R.status = 'active'` e preencha `R.phone` antes de seguir.
+9. Como **R**, com o perfil já completo, chame
+   `set_activation_status(P1, 'published')`.
+   **Observar:** `status = 'updated'` e `published_at` **preenchido**. Anote
+   esse timestamp.
+10. Chame `set_activation_status(P1, 'published')` de novo.
+    **Observar:** `status = 'updated'`, `published_at` **idêntico** ao anotado
+    — mesmo-estado é idempotente e não recarimba.
+11. Chame `set_activation_status(P1, 'unpublished')` e depois
+    `set_activation_status(P1, 'published')` outra vez.
+    **Observar:** as duas retornam `'updated'`, e `published_at` continua
+    **exatamente o mesmo timestamp do passo 9** nas duas — despublicar não
+    anula, republicar não sobrescreve. Esta é a asserção que prova a semântica
+    de `published_at` do ADR-043; se o valor mudar, a função está errada.
+12. Como **R**, chame `activate_product(P1)` com P1 agora `published`.
+    **Observar:** `status = 'activated'` e, num SELECT logo em seguida, P1
+    **continua `published`** — reativar não pode rebaixar para `draft` e tirar
+    a página do ar.
+13. Com P1 publicado e o perfil completo, visite a página pública real
+    (`<slug-de-R>.setnar.com/<slug-de-P1>`, ou via `curl -H 'Host: ...'` em
+    dev).
+    **Observar:** a página resolve e renderiza — é o elo inteiro fechando,
+    ativação escrita pelo produto virando Commercial Page pública.
+
+**Não coberto por este roteiro, exaustivamente:** `product_not_in_catalog`
+(regra 6) exigiria uma segunda Company com produto próprio, que nenhum
+ambiente tem hoje; `representative_not_found` exigiria uma conta autenticada
+sem representante chamando as RPCs direto (possível, mas é o mesmo tipo de
+defesa já exercitado no passo 10); `display_name_required` não é alcançável
+por conta criada pelo produto, já que `register_representative` rejeita nome
+vazio — só por linha inserida à mão; e concorrência real em `activate_product`
+(dois processos disputando a mesma UNIQUE), pela mesma limitação registrada no
+passo 5 do roteiro do passo 10.
+
+**Executado e confirmado em:** _(preencher na primeira vez que este roteiro
+rodar contra um projeto real — mesmo formato dos passos 8 e 10 acima)_.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 

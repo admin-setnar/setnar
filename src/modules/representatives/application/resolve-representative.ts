@@ -2,8 +2,7 @@ import { getTenantRepository } from '@/modules/tenancy/infrastructure/tenant-rep
 
 import type { RepresentativeActivation } from '@/modules/representatives/domain/representative';
 import type { RepresentativeRepository } from '@/modules/representatives/domain/representative-repository';
-
-const REPRESENTATIVE_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+import { REPRESENTATIVE_SLUG_PATTERN } from '@/modules/representatives/domain/representative-rules';
 
 /**
  * Resolves the public Commercial Page a request is for, given the raw `Host`
