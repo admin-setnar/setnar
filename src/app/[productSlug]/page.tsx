@@ -6,6 +6,7 @@ import { getAnalyticsGateway } from '@/modules/analytics/infrastructure/analytic
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
+import { ComplianceNotice } from '@/modules/representatives/presentation/compliance-notice';
 import { LicenseeIdentificationBlock } from '@/modules/representatives/presentation/licensee-identification-block';
 import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
 import { Container } from '@/shared/layout/container';
@@ -116,6 +117,8 @@ export default async function ProductPage({
             <LeadForm productSlug={productSlug} />
           </div>
         </Card>
+
+        <ComplianceNotice productSlug={productSlug} />
       </Container>
     </main>
   );

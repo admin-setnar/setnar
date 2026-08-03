@@ -89,8 +89,8 @@ describe('maskBRPhone', () => {
     assert.equal(maskBRPhone('119888'), '(11) 9888');
   });
 
-  it('inserts the dash once a 5th subscriber digit is typed, splitting the last 4 as the suffix', () => {
-    assert.equal(maskBRPhone('1198888'), '(11) 9-8888');
+  it('inserts the dash once a 5th subscriber digit is typed, keeping the first 4 subscriber digits fixed and growing the suffix', () => {
+    assert.equal(maskBRPhone('1198888'), '(11) 9888-8');
   });
 
   it('produces the full mask for a complete 11-digit mobile number', () => {

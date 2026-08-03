@@ -45,15 +45,12 @@ export function formatPhoneToE164(rawPhone: string): string {
 }
 
 /**
- * Progressive BR phone mask for the `telefone` input's `onChange` — turns
- * whatever the visitor just typed, pasted or autofilled into `BR_PHONE_PATTERN`'s
- * shape as they go, capped at 11 digits (DDD + 9-digit mobile number, the
- * pattern this form targets). Always re-derives the mask from the raw digits
- * rather than tracking previous cursor/character state, so it is naturally
- * idempotent: re-running it on its own output is a no-op, and deleting a
- * digit anywhere in the middle of an already-masked value (backspace,
- * selection delete) just re-masks correctly on the next `onChange`, with no
- * separate "unmask before edit" step needed.
+ * Progressive BR phone mask for the `telefone` input's `onChange` —
+ * reformats digits as they're typed so the input ends up in
+ * `BR_PHONE_PATTERN`'s shape by the time the visitor finishes. Only inserts
+ * the `-` once there are enough digits for a fixed line (10 total) or mobile
+ * (11 total) number; anything shorter renders as just `(DD) rest` so partial
+ * input never looks broken mid-type.
  *
  * Not wired to `formatE164ToBRPhone` (`representatives/domain/representative-rules.ts`)
  * on purpose: that function only ever reverses this project's OWN
@@ -66,13 +63,9 @@ export function maskBRPhone(rawValue: string): string {
 
   if (digits.length === 0) return '';
   if (digits.length <= 2) return `(${digits}`;
-
-  const ddd = digits.slice(0, 2);
-  const rest = digits.slice(2);
-
-  if (rest.length <= 4) return `(${ddd}) ${rest}`;
-
-  const suffix = rest.slice(-4);
-  const prefix = rest.slice(0, rest.length - 4);
-  return `(${ddd}) ${prefix}-${suffix}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }

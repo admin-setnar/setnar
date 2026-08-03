@@ -102,32 +102,26 @@ export function formatE164ToBRPhone(e164Phone: string): string {
 }
 
 /**
- * Progressive BR phone mask for `RepresentativeProfileForm`'s `phone` input
- * `onChange` — duplicated from `modules/leads/domain/lead-rules.ts`'s own
- * `maskBRPhone`, not imported, same cross-module boundary reasoning as
- * `BR_PHONE_PATTERN` above. Turns
- * whatever was just typed, pasted or autofilled into `BR_PHONE_PATTERN`'s
- * shape as the visitor goes, capped at 11 digits (DDD + 9-digit mobile).
- * Always re-derives the mask from the raw digits rather than tracking
- * previous cursor/character state, so it is naturally idempotent: re-running
- * it on its own output is a no-op, and deleting a digit anywhere in the
- * middle of an already-masked value just re-masks correctly on the next
- * `onChange`.
+ * Progressive BR phone mask for `RepresentativeProfileForm`'s and
+ * `OnboardingForm`'s `phone` input `onChange` — duplicated from
+ * `modules/leads/domain/lead-rules.ts`'s own `maskBRPhone`, not imported,
+ * same cross-module boundary reasoning as `BR_PHONE_PATTERN` above.
+ * Reformats digits as they're typed so the input ends up in
+ * `BR_PHONE_PATTERN`'s shape by the time the user finishes. Only inserts the
+ * `-` once there are enough digits for a fixed line (10 total) or mobile (11
+ * total) number; anything shorter renders as just `(DD) rest` so partial
+ * input never looks broken mid-type.
  */
 export function maskBRPhone(rawValue: string): string {
   const digits = rawValue.replace(/\D/g, '').slice(0, 11);
 
   if (digits.length === 0) return '';
   if (digits.length <= 2) return `(${digits}`;
-
-  const ddd = digits.slice(0, 2);
-  const rest = digits.slice(2);
-
-  if (rest.length <= 4) return `(${ddd}) ${rest}`;
-
-  const suffix = rest.slice(-4);
-  const prefix = rest.slice(0, rest.length - 4);
-  return `(${ddd}) ${prefix}-${suffix}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
 }
 
 /**
