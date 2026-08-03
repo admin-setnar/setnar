@@ -2140,6 +2140,148 @@ passo 11.
 **Custo de reversão.** Baixo — `drop function` nas duas; nenhuma policy,
 tabela ou coluna foi tocada, e nenhuma linha existente é migrada.
 
+### ADR-044 — `RepresentativeCatalogRepository`, quinta porta do módulo: leitura cruzada do Catalog da Company com as próprias Product Activations (D5.1)
+**Decisão.** `domain/representative-catalog-repository.ts` define
+`RepresentativeCatalogRepository.listOwnCatalog(profileId)`, retornando
+`RepresentativeCatalogEntry[]` — cada Product da Company do representante,
+cruzado com o estado da própria ativação (`not_activated`/`draft`/
+`published`/`unpublished`). O adapter `SupabaseRepresentativeCatalogRepository`
+roda três leituras (representante próprio → `id`/`company_id`; produtos da
+company; ativações próprias) e delega o cruzamento a uma função pura,
+`mergeRepresentativeCatalog` (`infrastructure/merge-representative-catalog.ts`),
+testável sem cliente Supabase — mesmo padrão dos mapeadores de RPC deste
+módulo. Passo D5.1 de `docs/SPRINT_D_PLAN.md`.
+**Nenhuma migration nova.** `products_select_public` (`using (true)`,
+`20260731000000`) já cobre o catálogo; `product_activations_select_own`
+(`20260804000000`/`20260805000000`) já cobre as próprias ativações em
+qualquer status, incluindo `draft`/`unpublished`, que a policy pública
+esconde. A auditoria que precedeu D5 confirmou isso antes de qualquer código
+ser escrito.
+**Quinta porta, não um método a mais.** Mesma "naturezas diferentes merecem
+portas diferentes" já usada três vezes (ADR-031, ADR-041, ADR-042):
+`RepresentativeAccountRepository.findByProfileId` responde "qual é minha
+própria linha" (uma tabela, uma linha); `listOwnCatalog` responde "como está
+meu Catalog" (duas tabelas, muitas linhas, cruzadas) — adapter e formato de
+retorno diferentes o bastante para não caber na mesma implementação sem
+forçar `SupabaseRepresentativeAccountRepository` a fazer algo que sua própria
+função não pede.
+**Teste.** `tests/merge-representative-catalog.test.ts` cobre o cruzamento
+puro: produto sem ativação → `not_activated`; produto com ativação → status
+repassado; mistura preservando ordem dos produtos; ativação "órfã" (produto
+de outra company, que a regra 6 já impede na prática) ignorada; lista vazia;
+`unpublished` tratado como qualquer outro status conhecido. As três queries
+do adapter em si não têm teste automatizado — mesma lacuna aceita nos outros
+adapters deste módulo, coberta por verificação manual (`supabase/README.md`).
+**Custo de reversão.** Baixo — arquivo novo, nenhuma tabela/policy tocada;
+remover a porta só afeta quem a chama (`src/app/app/page.tsx`,
+`RepresentativeHub`).
+
+### ADR-045 — Server Actions de ativação: `null` significa sucesso, e um wrapper genérico substitui um por família (D5.2)
+**Decisão.** `activateProductAction`/`setActivationStatusAction`/
+`updateRepresentativeProfileAction` (`presentation/actions.ts`) retornam
+`Failure | null` — `null` para sucesso, o tipo de falha tipado
+(`ActivateProductFailure`/`SetActivationStatusFailure`/
+`UpdateRepresentativeProfileFailure`) para o resto — e chamam
+`revalidatePath('/app')` em vez de `redirect()`. As três compartilham um
+único wrapper, `safeRepresentativeWriteCall`
+(`presentation/safe-representative-write-call.ts`), genérico sobre
+`T extends { status: string }`.
+**Por que `null`, não a convenção "retorno normal é sempre falha" que
+`registerRepresentativeAction` usa.** Aquela convenção só funciona porque o
+sucesso termina em `redirect()`, que lança — o corpo da função nunca de fato
+retorna um valor de sucesso para o tipo checar contra. Ativar, publicar,
+despublicar e editar perfil não navegam: o hub permanece na mesma tela,
+atualizado por `revalidatePath`. Devolver um valor de sucesso "encolhido" de
+uma função cujo tipo de retorno EXCLUI esse variant (por exemplo,
+`{status:'activated', ...}` de uma função tipada `ActivateProductFailure`)
+seria uma mentira de tipo — `null` é a forma honesta de dizer "funcionou" sem
+alegar que a exclusão de tipo não existe.
+**Por que um wrapper genérico, não um terceiro/quarto arquivo quase
+idêntico.** `safeAuthCall` e `safeOnboardingCall` são dois wrappers quase
+idênticos por uma razão real e documentada: `safeOnboardingCall` é
+estreitado para `T extends RegisterRepresentativeResult` especificamente
+pelo problema de narrowing que `registerRepresentativeAction` tem (ver o
+comentário daquele arquivo). Nenhuma das três Server Actions de escrita deste
+passo tem esse problema — nenhuma redireciona — então um terceiro/quarto
+arquivo copiando a mesma estrutura seria duplicação sem diferença de
+comportamento para justificá-la. `safeRepresentativeWriteCall` nasceu como
+`safeActivationCall` (só para D5.2) e foi generalizado e renomeado no mesmo
+passo, antes de D5b reutilizá-lo, exatamente para não repetir esse corpo uma
+terceira vez.
+**Custo de reversão.** Baixo — três Server Actions e um wrapper
+compartilhado; nenhuma migration.
+
+### ADR-046 — Hub real substitui `RepresentativeHubPlaceholder`; o link público compõe-se de `SITE_URL`, não de uma nova leitura de hostname (D5.3)
+**Decisão.** `RepresentativeHub` (`presentation/representative-hub.tsx`)
+substitui `RepresentativeHubPlaceholder` em `/app`. Para cada ativação
+`published`, mostra `<slug>.<rootHost>/<productSlug>`, onde `rootHost` é
+`new URL(SITE_URL).hostname` (`config/site.ts` — `setnar.com` por padrão, ou
+`NEXT_PUBLIC_SITE_URL`). Sem QR Code, sem analytics — Stage 1 do ROADMAP,
+fora deste elo, conforme o próprio plano.
+**A lacuna que fecha.** O comentário do próprio
+`RepresentativeHubPlaceholder` já registrava: nada em
+`TenantClientView`/`useTenant()` expõe o hostname raiz. `/app` é sempre
+visitado no domínio raiz — nunca no subdomínio do próprio representante —
+então não existe `Host` de requisição para ler aqui, ao contrário de
+`extractRepresentativeSlug` (que resolve a direção oposta, subdomínio →
+slug, para uma página pública). A composição usa `SITE_URL` porque esse já é
+o único lugar do projeto que define o domínio raiz canônico
+(`buildTenantMetadata`/`config/seo.ts` já constroem `openGraph.url` a partir
+da mesma constante) — nenhuma abstração nova em `tenancy/` foi criada só
+para isto.
+**Por que não adicionar um campo a `Tenant`.** Cogitado e descartado: um
+`tenant.rootHostname` duplicaria `SITE_URL` como segunda fonte da mesma
+informação, sem nenhum consumidor que precise dela por `Tenant`
+especificamente — o único uso é este link, e ele já tem `SITE_URL`
+disponível sem passar por `resolveTenant()`.
+**Custo de reversão.** Baixo — a composição do link é uma linha dentro de
+`RepresentativeHub`; removê-la não afeta o resto do hub.
+
+### ADR-047 — `update_representative_profile`, função `SECURITY DEFINER`, não policy de UPDATE por coluna; `avatar_url` adiado (D5b)
+**Decisão.**
+`supabase/migrations/20260808000000_add_update_representative_profile.sql`
+cria `update_representative_profile(p_phone, p_city, p_license_id)`,
+`security definer`, `grant ... to authenticated` (nunca `anon`), validando os
+três campos com a mesma forma que `register_representative` já usa.
+`avatar_url` fica de fora — decisão do Pedro, tomada na auditoria D5/D5b
+antes de qualquer código: nada no app renderiza esse campo hoje (mesmo
+motivo já registrado no cabeçalho de `20260807000000` para excluí-lo do gate
+de publicação).
+**A escolha real, entre duas opções legítimas.** A auditoria levantou duas
+formas válidas: `grant update (colunas)` + policy escopada (a receita que o
+comentário de `20260728000000:31-40` já prescreve, ali para `profiles`) ou
+uma função. Nenhum dos dois motivos que levaram D4 (ADR-043) a escolher
+função por cima de policy se aplica aqui — não há máquina de estados, e
+`representatives.updated_at` já é mantido por um trigger existente. A razão
+real é outra: uma policy de UPDATE decide QUEM escreve, não VALIDA o que foi
+escrito — um chamador direto do RPC conseguiria gravar `phone`/`license_id`
+fora de forma através de uma policy, porque nenhuma das duas colunas tem
+CHECK. `register_representative` já valida forma na escrita inicial; deixar
+a edição sem a mesma validação reabriria exatamente esse furo. Decisão do
+Pedro, confirmada explicitamente na auditoria que precedeu este passo.
+**Sexta porta do módulo.** `RepresentativeProfileGateway`
+(`domain/representative-profile-gateway.ts`), separada de
+`RepresentativeOnboardingGateway` — mesmo raciocínio já usado quatro vezes:
+`register()` é uma escrita única, antes de a linha existir, com 8 motivos de
+rejeição; `update()` é uma escrita repetível contra uma linha que já existe,
+com 4 motivos de rejeição, sem sobreposição.
+**Substituição total, não merge parcial.** Os três parâmetros SUBSTITUEM o
+valor atual — a UI (`RepresentativeProfileForm`) pré-preenche os três com os
+valores vigentes, então "não editar um campo" e "reenviar o valor atual" são
+a mesma coisa a partir da Server Action para baixo. `formatE164ToBRPhone`
+(`domain/representative-rules.ts`), inversa de `formatPhoneToE164`, existe só
+para esse pré-preenchimento — converte o E.164 salvo de volta para a máscara
+BR que o input espera.
+**Teste.** `tests/map-update-representative-profile-result.test.ts` cobre o
+mapeador (mesmo formato dos outros três: sucesso, cada rejeição, status
+desconhecido, `data`/`error` nulos, não aceita o status de sucesso de outra
+RPC). `tests/representative-profile-schema.test.ts` cobre o Zod.
+`tests/representative-rules.test.ts` ganha os casos de
+`formatE164ToBRPhone`. A função SQL em si não tem teste automatizado — mesma
+lacuna aceita nas outras três, verificação manual em `supabase/README.md`.
+**Custo de reversão.** Baixo — `drop function`; nenhuma coluna, tabela ou
+linha existente é tocada.
+
 ---
 
 ## Accessibility

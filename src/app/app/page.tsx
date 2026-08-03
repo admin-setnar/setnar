@@ -4,8 +4,9 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { LogoutButton } from '@/modules/auth/presentation/logout-button';
 import { getRepresentativeAccountRepository } from '@/modules/representatives/infrastructure/representative-account-repository-factory';
+import { getRepresentativeCatalogRepository } from '@/modules/representatives/infrastructure/representative-catalog-repository-factory';
 import { OnboardingForm } from '@/modules/representatives/presentation/onboarding-form';
-import { RepresentativeHubPlaceholder } from '@/modules/representatives/presentation/representative-hub-placeholder';
+import { RepresentativeHub } from '@/modules/representatives/presentation/representative-hub';
 import { Card } from '@/shared/ui/card';
 import { Container } from '@/shared/layout/container';
 import { Text } from '@/shared/ui/typography';
@@ -30,12 +31,13 @@ export const metadata: Metadata = { title: 'Sua conta', robots: { index: false, 
  * D3.B.5: `getRepresentativeAccountRepository().findByProfileId(user.id)`
  * decides the branch below — `null` (no Representative row yet) renders
  * `OnboardingForm` (D3.B.4); a resolved `Representative` renders
- * `RepresentativeHubPlaceholder`, a deliberately minimal stand-in for D5's
- * real hub (activated products, public link/QR Code, lead list — none of
- * that exists yet). This replaces the D3.B.4 comment that used to say
- * `OnboardingForm` was mounted unconditionally, "provisório" — that is no
- * longer true of the code below; the substitution documented here IS the
- * follow-up that comment pointed at.
+ * `RepresentativeHub` (D5), which replaced `RepresentativeHubPlaceholder`.
+ *
+ * D5.1: the catalog read (`RepresentativeCatalogRepository.listOwnCatalog()`)
+ * only runs in the "has a Representative" branch — it needs the caller's own
+ * Representative row to resolve a `company_id` to filter Products by, so
+ * fetching it before knowing `representative` is non-null would be wasted
+ * work on the onboarding path.
  */
 export default async function AppHomePage() {
   const user = await getCurrentUser();
@@ -44,6 +46,9 @@ export default async function AppHomePage() {
   }
 
   const representative = await (await getRepresentativeAccountRepository()).findByProfileId(user.id);
+  const catalog = representative
+    ? await (await getRepresentativeCatalogRepository()).listOwnCatalog(user.id)
+    : [];
 
   return (
     <main id="conteudo" className="pt-16 pb-20">
@@ -66,7 +71,7 @@ export default async function AppHomePage() {
         </div>
 
         {representative ? (
-          <RepresentativeHubPlaceholder representative={representative} />
+          <RepresentativeHub representative={representative} catalog={catalog} />
         ) : (
           <Card variant="raised" padding="lg" className="mt-8">
             <Text as="h2" variant="title" className="mb-4">

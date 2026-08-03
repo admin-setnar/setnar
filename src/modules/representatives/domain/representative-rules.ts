@@ -83,6 +83,25 @@ export function formatPhoneToE164(rawPhone: string): string {
 }
 
 /**
+ * The inverse of `formatPhoneToE164` — turns the E.164 value stored in
+ * `representatives.phone` back into the BR mask `BR_PHONE_PATTERN` validates,
+ * so D5b's profile edit form can pre-fill an existing phone instead of
+ * showing the raw stored value or leaving the field blank. Only ever called
+ * with a value this codebase itself wrote (always `formatPhoneToE164`'s
+ * output, on `register_representative`/`update_representative_profile`'s
+ * write paths) — a phone typed directly into the database via the SQL
+ * Editor in some other shape is the one case this can't reverse, and it
+ * degrades to `''` (an empty field the representative can just fill in
+ * again) rather than showing something malformed.
+ */
+export function formatE164ToBRPhone(e164Phone: string): string {
+  const match = /^\+55(\d{2})(\d{4,5})(\d{4})$/.exec(e164Phone);
+  if (!match) return '';
+  const [, ddd, prefix, suffix] = match;
+  return `(${ddd}) ${prefix}-${suffix}`;
+}
+
+/**
  * "Nome e sobrenome" in its most permissive shape: at least two
  * whitespace-separated non-empty tokens after trimming. Deliberately does
  * not reject single-character tokens or hyphenated/compound names — this is

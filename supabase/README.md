@@ -4,9 +4,9 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as onze
+## 1. Aplicar as migrations, nesta ordem, todas as doze
 
-São cumulativas — aplique as onze, em ordem, nunca só a primeira. Cole cada
+São cumulativas — aplique as doze, em ordem, nunca só a primeira. Cole cada
 arquivo no SQL Editor do projeto e execute, ou rode `supabase db push` se
 preferir a CLI.
 
@@ -213,6 +213,28 @@ preferir a CLI.
     (`tests/map-product-activation-result.test.ts`), mas **as funções SQL em
     si não têm teste automatizado nenhum** — a verificação é manual, seção
     própria mais abaixo neste arquivo (**passo 11**).
+12. `supabase/migrations/20260808000000_add_update_representative_profile.sql`
+    — passo D5b (`docs/SPRINT_D_PLAN.md` §4/D5b): cria
+    `update_representative_profile(p_phone, p_city, p_license_id)`,
+    `SECURITY DEFINER`, `grant execute` só para `authenticated` (**nunca**
+    `anon`, mesma lógica de concessão dos passos 10/11). Nenhuma policy nova,
+    nenhuma tabela, nenhuma coluna. É a primeira escrita em `representatives`
+    **fora** do cadastro inicial (passo 10): substitui `phone`/`city`/
+    `license_id` do próprio representante autenticado por completo, validando
+    a mesma forma que `register_representative` já usa para os mesmos três
+    campos (E.164 para `phone`, teto de 500 para `city`, não-vazio e teto de
+    100 para `license_id`). `avatar_url` fica de fora — decisão do Pedro, ver
+    ADR-047. `slug`/`display_name`/`company_id`/`status` também ficam de
+    fora — fora de escopo do D5b, e `slug` em particular não pode ganhar
+    caminho de UPDATE aqui sem violar a regra 12 (endereço não muda depois de
+    publicado). Ver ADR-047 no `README.md` principal para o raciocínio
+    completo, incluindo por que função e não policy de UPDATE por coluna —
+    a mesma pergunta que o passo 11 já respondeu, aqui com uma resposta
+    diferente pelo motivo lá explicado.
+    **Verificação:** o mapeador tem teste unitário
+    (`tests/map-update-representative-profile-result.test.ts`), mas **a
+    função SQL em si não tem teste automatizado nenhum** — a verificação é
+    manual, seção própria mais abaixo neste arquivo (**passo 12**).
 
 ## 2. Confirm email — decidido: DESLIGADO
 
@@ -546,8 +568,71 @@ vazio — só por linha inserida à mão; e concorrência real em `activate_prod
 (dois processos disputando a mesma UNIQUE), pela mesma limitação registrada no
 passo 5 do roteiro do passo 10.
 
-**Executado e confirmado em:** _(preencher na primeira vez que este roteiro
-rodar contra um projeto real — mesmo formato dos passos 8 e 10 acima)_.
+**Executado e confirmado em 2026-08-03**, contra o projeto real do Pedro (não
+um projeto de teste descartável), com o representante `teste-novo-a`
+(onboarded no passo 10) e os produtos `conexao-green`/`conexao-club` como
+P1/P2. Os 13 itens passaram sem exceção, incluindo o gate de publicação
+(`phone_required` antes de preencher o telefone, `representative_not_active`
+com prioridade sobre ele ao suspender), a estabilidade de `published_at`
+através de republicar/despublicar/reativar, e a verificação final: a página
+pública (`teste-novo-a.setnar.com/conexao-green`, testada via `curl` local
+com `Host` forjado) resolveu e renderizou com o CTA do WhatsApp
+(`wa.me/5511987654321`) — o elo Auth → Commercial Page fechado de ponta a
+ponta com dado criado inteiramente pelo produto.
+
+## Verificação manual obrigatória — edição de perfil (passo 12)
+
+`tests/map-update-representative-profile-result.test.ts` cobre o mapeador de
+TypeScript, mas **nenhum teste automatizado exercita
+`update_representative_profile` contra um banco real**. Mesma limitação já
+registrada nos passos 10/11: toda a lógica só existe para uma sessão
+autenticada, e sem service role key não há como criar e depois limpar uma
+conta descartável por rodada de CI.
+
+**Fixture**: a mesma conta de teste **R** dos roteiros dos passos 10/11, já
+com representante. Todas as chamadas abaixo são RPC pela sessão real da
+aplicação (chave publicável), nunca pelo SQL Editor.
+
+1. **Sem sessão nenhuma** (chave publicável, sem login), chame
+   `update_representative_profile`.
+   **Observar:** a chamada **falha** — a função nunca foi concedida a
+   `anon`. Mesma checagem que os passos 10/11 fazem para suas próprias
+   funções.
+2. Autenticado como **R**, chame `update_representative_profile` com
+   `p_phone := '+5511977776666'`, `p_city := 'Curitiba'`,
+   `p_license_id := 'ID-NOVO-123'`.
+   **Observar:** `status = 'updated'`. Confirme com um SELECT em
+   `representatives` (sessão de R, coberto pelo passo 8) que as três colunas
+   mudaram para os valores enviados, e que `updated_at` avançou (o trigger
+   `representatives_set_updated_at` do passo 4 é automático).
+3. Ainda como **R**, chame de novo com `p_license_id := ''`.
+   **Observar:** `status = 'license_id_invalid'`, e um SELECT confirma que
+   `phone`/`city`/`license_id` **não mudaram** — a validação roda antes do
+   UPDATE, tudo ou nada, nenhuma escrita parcial.
+4. Ainda como **R**, chame com `p_phone := 'não-é-telefone'` (e
+   `p_license_id` válido).
+   **Observar:** `status = 'phone_invalid'`.
+5. Ainda como **R**, chame com `p_city` de mais de 500 caracteres (e os
+   outros dois válidos).
+   **Observar:** `status = 'city_invalid'`.
+6. Ainda como **R**, chame com `p_phone := null` e `p_city := null` (e
+   `p_license_id` válido).
+   **Observar:** `status = 'updated'`, e o SELECT confirma `phone`/`city`
+   **nulos** — limpar os campos opcionais é um resultado válido, não um erro,
+   mesma normalização de string vazia para NULL que `register_representative`
+   já usa.
+7. Autenticado como uma conta **sem** representante (ex.: uma conta nova,
+   criada pelo signup, que nunca completou o onboarding do passo 10), chame
+   `update_representative_profile` com os três parâmetros válidos.
+   **Observar:** `status = 'representative_not_found'`.
+
+**Executado e confirmado em 2026-08-03**, contra o projeto real do Pedro, com
+o representante `teste-novo-a` (R) e uma conta extra sem representante
+(`teste-sem-rep`) para o item 7. Os 7 itens passaram sem exceção: rejeição
+anônima (retestada no passo 13, após o fix do vazamento de EXECUTE),
+atualização válida, `license_id_invalid` (vazio), `phone_invalid` (formato),
+`city_invalid` (>500 caracteres), limpeza de `phone`/`city` para NULL como
+resultado válido, e `representative_not_found` para conta sem representante.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 
