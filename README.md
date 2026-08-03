@@ -2345,6 +2345,349 @@ real, depois de aplicar esta migration.
 migration nova; nenhuma tabela, coluna ou linha é tocada. Reverter a migration
 reabriria o furo, não vice-versa.
 
+### ADR-049 — QR Code renderizado no cliente, a partir da URL já resolvida; zero migration (QR1, `docs/QR_ANALYTICS_PLAN.md` §3.1)
+**Decisão.** `QrCodeCard` (`src/modules/representatives/presentation/qr-code-card.tsx`),
+um Client Component novo, renderiza o QR Code de cada ativação `published`
+dentro de `RepresentativeHub`, chamando `toDataURL` da lib `qrcode` sobre a
+mesma URL que o hub já compõe (`SITE_URL` + slug do representante + slug do
+produto, `representative-hub.tsx:46,74` — nenhuma leitura de hostname nova).
+"Baixar" e "copiar link" não precisam de nenhuma infraestrutura própria: o
+`data:` URI retornado por `toDataURL` serve tanto de `src` da `<img>` quanto
+de `href` de um `<a download>` (um `data:` URI é aceito diretamente pelo
+atributo `download`); "copiar link" é `navigator.clipboard.writeText` sobre a
+mesma string de URL já exibida na tela.
+**Alternativas.** Geração server-side (rota ou Server Action gerando
+PNG/SVG via a API Node da mesma lib) foi levantada e não escolhida — ver
+`docs/QR_ANALYTICS_PLAN.md` §3.1 para o custo completo de cada opção. O fator
+decisivo: o link atrás do QR é estável por construção (regra 12 do
+`DOMAIN_MODEL.md` — não muda silenciosamente depois de publicado), então não
+há evento de "geração" que precise ficar registrado no servidor no Stage 1;
+a regra 11 do `DOMAIN_MODEL.md` ("regenerating creates a new QR Code and
+invalidates the previous one") descreve um ciclo de vida que só passa a ter
+efeito prático quando o Stage 2 introduzir Smart QR Code apontando para um
+link de Campanha que pode mudar de alvo — não é ignorada aqui, só ainda não
+tem nada para invalidar.
+**Dependência nova.** `qrcode`/`@types/qrcode` — `docs/ENGINEERING_GUIDELINES.md`
+pede para preferir API nativa antes de adicionar dependência; gerar QR Code
+(correção de erro Reed-Solomon, matriz de módulos) não tem equivalente nativo
+no browser nem no Node, então a dependência é justificada independente de
+qual das duas opções acima fosse escolhida — a lib roda nos dois ambientes.
+**Custo de reversão.** Baixo — nenhuma migration, nenhuma RLS, nenhuma
+Server Action. Trocar para geração server-side depois é trocar o componente,
+não desfazer schema.
+
+### ADR-050 — `analytics_events`, tabela única de eventos crus com `ip_hash` embutido; zero função de escrita ainda (AN1, `docs/QR_ANALYTICS_PLAN.md` §3.4/§3.5)
+**Decisão.** Nova migration
+(`supabase/migrations/20260810000000_add_analytics_events.sql`) cria
+`analytics_events` (`representative_id`, `product_id`, `event_type` check
+`'visit'`/`'whatsapp_click'`, `referrer` nullable, `ip_hash`, `created_at`),
+`RLS enabled`, zero policies de escrita, e uma policy de SELECT por dono
+(`analytics_events_select_own`, via `is_own_representative()` do ADR-039).
+Nenhuma função `SECURITY DEFINER` é criada — `record_page_visit`/
+`record_whatsapp_click` são AN2/AN4, passos seguintes; até lá não existe
+nenhum caminho de escrita, nem anônimo nem autenticado.
+**`representative_id`/`product_id` são os dois NOT NULL — diferente de
+`leads.product_id` (nullable).** A regra 13 do `DOMAIN_MODEL.md` exige que
+todo Analytics/Visitor Event referencie exatamente uma Commercial Page ou
+uma Campaign, nunca nenhuma. Como Commercial Page é o par Representative ×
+Product (ADR-029) e Campaign ainda não existe (Stage 2), "exatamente uma
+Commercial Page" só é satisfeito com os dois campos presentes — deixar
+`product_id` nullable, espelhando `leads`, abriria uma linha sem Commercial
+Page nenhuma, o que a regra 13 e a constraint 7 (`DOMAIN_MODEL.md` §17)
+proíbem.
+**`ip_hash` mora na própria tabela, não numa tabela irmã de rate-limit.**
+Diferente de `leads`/`lead_submission_attempts`, aqui a mesma linha cumpre
+as duas funções — é o dado reportável (o evento) e a chave de rate-limit da
+futura `record_page_visit`/`record_whatsapp_click` — porque não há, para
+analytics, o par "dado de negócio permanente" / "artefato descartável" que
+justificou separar as duas tabelas do lead capture. A purga de `ip_hash`
+(AN7, `docs/QR_ANALYTICS_PLAN.md` §4, ainda em aberto) decidirá depois se
+anula só a coluna ou descarta a linha inteira — o schema não precisa mudar
+para nenhuma das duas.
+**Policy de SELECT reaproveita `is_own_representative()`** em vez de
+inlinar pela terceira vez o `exists (select 1 from representatives r ...)`
+que `leads_select_own` já usa. Não reabre o ciclo de RLS do ADR-039: aquele
+ciclo precisava de duas arestas (`representatives_select_public` ⇄
+`product_activations_select_own`); `analytics_events` só tem a aresta de
+saída, sem nenhuma policy de `representatives`/`product_activations`
+referenciando-a de volta.
+**Teste.** `tests/analytics-events-select-policy.integration.test.ts` cobre
+o lado anônimo (sem recursão/relação ausente, zero linhas para `anon`).
+Isolamento real entre dois representantes e o exercício do `check` de
+`event_type` por um chamador real **não são automatizáveis neste passo**:
+sem AN2/AN4 não existe nenhum caminho de escrita (nem pela chave
+publicável, nem por falta de service role key para semear dado direto) —
+mesma limitação que `register-representative.integration.test.ts` já
+documenta para outra tabela. O `check` de `event_type` é verificado
+manualmente via SQL Editor (`supabase/README.md`, passo 14), que ignora RLS
+mas nunca ignora CHECK/FK; o isolamento entre representantes fica para o
+roteiro de AN2/AN4, quando houver linha real para testar contra.
+**Custo de reversão.** Baixo — migration só de schema, nenhuma linha
+existe ainda (a tabela não tem caminho de escrita nenhum).
+
+### ADR-051 — `record_page_visit`/`record_whatsapp_click`, o caminho de escrita de `analytics_events`; resolvem por slug+slug, nunca por id (AN2 + AN4, `docs/QR_ANALYTICS_PLAN.md` §3.2/§3.6)
+**Decisão.** Uma migration só
+(`supabase/migrations/20260811000000_add_analytics_write_functions.sql`)
+cria as duas funções `SECURITY DEFINER` que escrevem em `analytics_events`
+(AN1) — `record_page_visit` (`event_type = 'visit'`) e
+`record_whatsapp_click` (`event_type = 'whatsapp_click'`) — mesma forma de
+`submit_lead`: retorno `boolean` anti-enumeration, limiares de rate limit
+como literais fixos (nunca parâmetro do chamador — ADR-036), `revoke ...
+from public` + `grant execute ... to anon, authenticated` explícito, nunca
+dependendo de `ALTER DEFAULT PRIVILEGES` (ADR-048). Uma migration para as
+duas, não duas: mesma forma exata, revisadas como uma unidade ("AN2 + AN4"),
+compartilhando o helper de bot abaixo — diferente de
+`submit_lead`/`20260802000000`, que são a MESMA função em dois momentos no
+tempo (criação e correção), não duas funções irmãs nascendo juntas.
+**Resolvem por slug+slug, nunca por id — diferente de `submit_lead`.**
+`submit_lead` recebe ids porque seu chamador (`/api/leads/route.ts`) já
+resolveu a ativação a partir do `Host` antes de chamar o RPC. Aqui a escolha
+é `p_representative_slug`/`p_product_slug` — os dois textos públicos que
+qualquer visitante já conhece só de estar na página (subdomínio =
+`representatives.slug`, ADR-026; segmento de path = `products.slug`) — e a
+função faz a resolução inteira sozinha. Não esconde nada que já não fosse
+público (`representatives_select_public`/`product_activations_select_published`
+já expõem esses ids a qualquer chave publicável); a vantagem é a checagem
+ficar autocontida, sem herdar confiança de uma resolução feita em outro
+lugar do código.
+**Filtro de bot (§3.2) estendido às duas funções — mesma decisão, não uma
+segunda.** `is_bot_user_agent(text)`, helper novo (`language sql immutable`,
+não `security definer` — não lê tabela nenhuma), com a lista de substrings
+do plano (`bot`, `crawler`, `spider`, `facebookexternalhit`, `whatsapp`)
+mais três adicionadas aqui (`curl`, `python-requests`, `headlesschrome`).
+Uma chamada filtrada retorna `true` sem inserir e sem consumir rate limit —
+nunca `false` — mesmo anti-enumeration de `submit_lead`, ao contrário: um
+retorno diferente de uma inserção real permitiria a um bot descobrir, por
+tentativa, quais substrings a lista contém.
+**Dois limiares, motivos distintos.** `record_page_visit`: 60/60s — evento
+passivo, volume maior esperado, janela curta cobre navegação rápida
+legítima entre produtos do mesmo representante sem esbarrar no limite.
+`record_whatsapp_click`: 5/3600s — DELIBERADAMENTE o mesmo par de
+`submit_lead` (`20260802000000`), não um número novo: `DOMAIN_MODEL.md`
+(Lead Attribution Service) descreve um clique no WhatsApp como um
+"conversion-intent Visitor Event", mesma classe de ação deliberada que já
+justificou o limiar de leads. Cada limiar conta só dentro do próprio
+`event_type`, então navegar bastante nunca consome o orçamento, bem mais
+apertado, dos cliques.
+**Par inválido não consome rate limit — divergência deliberada de
+`submit_lead`, causa é o schema já fechado em AN1.**
+`lead_submission_attempts` é uma tabela só de `(ip_hash, attempted_at)`,
+sem referência a representative/product — pode registrar "uma tentativa"
+sem sujeito válido. `analytics_events` acumula dado reportável E ledger de
+rate limit numa peça só (§3.5, já aplicada); `representative_id`/
+`product_id` são `not null` com FK, tornando estruturalmente impossível
+inserir uma linha "tentativa" sem par já válido. Risco residual avaliado
+como baixo: slug é informação pública (é a própria URL); nenhuma linha é
+escrita nesse caminho, então não há como poluir dado de um representante
+real por essa via — só round-trips rejeitados.
+**Sem limpeza dentro destas funções — diferente de `submit_lead`, de
+propósito.** `submit_lead` apaga suas próprias linhas de rate-limit >1 dia
+porque aquela tabela não tem valor além disso. `analytics_events` É o dado
+reportável; apagar aqui destruiria histórico real sob pretexto de limpar
+rate limit. Retenção/purga é AN7, ainda em aberto.
+**`p_referrer` truncado (`left(..., 2048)`), nunca rejeitado** — diferente
+de `nome`/`cidade` em `submit_lead`: o evento (uma visita aconteceu) já é
+verdadeiro e valioso independente do tamanho do referrer; descartar o
+evento inteiro por um header HTTP atípico jogaria fora dado real por motivo
+cosmético.
+**`p_ip_hash` nulo/vazio rejeitado explicitamente**, defesa em profundidade:
+sem essa checagem, `ip_hash = null` nunca bate na contagem de rate limit
+(comparação com NULL nunca é verdadeira em SQL) e o INSERT falharia com um
+erro cru de constraint em vez do `boolean` tipado que a função promete.
+**Double-check do ADR-048 — obrigatório, feito nas duas funções.**
+`select grantee, privilege_type from information_schema.role_routine_grants
+where routine_name in ('record_page_visit', 'record_whatsapp_click')` e uma
+chamada RPC HTTP crua, sem header `Authorization`, contra as duas —
+resultados registrados em `supabase/README.md`, passo 15, quando a migration
+for aplicada e o roteiro executado. Ao contrário do achado do ADR-048, aqui
+`anon` DEVE aparecer — é o resultado esperado, não um vazamento.
+**Teste.** `tests/analytics-write-functions.integration.test.ts`, mesma
+forma de `tests/lead-submission.integration.test.ts`. Cobertura assimétrica
+deliberada entre as duas funções: o limite de `record_whatsapp_click`
+(5/3600s) é saturado de verdade (6 chamadas, mesmo custo de dado que o
+teste de leads já aceita); o de `record_page_visit` (60/60s) não é saturado
+— faria 60 linhas reais só para reprovar o mesmo mecanismo de corte por
+`count(*)` já exercitado, num limiar menor, pela própria suíte de
+`record_whatsapp_click` e por `lead-submission.integration.test.ts`. O
+filtro de bot, que É específico destas duas funções, é testado a fundo (61
+chamadas para visita, 6 para clique, todas retornando `true`) — sem custo de
+dado nenhum, já que uma chamada filtrada nunca insere.
+**Custo de reversão.** Baixo — duas funções novas, zero alteração em
+`analytics_events` (AN1). Dropar as duas fecha o caminho de escrita sem
+tocar no schema.
+
+### ADR-052 — Correção ao ADR-051: `authenticated` tinha EXECUTE em `is_bot_user_agent`, apesar do comentário afirmar o contrário; `anon` estava correto
+**O ADR-051 (acima) está errado na metade.** Ele afirma que
+`is_bot_user_agent` "não é concedido a anon/authenticated". O double-check
+de grants que o próprio AN2/AN4 exigia (`information_schema.role_routine_grants`)
+mostrou `authenticated` com EXECUTE nessa função — só `anon` estava correto,
+confirmado também por RPC HTTP cru sem `Authorization`
+(`401 42501 permission denied`, o resultado certo). Mesmo padrão do ADR-039
+corrigindo um comentário errado de `20260804000000`: a migration antiga
+(`20260811000000`) não é editada (regra do README.md); esta entrada é a
+correção registrada.
+**Causa raiz — mesma classe do ADR-048, papel diferente.** `revoke ...
+from public` funcionou (por isso `anon` estava certo — o
+`alter default privileges ... revoke execute on functions from anon` do
+ADR-048 fechou especificamente o default de `anon` deste projeto). Mas
+aquela correção nunca tocou `authenticated`: este projeto Supabase tem (tinha)
+um default privilege próprio concedendo EXECUTE a `authenticated` em toda
+função nova — mesmo mecanismo do ADR-048 (`ALTER DEFAULT PRIVILEGES`, não um
+`grant` explícito), só que para o papel que, para as quatro funções
+originais do ADR-048, era o acesso CORRETO — por isso nunca foi fechado até
+agora, quando uma função (`is_bot_user_agent`) que não deveria ter
+`authenticated` nenhum expôs o gap.
+**Risco real, avaliado como baixo.** `is_bot_user_agent` não lê tabela, não
+muta nada, devolve só um `boolean` sobre o próprio parâmetro — nenhum dado
+vaza por essa concessão. Corrigido mesmo assim porque a documentação
+afirmava um comportamento que não era o real, e esse é exatamente o tipo de
+divergência que o ADR-048 existe para não deixar passar.
+**Correção.** Nova migration
+(`20260812000000_revoke_authenticated_from_is_bot_user_agent.sql`):
+`revoke execute on function public.is_bot_user_agent(text) from
+authenticated`. `record_page_visit`/`record_whatsapp_click` não são tocadas
+— `authenticated` nelas é o público pretendido (ADR-051), não um vazamento.
+**Custo de reversão.** Baixo — um `revoke` a mais, nenhum dado tocado.
+
+### ADR-053 — `record_page_visit`/`record_whatsapp_click` chamadas do app; `after()` para a visita, rota dedicada para o clique (AN3 + AN5, `docs/QR_ANALYTICS_PLAN.md` §4)
+
+**O que muda.** As duas funções `SECURITY DEFINER` do ADR-051 existiam desde
+`20260811000000` sem nenhum chamador no app. Este ADR fecha isso: `[productSlug]/page.tsx`
+chama `record_page_visit` depois de resolver a ativação; `WhatsappCta` chama
+`record_whatsapp_click` através de uma rota nova, `/api/track-click`. Zero
+migration — só código de aplicação, mesmo como o plano já previa.
+
+**Módulo novo, `analytics`, em vez de estender `leads`.** `AnalyticsGateway`
+(`modules/analytics/domain/analytics-gateway.ts`) é uma porta com dois
+métodos (`recordPageVisit`/`recordWhatsappClick`), implementada por
+`SupabaseAnalyticsGateway` e resolvida por `getAnalyticsGateway()` — mesma
+forma de `LeadGateway`/`getLeadGateway()`, não um método a mais ali. As duas
+funções SQL sempre andam juntas (mesmo desenho, mesmo filtro de bot, mesma
+migration — ADR-051), então uma porta com dois métodos, não duas portas,
+espelha isso; mas o domínio é outro (analytics não é lead capture), então um
+módulo próprio, não uma extensão de `leads` — mesmo raciocínio que já levou
+a `RepresentativeOnboardingGateway` (ADR-041) a ser uma porta nova em vez de
+inchar `RepresentativeRepository`.
+
+**`p_ip_hash`: `LOGIN_ATTEMPT_SALT` reaproveitado, não um salt novo — resposta
+concreta ao que §3.4 deixou em aberto.** O plano listava as duas opções sem
+decidir qual; a implementação segue o mesmo salt que `login-rate-limiter.ts`
+e `supabase-lead-gateway.ts` já leem, pela mesma razão que este último já
+documenta: um segundo salt não isola nenhum domínio de retenção que já não
+esteja isolado pelo próprio `ip_hash` morar em `analytics_events` (não numa
+tabela de rate-limit irmã, decisão já fechada em AN1/ADR-050). `hash()` é
+duplicada em `supabase-analytics-gateway.ts` em vez de importada de
+`supabase-lead-gateway.ts`, mesma razão que este último já dá para não
+importar de `login-rate-limiter.ts`: acoplar dois módulos de domínio por
+quatro linhas de crypto não paga o preço.
+
+**AN3 — `after()` (`next/server`), não um `await` bloqueando a renderização.**
+O plano exige que uma falha ou lentidão no RPC nunca atrase a página real. Um
+`await` dentro de um `try/catch` ainda atrasaria a resposta pelo tempo do
+round-trip a Postgres, mesmo capturando o erro; `after()` agenda o callback
+para rodar **depois** que a resposta já foi enviada, então nem uma exceção
+nem uma latência alta dentro dele pode, por construção, chegar ao visitante.
+`headers()`/`cookies()` continuam legíveis dentro do callback (garantia do
+próprio Next.js para `after()`), o que é o que permite `getAnalyticsGateway()`
+(que precisa de `cookies()` para montar o client Supabase) e `getClientIp()`
+funcionarem ali sem reabrir o contexto da requisição por fora dele. Chamado
+só depois do `if (!activation) notFound()` — mesma instrução do plano: não
+tentar a chamada num caminho que a página já sabe que vai dar 404.
+
+**AN5 — rota dedicada (`/api/track-click`), não uma Server Action.** Mesma
+forma de `/api/leads/route.ts` (ADR-034): `productSlug` é o único dado
+confiado do corpo, a rota resolve `representative`/`product` de novo a
+partir do `Host` da própria requisição
+(`resolveRepresentativeActivation`), nunca aceitando um id vindo do
+cliente. Uma Server Action não serviria aqui: o disparo é `fetch(...,
+{ keepalive: true })` de um `onClick` sem `preventDefault`, desenhado
+exatamente para sobreviver ao unload da aba (§3.3 do plano, decisão já
+fechada) — isso é o contrato de uma requisição HTTP comum, não o de uma
+Server Action.
+
+**`WhatsappCta` vira Client Component — única forma de interceptar o
+clique**, confirmado em §2.3 do plano: não havia `onClick` nenhum antes.
+`representative`/`product` continuam vindo como props do Server Component
+pai (`[productSlug]/page.tsx`) — são dados simples (`string`/`string | null`),
+sem nada que um Client Component não possa receber serializado.
+
+**`/api/track-click` sempre responde `200`.** O cliente nunca lê nem espera
+essa resposta (a navegação para `wa.me` já começou antes dela chegar), então
+não há nenhum consumidor para um código de erro comunicar algo a. Toda falha
+(corpo malformado, par inválido, erro no RPC) é capturada e logada,
+nunca repassada — mesmo espírito best-effort do AN3, aplicado ao lado da
+rota em vez de um `after()`, porque aqui o "atraso" que importa evitar é do
+lado do cliente (o `fetch` já é `keepalive`, sem `await` no `onClick`), não
+do lado do servidor.
+
+**Não coberto por este ADR, de propósito:** AN6 (exibir as estatísticas no
+hub) e AN7 (retenção/purga) — próximos passos do mesmo plano, ainda não
+implementados.
+
+**Custo de reversão.** Baixo — nenhuma migration, nenhum schema tocado; um
+`AnalyticsGateway` a menos ou uma rota a menos não desfaz nada persistido.
+
+### ADR-054 — Correção ao ADR-053: `ip_hash` de analytics passa a ter salt próprio (`ANALYTICS_IP_SALT`), não mais `LOGIN_ATTEMPT_SALT` reaproveitado
+
+**O ADR-053 (acima) decidiu errado nesse ponto específico.** Ele reaproveitou
+`LOGIN_ATTEMPT_SALT` para o `ip_hash` de `analytics_events`, apresentando
+isso como "a decisão menor, mais consistente" — mas essa era exatamente uma
+das duas opções que `docs/QR_ANALYTICS_PLAN.md` §3.4 tinha deixado
+deliberadamente em aberto ("reaproveitar `LOGIN_ATTEMPT_SALT` ... ou um salt
+novo ... ambas as opções existem, não decido qual aqui"), e foi escolhida
+sem confirmação do Pedro. Mesma convenção de correção já usada para o gap do
+`is_bot_user_agent` (ADR-052): a entrada original não é reescrita, esta é a
+correção registrada.
+
+**Por que reaproveitar o salt era o erro.** Nenhuma das tabelas
+(`analytics_events`, `login_attempts`, `lead_submission_attempts`) guarda IP
+em texto puro — mas com o **mesmo** salt, o mesmo IP produz o **mesmo**
+`ip_hash` nas três. Isso torna possível correlacionar uma linha de
+`analytics_events` (visita/clique, em princípio anônimo) com uma tentativa
+de login ou um lead identificável (nome, telefone, e-mail) que compartilhe
+o mesmo IP — exatamente o tipo de correlação que a postura conservadora de
+LGPD já fechada em §3.4 existe para impedir ("Analytics data must never
+expose personally identifying Visitor information", regra 14 do
+`DOMAIN_MODEL.md`, citada pelo próprio ADR-050). Um salt compartilhado não
+é neutro aqui: é a única coisa que tornaria essa correlação possível.
+
+**Decisão.** `ANALYTICS_IP_SALT`, variável de ambiente nova, mesma forma de
+`LOGIN_ATTEMPT_SALT` (server-only, string aleatória longa, nunca commitada —
+ver `supabase/README.md` §5). `supabase-analytics-gateway.ts`'s `hash()` lê
+`ANALYTICS_IP_SALT` em vez de `LOGIN_ATTEMPT_SALT`; a função de hash em si
+não muda (`sha256(salt:ip)`, mesma forma das outras duas). Nenhuma migration:
+`analytics_events.ip_hash` já era só `text`, sem CHECK de formato — trocar o
+salt que a alimenta é puramente um detalhe do adapter.
+
+**Por que agora é de graça, e por que essa janela fecha.** `analytics_events`
+foi criada em `20260810000000` (AN1) e as funções que escrevem nela em
+`20260811000000`/`20260812000000` (AN2/AN4) — o wiring do app (AN3/AN5,
+ADR-053) é o primeiro código que de fato as invoca. Confirmado contra o
+projeto real do Pedro antes desta troca: `select count(*) from
+analytics_events` (chave anon, portanto sujeito à mesma policy own-row que
+`analytics_events_select_own` já aplica) devolveu `0`. **Essa contagem não é
+prova definitiva** — a chave anon nunca enxerga linha nenhuma dessa tabela
+por RLS, com ou sem dado real presente, então uma leitura por essa via
+sempre devolveria `0` mesmo que existissem linhas. O double-check
+verdadeiramente conclusivo (`select count(*)` pelo SQL Editor, que ignora
+RLS) fica pendente de confirmação do Pedro antes deste ADR ser considerado
+totalmente fechado. Se alguma linha de verificação manual anterior já tiver
+sido gravada com o salt antigo, ela fica órfã (hash calculado com um salt
+que o app não lê mais) — aceitável, é dado de teste, não dado real, e não
+há como re-hashear retroativamente (o IP original nunca foi persistido, por
+design). A partir desta mudança, toda linha nova é gravada com
+`ANALYTICS_IP_SALT`. Esta é a única janela em que a troca não tem custo:
+uma vez que exista tráfego real, qualquer salt novo tornaria as linhas
+antigas não-comparáveis entre si por IP (mesma consequência que já se aplica
+a rotacionar `LOGIN_ATTEMPT_SALT`, documentada em `supabase/README.md` §5) —
+mas aqui, ao contrário de uma rotação de manutenção, essa perda de
+comparabilidade é precisamente o objetivo, não um efeito colateral aceito.
+
+**Custo de reversão.** Baixo enquanto a tabela seguir vazia (que é o estado
+confirmado, com a ressalva acima); alto depois que existir tráfego real —
+outro motivo para fechar isto agora, antes do primeiro deploy com visitas de
+verdade.
+
 ---
 
 ## Accessibility

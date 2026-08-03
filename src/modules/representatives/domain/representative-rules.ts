@@ -102,6 +102,35 @@ export function formatE164ToBRPhone(e164Phone: string): string {
 }
 
 /**
+ * Progressive BR phone mask for `RepresentativeProfileForm`'s `phone` input
+ * `onChange` — duplicated from `modules/leads/domain/lead-rules.ts`'s own
+ * `maskBRPhone`, not imported, same cross-module boundary reasoning as
+ * `BR_PHONE_PATTERN` above. Turns
+ * whatever was just typed, pasted or autofilled into `BR_PHONE_PATTERN`'s
+ * shape as the visitor goes, capped at 11 digits (DDD + 9-digit mobile).
+ * Always re-derives the mask from the raw digits rather than tracking
+ * previous cursor/character state, so it is naturally idempotent: re-running
+ * it on its own output is a no-op, and deleting a digit anywhere in the
+ * middle of an already-masked value just re-masks correctly on the next
+ * `onChange`.
+ */
+export function maskBRPhone(rawValue: string): string {
+  const digits = rawValue.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return `(${digits}`;
+
+  const ddd = digits.slice(0, 2);
+  const rest = digits.slice(2);
+
+  if (rest.length <= 4) return `(${ddd}) ${rest}`;
+
+  const suffix = rest.slice(-4);
+  const prefix = rest.slice(0, rest.length - 4);
+  return `(${ddd}) ${prefix}-${suffix}`;
+}
+
+/**
  * "Nome e sobrenome" in its most permissive shape: at least two
  * whitespace-separated non-empty tokens after trimming. Deliberately does
  * not reject single-character tokens or hyphenated/compound names — this is

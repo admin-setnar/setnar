@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import type { Representative } from '@/modules/representatives/domain/representative';
-import { formatE164ToBRPhone } from '@/modules/representatives/domain/representative-rules';
+import { formatE164ToBRPhone, maskBRPhone } from '@/modules/representatives/domain/representative-rules';
 import { updateRepresentativeProfileAction } from '@/modules/representatives/presentation/actions';
 import {
   representativeProfileErrorCopy,
@@ -57,6 +57,12 @@ export function RepresentativeProfileForm({ representative }: { representative: 
     mode: 'onBlur',
   });
 
+  // Progressive mask on `phone` — same `onChange` interception as
+  // `LeadForm`'s own `telefone` field (`modules/leads/presentation/lead-form.tsx`):
+  // mutate the DOM value before handing the event to RHF's `onChange`, so
+  // paste/autofill get masked too, not just individual keystrokes.
+  const phoneField = register('phone');
+
   async function onSubmit(values: RepresentativeProfileFormValues) {
     setFailure(null);
     setSaved(false);
@@ -98,7 +104,11 @@ export function RepresentativeProfileForm({ representative }: { representative: 
             aria-describedby={describedBy}
             invalid={invalid}
             disabled={isSubmitting}
-            {...register('phone')}
+            {...phoneField}
+            onChange={(event) => {
+              event.target.value = maskBRPhone(event.target.value);
+              return phoneField.onChange(event);
+            }}
           />
         )}
       </FormField>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { LEAD_HONEYPOT_FIELD } from '@/modules/leads/domain/lead-rules';
+import { LEAD_HONEYPOT_FIELD, maskBRPhone } from '@/modules/leads/domain/lead-rules';
 import {
   leadSubmissionSchema,
   type LeadSubmissionFormValues,
@@ -37,6 +37,13 @@ export function LeadForm({ productSlug }: { productSlug: string }) {
     defaultValues: { nome: '', telefone: '', cidade: '', email: '', [LEAD_HONEYPOT_FIELD]: '' },
     mode: 'onBlur',
   });
+
+  // Progressive mask on `telefone` — `onChange` (not `onKeyUp`) so paste and
+  // autofill get masked too, not just individual keystrokes. Mutating
+  // `event.target.value` before handing the event to RHF's own `onChange`
+  // is the standard way to mask an RHF-registered (uncontrolled) input: RHF
+  // reads the DOM node's current value, which is the one this just set.
+  const telefoneField = register('telefone');
 
   async function onSubmit(values: LeadSubmissionFormValues) {
     setSubmitState('idle');
@@ -116,7 +123,11 @@ export function LeadForm({ productSlug }: { productSlug: string }) {
             aria-describedby={describedBy}
             invalid={invalid}
             disabled={isSubmitting}
-            {...register('telefone')}
+            {...telefoneField}
+            onChange={(event) => {
+              event.target.value = maskBRPhone(event.target.value);
+              return telefoneField.onChange(event);
+            }}
           />
         )}
       </FormField>

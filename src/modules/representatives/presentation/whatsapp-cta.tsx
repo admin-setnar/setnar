@@ -1,3 +1,5 @@
+'use client';
+
 import { MessageCircle } from 'lucide-react';
 
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
@@ -19,6 +21,26 @@ function toWhatsAppDigits(phone: string): string {
   return digits.startsWith('55') ? digits : `55${digits}`;
 }
 
+/**
+ * AN5 (docs/QR_ANALYTICS_PLAN.md §3.3/§4) — best-effort click tracking. No
+ * `preventDefault`: the browser's own navigation to `wa.me` proceeds exactly
+ * as before, regardless of whether this fetch ever completes. `keepalive`
+ * lets the request survive the page unloading right after the click, which
+ * is the whole point of an outbound link; if the tab closes before the
+ * request lands, the click simply isn't counted — the same imprecision every
+ * outbound-click tracker on the web accepts, not a bug to fix here.
+ */
+function trackWhatsappClick(productSlug: string) {
+  fetch('/api/track-click', {
+    method: 'POST',
+    keepalive: true,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productSlug, referrer: document.referrer || null }),
+  }).catch(() => {
+    // Best-effort — a failed beacon must never surface to the visitor.
+  });
+}
+
 export function WhatsappCta({
   representative,
   product,
@@ -33,7 +55,12 @@ export function WhatsappCta({
 
   return (
     <Button asChild size="lg" fullWidth>
-      <a href={href} target="_blank" rel="noopener noreferrer">
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={() => trackWhatsappClick(product.slug)}
+      >
         <MessageCircle aria-hidden="true" className="h-5 w-5" />
         Falar no WhatsApp
       </a>

@@ -43,3 +43,36 @@ export function formatPhoneToE164(rawPhone: string): string {
   const digits = rawPhone.replace(/\D/g, '');
   return `+55${digits}`;
 }
+
+/**
+ * Progressive BR phone mask for the `telefone` input's `onChange` — turns
+ * whatever the visitor just typed, pasted or autofilled into `BR_PHONE_PATTERN`'s
+ * shape as they go, capped at 11 digits (DDD + 9-digit mobile number, the
+ * pattern this form targets). Always re-derives the mask from the raw digits
+ * rather than tracking previous cursor/character state, so it is naturally
+ * idempotent: re-running it on its own output is a no-op, and deleting a
+ * digit anywhere in the middle of an already-masked value (backspace,
+ * selection delete) just re-masks correctly on the next `onChange`, with no
+ * separate "unmask before edit" step needed.
+ *
+ * Not wired to `formatE164ToBRPhone` (`representatives/domain/representative-rules.ts`)
+ * on purpose: that function only ever reverses this project's OWN
+ * `formatPhoneToE164` output (always exactly 10 or 11 digits, already
+ * grouped), while this one must handle every partial length a visitor can be
+ * mid-typing (0 to 11 digits) — a genuinely different job, not a duplicate.
+ */
+export function maskBRPhone(rawValue: string): string {
+  const digits = rawValue.replace(/\D/g, '').slice(0, 11);
+
+  if (digits.length === 0) return '';
+  if (digits.length <= 2) return `(${digits}`;
+
+  const ddd = digits.slice(0, 2);
+  const rest = digits.slice(2);
+
+  if (rest.length <= 4) return `(${ddd}) ${rest}`;
+
+  const suffix = rest.slice(-4);
+  const prefix = rest.slice(0, rest.length - 4);
+  return `(${ddd}) ${prefix}-${suffix}`;
+}

@@ -2,6 +2,7 @@ import { SITE_URL } from '@/config/site';
 import type { Representative } from '@/modules/representatives/domain/representative';
 import type { RepresentativeCatalogEntry } from '@/modules/representatives/domain/representative-catalog-repository';
 import { ProductActivationCard } from '@/modules/representatives/presentation/product-activation-card';
+import { QrCodeCard } from '@/modules/representatives/presentation/qr-code-card';
 import { RepresentativeProfileForm } from '@/modules/representatives/presentation/representative-profile-form';
 import { Card } from '@/shared/ui/card';
 import { Text } from '@/shared/ui/typography';
@@ -68,17 +69,23 @@ export function RepresentativeHub({
           <div key={entry.product.id} className="space-y-2">
             <ProductActivationCard product={entry.product} state={entry.state} />
             {entry.state === 'published' ? (
-              <Text as="p" variant="caption" className="pl-1">
-                Página no ar:{' '}
-                <a
-                  href={`https://${representative.slug}.${rootHost}/${entry.product.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-brand underline underline-offset-2"
-                >
-                  {representative.slug}.{rootHost}/{entry.product.slug}
-                </a>
-              </Text>
+              <>
+                <Text as="p" variant="caption" className="pl-1">
+                  Página no ar:{' '}
+                  <a
+                    href={`https://${representative.slug}.${rootHost}/${entry.product.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand underline underline-offset-2"
+                  >
+                    {representative.slug}.{rootHost}/{entry.product.slug}
+                  </a>
+                </Text>
+                <QrCodeCard
+                  url={`https://${representative.slug}.${rootHost}/${entry.product.slug}`}
+                  fileName={`${representative.slug}-${entry.product.slug}.png`}
+                />
+              </>
             ) : null}
           </div>
         ))}

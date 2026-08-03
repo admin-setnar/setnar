@@ -1,12 +1,15 @@
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { after } from 'next/server';
 
+import { getAnalyticsGateway } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
 import { LicenseeIdentificationBlock } from '@/modules/representatives/presentation/licensee-identification-block';
 import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
 import { Container } from '@/shared/layout/container';
+import { getClientIp } from '@/shared/lib/get-client-ip';
 import { Card } from '@/shared/ui/card';
 import { Text } from '@/shared/ui/typography';
 
@@ -63,6 +66,28 @@ export default async function ProductPage({
   }
 
   const { representative, product } = activation;
+
+  // AN3 (docs/QR_ANALYTICS_PLAN.md §4) — best-effort visit tracking.
+  // `after()` runs this once the response has already been sent, so a slow
+  // or failing RPC can never delay or break the page a real visitor sees;
+  // any error is caught and logged, never rethrown. Only called once
+  // resolution above already succeeded — `record_page_visit` re-validates
+  // the pair itself, but there is no reason to attempt the call on a path
+  // that is already about to 404.
+  after(async () => {
+    try {
+      const analyticsGateway = await getAnalyticsGateway();
+      await analyticsGateway.recordPageVisit({
+        representativeSlug: representative.slug,
+        productSlug: product.slug,
+        referrer: requestHeaders.get('referer'),
+        ip: await getClientIp(),
+        userAgent: requestHeaders.get('user-agent'),
+      });
+    } catch (error) {
+      console.error('record_page_visit failed', error);
+    }
+  });
 
   return (
     <main id="conteudo" className="pt-16 pb-20">

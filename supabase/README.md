@@ -4,11 +4,11 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as treze
+## 1. Aplicar as migrations, nesta ordem, todas as dezesseis
 
-São cumulativas — aplique as treze, em ordem, nunca só a primeira. Cole cada
-arquivo no SQL Editor do projeto e execute, ou rode `supabase db push` se
-preferir a CLI.
+São cumulativas — aplique as dezesseis, em ordem, nunca só a primeira. Cole
+cada arquivo no SQL Editor do projeto e execute, ou rode `supabase db push`
+se preferir a CLI.
 
 > **Parar no passo 8 deixa o banco quebrado, não incompleto.** A `20260804000000`
 > fecha um ciclo de RLS entre `representatives` e `product_activations` que faz
@@ -257,6 +257,52 @@ preferir a CLI.
     README seja seguido corretamente. **Verificação:** re-rodar o teste
     manual que encontrou o furo — seção própria mais abaixo neste arquivo
     (**passo 13**).
+14. `supabase/migrations/20260810000000_add_analytics_events.sql` — AN1
+    (`docs/QR_ANALYTICS_PLAN.md` §4), cria só o schema de Analytics (Básico):
+    a tabela `analytics_events` (uma linha por visita/clique no WhatsApp,
+    `ip_hash` incluído — ver ADR-050 no `README.md` principal para o porquê
+    de morar na própria tabela e não numa tabela irmã de rate-limit), RLS
+    habilitada com zero policies de escrita, e uma única policy de SELECT
+    por dono (`analytics_events_select_own`, via `is_own_representative()`
+    do passo 9). **Nenhuma função `SECURITY DEFINER` é criada aqui** —
+    `record_page_visit`/`record_whatsapp_click` (AN2/AN4) são passos
+    seguintes, ainda não implementados; até lá, não existe NENHUM caminho de
+    escrita para esta tabela, nem anônimo nem autenticado. **Verificação:**
+    seção própria mais abaixo neste arquivo (**passo 14**).
+15. `supabase/migrations/20260811000000_add_analytics_write_functions.sql`
+    — AN2 + AN4 (`docs/QR_ANALYTICS_PLAN.md` §4), cria o único caminho de
+    escrita em `analytics_events`: `record_page_visit`/
+    `record_whatsapp_click`, funções `SECURITY DEFINER` no formato de
+    `submit_lead` (resolvem por slug+slug, nunca confiam em id vindo do
+    chamador; retorno `boolean` anti-enumeration; limiares de rate limit
+    fixos dentro da função). Cria também `is_bot_user_agent(text)`, helper
+    do filtro de ruído (§3.2), não concedido a `anon`/`authenticated` de
+    propósito — só é chamado de dentro das duas funções acima. Ver ADR-051
+    no `README.md` principal para o raciocínio completo, incluindo por que
+    `record_whatsapp_click` reusa deliberadamente o mesmo limiar de
+    `submit_lead` (5/3600s) e por que um par (slug, slug) inválido não
+    consome o rate limit aqui, ao contrário de `submit_lead`. **O wiring no
+    app ([productSlug]/page.tsx, WhatsappCta) NÃO está nesta migration** —
+    são os passos AN3/AN5, ainda não implementados; até lá, estas duas
+    funções existem e são chamáveis por RPC direto, mas nada no app as
+    invoca ainda. **Verificação:** seção própria mais abaixo neste arquivo
+    (**passo 15**) — inclui o double-check obrigatório do ADR-048 (grants +
+    RPC HTTP cru sem `Authorization`), desta vez confirmando que `anon`
+    aparece de propósito, não por vazamento.
+16. `supabase/migrations/20260812000000_revoke_authenticated_from_is_bot_user_agent.sql`
+    — **corrige um achado real, encontrado pelo próprio double-check do
+    passo 15**: `authenticated` tinha EXECUTE em `is_bot_user_agent`, apesar
+    do comentário do passo 15 afirmar o contrário. `anon` estava correto
+    (confirmado por RPC HTTP cru sem `Authorization`: `401 42501`). Mesma
+    causa do ADR-048 — um default privilege de schema, desta vez para
+    `authenticated`, nunca fechado porque para as quatro funções do ADR-048
+    `authenticated` era o acesso pretendido. Risco avaliado como baixo
+    (`is_bot_user_agent` não lê tabela nem muta nada), corrigido mesmo assim
+    pela divergência entre documentação e comportamento real. Ver ADR-052
+    no `README.md` principal. **Verificação:** re-rodar a query de grants do
+    passo 15 e confirmar que `authenticated` não aparece mais para
+    `is_bot_user_agent` (`record_page_visit`/`record_whatsapp_click`
+    continuam com `authenticated`, de propósito).
 
 ## 2. Confirm email — decidido: DESLIGADO
 
@@ -374,6 +420,7 @@ por IP, e também eleva o custo do lockout-por-e-mail descrito na ADR-018.
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 LOGIN_ATTEMPT_SALT=
+ANALYTICS_IP_SALT=
 ```
 
 As duas primeiras são as chaves públicas do projeto (Settings → API).
@@ -383,11 +430,34 @@ grave e-mail/IP em texto puro. Gere uma vez e não troque depois sem motivo:
 trocar invalida silenciosamente o rate limiting de tentativas já registradas
 (os hashes antigos deixam de bater com os novos).
 
+`ANALYTICS_IP_SALT` é server-only, mesma forma (qualquer string aleatória
+longa) e mesmo motivo (nunca gravar IP em texto puro) — mas é um valor
+**diferente** de `LOGIN_ATTEMPT_SALT`, de propósito: ver ADR-054 no
+`README.md` principal. Reusar o mesmo salt entre `analytics_events` e
+`login_attempts`/`lead_submission_attempts` deixaria um `ip_hash` idêntico
+nas duas tabelas para o mesmo IP, permitindo correlacionar um evento de
+analytics (visita/clique) a uma tentativa de login/lead identificável —
+exatamente o que a postura conservadora de LGPD do
+`docs/QR_ANALYTICS_PLAN.md` §3.4 proíbe. Mesma ressalva de rotação do
+`LOGIN_ATTEMPT_SALT`: gerar uma vez, não trocar sem motivo (invalida os
+hashes já gravados).
+
 ## 6. Região das funções na Vercel
 
 Confirmar que o projeto Vercel está configurado para rodar as funções em
 `gru1` (São Paulo) — mesma região do projeto Supabase, para latência mínima
 entre a aplicação e o banco.
+
+## 7. AN3/AN5 — wiring de analytics no app, sem migration nova
+
+Diferente de todos os itens da lista numerada acima, este passo não aplica
+nenhum arquivo em `supabase/migrations/` — `record_page_visit`/
+`record_whatsapp_click` (passos 15/16) já existiam no banco; o que faltava
+era só código de aplicação chamando-as. Nada a fazer aqui no painel do
+Supabase nem na Vercel além do que os passos 1-6 já cobrem. Ver ADR-053 no
+`README.md` principal para o código (módulo `analytics` novo, `after()` para
+a visita, rota `/api/track-click` para o clique) e a **Verificação manual
+obrigatória** própria mais abaixo neste arquivo.
 
 ## Verificação manual obrigatória — policies de leitura própria (passo 8)
 
@@ -714,6 +784,201 @@ respondido HTTP 200 com `{status: 'representative_not_found', ...}`,
 confirmando o furo original. A contraprova de `submit_lead` (mesma chamada,
 sem `Authorization`) retornou `true` — `anon` continua com EXECUTE nela, de
 propósito, sem regressão.
+
+## Verificação manual obrigatória — `analytics_events` (passo 14)
+
+**Escopo limitado, de propósito.** Diferente dos roteiros 10-13, este passo
+não tem NENHUMA função `SECURITY DEFINER` para chamar ainda —
+`record_page_visit`/`record_whatsapp_click` são AN2/AN4
+(`docs/QR_ANALYTICS_PLAN.md` §4), passos seguintes. Sem elas, não existe
+caminho de escrita nenhum para `analytics_events` — nem anônimo, nem
+autenticado, nem pelo SQL Editor de propósito (a tabela não tem policy de
+INSERT). O que dá para verificar agora é só: (1) a tabela existe e responde
+sem erro de política/recursão, e (2) a constraint de `event_type` rejeita
+valor fora do conjunto permitido. O isolamento real entre representantes
+(R vê só os próprios eventos, nunca os de outro) só é verificável quando
+existir pelo menos uma linha real — isso fica para o roteiro de AN2/AN4, não
+para este.
+
+1. **Sem sessão nenhuma** (chave publicável, sem login), consulte
+   `analytics_events` (`select id from analytics_events limit 1`, via
+   `supabase-js` ou RPC REST).
+   **Observar:** resposta vazia (`data: []`, `error: null`) — nunca `42P17`
+   (ciclo de política) e nunca "relation does not exist"/`PGRST205` (a
+   migration não foi aplicada). `tests/analytics-events-select-policy.integration.test.ts`
+   automatiza exatamente este item.
+2. **Pelo SQL Editor** (conecta como dono da tabela, ignora RLS — mas nunca
+   ignora CHECK/FK, então isto testa a constraint, não a policy), com um
+   `representative_id`/`product_id` reais já existentes no ambiente (ex.: o
+   representante `teste-novo-a`/produto `conexao-green` dos passos
+   anteriores), tente:
+   ```sql
+   insert into analytics_events (representative_id, product_id, event_type, ip_hash)
+   values ('<uuid do representante>', '<uuid do produto>', 'algo_invalido', 'teste');
+   ```
+   **Observar:** rejeitado por violação de `check` (`event_type` fora de
+   `'visit'`/`'whatsapp_click'`). Repita trocando só `event_type` para
+   `'visit'` e depois para `'whatsapp_click'` — as duas devem ser aceitas
+   pela constraint (a linha inserida pode ser apagada depois pelo próprio SQL
+   Editor; não há policy de DELETE, mas o dono da tabela não passa por RLS).
+
+**Não coberto por este roteiro, de propósito:** isolamento entre dois
+representantes (precisa de linha real, criada por `record_page_visit`/
+`record_whatsapp_click` — AN2/AN4, ainda não implementadas); rate limit por
+`ip_hash` (mesma dependência); qualquer coisa que passe pela chave
+publicável fazendo INSERT (a tabela não tem policy de INSERT nenhuma —
+tentar confirmaria só que a policy continua ausente, não a constraint).
+
+**Item 1 confirmado em 2026-08-03**, contra o projeto real do Pedro:
+`npm run verify` passou a reportar `tests/analytics-events-select-policy.integration.test.ts`
+verde (208/208 no total), inclusive o controle de catálogo — prova que a
+migration foi aplicada e que a leitura anônima se comporta como esperado
+(zero linhas, sem `42P17`/`PGRST205`). **Item 2 (constraint de `event_type`
+via SQL Editor) ainda não tem confirmação registrada aqui** — pendente de
+execução manual.
+
+## Verificação manual obrigatória — `record_page_visit`/`record_whatsapp_click` (passo 15)
+
+**Pré-requisito:** a migration `20260811000000_add_analytics_write_functions.sql`
+(passo 15 da lista acima) já aplicada.
+
+`tests/analytics-write-functions.integration.test.ts` cobre rejeição de par
+inválido, `ip_hash` nulo, o filtro de bot (a fundo, sem custo de dado) e o
+rate limit de `record_whatsapp_click` (saturado de verdade, 6 chamadas). O
+que aquele teste **não** cobre — porque é exatamente a lição do ADR-048 —
+é o double-check de grants contra o projeto real. Isto é esse roteiro,
+mesma forma do passo 13.
+
+1. Pelo SQL Editor:
+   ```sql
+   select routine_name, grantee, privilege_type
+   from information_schema.role_routine_grants
+   where routine_name in ('record_page_visit', 'record_whatsapp_click', 'is_bot_user_agent');
+   ```
+   **Observar:** `anon` e `authenticated` aparecem para `record_page_visit`
+   e `record_whatsapp_click` — ao contrário do achado do ADR-048, aqui é o
+   resultado ESPERADO (§3.6: o chamador é sempre anônimo). `is_bot_user_agent`
+   **não deve aparecer para `anon` nem `authenticated`** — é um helper
+   interno, só chamado de dentro das duas funções acima (que rodam como
+   dono via `security definer`), nunca exposto por RPC direto.
+2. RPC HTTP cru, `POST` para `{SUPABASE_URL}/rest/v1/rpc/record_page_visit`,
+   header `apikey: {chave publicável}`, **sem** header `Authorization`
+   nenhum. Corpo:
+   ```json
+   {"p_representative_slug": "qualquer-coisa", "p_product_slug": "qualquer-coisa",
+    "p_referrer": null, "p_ip_hash": "teste-manual-15", "p_user_agent": "curl/8"}
+   ```
+   **Observar:** HTTP 200 com `data: false` (par inválido — mas a função
+   RODOU, o que é o ponto: uma concessão ausente responderia `42501`, não um
+   `boolean` tipado). Repita para `record_whatsapp_click` com o mesmo corpo.
+   **Observar:** mesmo resultado.
+3. Repita o item 2 com um par (`p_representative_slug`/`p_product_slug`)
+   real e publicado (ex.: `teste-novo-a`/`conexao-green`, dos passos
+   anteriores) e um `p_ip_hash` novo. **Observar:** `data: true` nas duas —
+   e, se a sessão de **R** estiver disponível para conferir depois
+   (`analytics_events_select_own`, AN1), a leitura própria deve mostrar as
+   linhas inseridas (isolamento entre representantes fica para quando
+   houver uma segunda conta com dado próprio para comparar — não coberto
+   por este item sozinho).
+
+**Não coberto por este roteiro, de propósito:** o wiring no app (AN3/AN5
+ainda não existe — nada em `[productSlug]/page.tsx`/`WhatsappCta` chama
+estas funções ainda); isolamento de leitura entre dois representantes reais
+(precisa de duas contas com dado próprio para comparar).
+
+**Item 1 executado em 2026-08-03**, contra o projeto real do Pedro:
+`record_page_visit`/`record_whatsapp_click` — `anon`/`authenticated` com
+EXECUTE, como esperado. `is_bot_user_agent` — **achado real**: `anon`
+corretamente ausente, mas `authenticated` presente, contrariando o que o
+comentário da migration e o ADR-051 afirmavam. Corrigido pelo passo 16
+(`20260812000000`, ADR-052) e **re-confirmado após a correção**: a mesma
+query voltou a rodar e `is_bot_user_agent` agora aparece só para
+`postgres`/`service_role` — `anon`/`authenticated` corretamente ausentes.
+`record_page_visit`/`record_whatsapp_click` inalteradas (`anon`/`authenticated`
+continuam presentes, de propósito).
+
+**Item 2 executado em 2026-08-03**, via RPC HTTP cru sem `Authorization`:
+`record_page_visit`/`record_whatsapp_click` responderam `200`/`data: false`
+para um par inválido — a função rodou, concessão correta. `is_bot_user_agent`
+respondeu `401 {"code":"42501","message":"permission denied for function
+is_bot_user_agent"}` — confirma que `anon` está corretamente bloqueado
+(consistente com o item 1).
+
+**Item 3 (par real, `data: true` nas duas) coberto indiretamente**: com as
+duas migrations aplicadas, `npm run verify` passou a exercitar
+`tests/analytics-write-functions.integration.test.ts` de ponta a ponta
+(219/219 no total) — incluindo o caminho feliz de cada função contra um par
+real (`teste-novo-a`/`conexao-green`), o filtro de bot e o rate limit de
+`record_whatsapp_click` saturado de verdade. O item 3 propriamente dito
+(via RPC HTTP cru, não via `supabase-js`) não foi re-executado à parte —
+considerado coberto pela combinação dos itens 1/2 acima com a suíte
+automatizada.
+
+## Verificação manual obrigatória — wiring de analytics no app (AN3/AN5)
+
+**Escopo.** Este roteiro prova que o app agora chama as funções do passo 15
+— não repete o double-check de grants (isso é o passo 15 acima), nem exercita
+o rate limit ou o filtro de bot (já cobertos por
+`tests/analytics-write-functions.integration.test.ts`). O que só é
+verificável com o app rodando: (1) uma visita real insere uma linha em
+`analytics_events`; (2) um clique real no CTA do WhatsApp insere outra, e a
+navegação para `wa.me` acontece de qualquer forma. Nenhum dos dois tem teste
+automatizado — `npm run verify` cobre typecheck/lint/build e as suítes de
+integração das duas funções SQL, não o wiring do app em si.
+
+**Pré-requisito:** um par (representative, product) real e publicado (ex.:
+`teste-novo-a`/`conexao-green`, dos passos anteriores), `npm run dev`
+rodando local, e `ANALYTICS_IP_SALT` configurada em `.env.local` (ADR-054 —
+**não** o mesmo valor de `LOGIN_ATTEMPT_SALT`; ver §5 acima).
+
+0. **Antes de rodar os itens abaixo, confirme pelo SQL Editor** (ignora RLS,
+   ao contrário da chave anon) **que `analytics_events` ainda está vazia**:
+   `select count(*) from analytics_events;`. Isto é o double-check que o
+   ADR-054 deixou pendente — a troca de `LOGIN_ATTEMPT_SALT` para
+   `ANALYTICS_IP_SALT` só é "de graça" enquanto nenhuma linha real existir
+   com o salt antigo. Se a contagem vier `0`, prossiga. Se vier maior que
+   `0`, são linhas de teste de uma verificação manual anterior (dado de
+   teste, não real) — aceitável ignorá-las/descartá-las, mas registre aqui
+   quantas eram antes de seguir.
+1. **Visita (AN3).** Com o servidor local rodando, visite
+   `http://teste-novo-a.localhost:3000/conexao-green` (ou o subdomínio real
+   em produção). **Observar:** a página renderiza normalmente, sem nenhum
+   atraso perceptível e sem nenhum erro visível — mesmo que o RPC falhe ou
+   demore, `after()` garante que isso nunca chega à resposta (ver ADR-053).
+   Pelo SQL Editor: `select event_type, referrer, created_at from
+   analytics_events where representative_id = (select id from
+   representatives where slug = 'teste-novo-a') order by created_at desc
+   limit 5;` — **observar** uma linha nova `event_type = 'visit'`, com
+   `created_at` próximo do momento da visita.
+2. **Clique no WhatsApp (AN5).** Na mesma página, clique no botão "Falar no
+   WhatsApp". **Observar:** a navegação para `wa.me` acontece normalmente
+   (nova aba/janela abre), independente de quando ou se `/api/track-click`
+   responde — o `onClick` nunca chama `preventDefault`. Pela aba de Network
+   do navegador: uma requisição `POST /api/track-click` com `keepalive`,
+   corpo `{"productSlug":"conexao-green","referrer":"..."}`, resposta `200
+   {"ok":true}`. Repita a query do item 1 — **observar** uma segunda linha
+   nova, `event_type = 'whatsapp_click'`.
+3. **Par inexistente ou não publicado**, chame `POST /api/track-click` direto
+   (ex. via `curl`) com `{"productSlug": "produto-que-nao-existe"}` e sem
+   simular o `Host` de um representante real. **Observar:** `200 {"ok":true}`
+   mesmo assim (resposta sempre-200, ADR-053) e nenhuma linha nova em
+   `analytics_events`.
+
+**Não coberto por este roteiro, de propósito:** AN6 (exibir as estatísticas
+agregadas no hub) — próximo passo do mesmo plano, ainda não implementado;
+qualquer verificação que dependa de uma segunda conta representante para
+provar isolamento de leitura (já coberto pelo roteiro do passo 14).
+
+**Pendente de execução** — este roteiro ainda não foi rodado contra o
+projeto real do Pedro; `npm run verify` (typecheck, lint, as 219 unit/
+integration tests existentes, e o build de produção) passou de ponta a
+ponta com o código deste passo, mas os itens 0-3 acima exigem o SQL Editor
+(item 0) e clicar de verdade na página publicada (itens 1-3). Verificado
+apenas por uma leitura via chave anon (`select count(*)`, sujeita à mesma
+policy own-row de `analytics_events_select_own`) — `0`, mas essa leitura não
+prova nada por si só (a chave anon sempre vê `0` nessa tabela, com ou sem
+dado real): o item 0 pelo SQL Editor é quem confirma de verdade antes de
+considerar a troca do ADR-054 sem custo.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 

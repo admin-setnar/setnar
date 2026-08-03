@@ -1,0 +1,72 @@
+-- Corrige um achado real, confirmado contra o projeto Supabase de verdade
+-- durante o double-check do ADR-048 que o próprio AN2/AN4
+-- (`20260811000000_add_analytics_write_functions.sql`) exigia: `authenticated`
+-- tinha EXECUTE em `is_bot_user_agent(text)`, apesar do comentário daquela
+-- migration afirmar "Deliberadamente NÃO concedido a anon/authenticated".
+-- Migration nova; `20260811000000` não é editada (regra do README.md).
+--
+-- ============================================================================
+-- Como foi confirmado — teste manual real, não suposição
+-- ============================================================================
+--
+-- 1. `select routine_name, grantee, privilege_type from
+--    information_schema.role_routine_grants where routine_name in
+--    ('record_page_visit', 'record_whatsapp_click', 'is_bot_user_agent')` —
+--    `is_bot_user_agent` aparece com EXECUTE para `authenticated` (além de
+--    `postgres`/`service_role`, esperados). `anon` NÃO aparece para
+--    `is_bot_user_agent` — só `authenticated` estava errado, não os dois.
+-- 2. RPC HTTP cru, só `apikey`, sem `Authorization` (papel `anon` para o
+--    PostgREST): `is_bot_user_agent` respondeu `401 {"code":"42501",
+--    "message":"permission denied for function is_bot_user_agent"}` —
+--    confirma que `anon` está corretamente bloqueado. `record_page_visit`/
+--    `record_whatsapp_click` responderam `200 true` nas duas — confirma que
+--    o caminho de escrita pretendido (§3.6) está correto e funcionando.
+--
+-- ============================================================================
+-- Causa raiz — por que `authenticated`, especificamente, e não `anon`
+-- ============================================================================
+--
+-- `20260811000000` fez `revoke execute on function
+-- public.is_bot_user_agent(text) from public` (undo do default do próprio
+-- Postgres, que concede EXECUTE a PUBLIC em toda função nova) — isso
+-- funcionou, e é por isso que `anon` não tem a concessão: o
+-- `alter default privileges in schema public revoke execute on functions
+-- from anon` do ADR-048 (`20260809000000`) fechou especificamente o default
+-- de `anon` deste projeto. Mas aquela correção nunca tocou `authenticated` —
+-- só fechou o papel que estava vazando na época (§ADR-048 é claro sobre
+-- isso: "Não altera `authenticated` — nenhuma das quatro funções deveria
+-- perder acesso para o papel autenticado real", porque para AQUELAS quatro
+-- funções `authenticated` É o público pretendido). Este projeto Supabase tem
+-- (ou tinha, antes desta migration) um default privilege próprio,
+-- configurado por fora deste repositório, concedendo EXECUTE a
+-- `authenticated` em toda função nova — o mesmo mecanismo do ADR-048,
+-- mesma causa raiz (`ALTER DEFAULT PRIVILEGES`, não um `grant` explícito),
+-- só que para um papel diferente. `revoke ... from public` não alcança essa
+-- concessão pelo mesmo motivo do ADR-048: a concessão a `authenticated`
+-- nunca passou por `public`.
+--
+-- ============================================================================
+-- Por que isto importa mesmo sendo um helper "inofensivo"
+-- ============================================================================
+--
+-- `is_bot_user_agent` não lê tabela nenhuma, não muta nada, e devolve só um
+-- boolean sobre o próprio parâmetro recebido — um usuário autenticado
+-- conseguindo chamá-la via RPC não vaza dado nenhum. O motivo de corrigir
+-- mesmo assim: o comentário de `20260811000000` e o ADR-051 (`README.md`
+-- principal) **afirmam explicitamente** que nem `anon` nem `authenticated`
+-- têm a concessão — e essa afirmação estava errada na metade. Deixar a
+-- documentação e o comportamento real divergirem é exatamente o tipo de
+-- lacuna que o ADR-048 existe para não deixar passar despercebida — a
+-- gravidade do vazamento em si é o que muda entre os dois casos (lá,
+-- funções que gravam em `representatives`; aqui, uma função pura), não o
+-- princípio de verificar.
+--
+-- ============================================================================
+-- Correção
+-- ============================================================================
+
+revoke execute on function public.is_bot_user_agent(text) from authenticated;
+
+-- `anon` já não tem a concessão (confirmado acima) — nada a revogar ali.
+-- `record_page_visit`/`record_whatsapp_click` mantêm `authenticated` de
+-- propósito (é o público pretendido, ADR-051) — não tocados aqui.

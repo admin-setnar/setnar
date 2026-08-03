@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { maskBRPhone } from '@/modules/representatives/domain/representative-rules';
 import { registerRepresentativeAction } from '@/modules/representatives/presentation/actions';
 import {
   onboardingErrorCopy,
@@ -56,6 +57,10 @@ export function OnboardingForm() {
     },
     mode: 'onBlur',
   });
+
+  // Progressive mask on `phone` — same `onChange` interception as
+  // `RepresentativeProfileForm`'s own `phone` field.
+  const phoneField = register('phone');
 
   async function onSubmit(values: RepresentativeOnboardingFormValues) {
     setFailure(null);
@@ -126,7 +131,11 @@ export function OnboardingForm() {
             aria-describedby={describedBy}
             invalid={invalid}
             disabled={isSubmitting}
-            {...register('phone')}
+            {...phoneField}
+            onChange={(event) => {
+              event.target.value = maskBRPhone(event.target.value);
+              return phoneField.onChange(event);
+            }}
           />
         )}
       </FormField>
