@@ -5,9 +5,11 @@ import { after } from 'next/server';
 import { getAnalyticsGateway } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
+import { CONEXAO_CLUB_TABS } from '@/modules/representatives/domain/product-content/conexao-club';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
 import { ComplianceNotice } from '@/modules/representatives/presentation/compliance-notice';
 import { LicenseeIdentificationBlock } from '@/modules/representatives/presentation/licensee-identification-block';
+import { ProductContentTabs } from '@/modules/representatives/presentation/product-content-tabs';
 import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
 import { Container } from '@/shared/layout/container';
 import { getClientIp } from '@/shared/lib/get-client-ip';
@@ -105,6 +107,12 @@ export default async function ProductPage({
         <div className="mt-6">
           <WhatsappCta representative={representative} product={product} />
         </div>
+
+        {product.slug === 'conexao-club' ? (
+          <div className="mt-8">
+            <ProductContentTabs tabs={CONEXAO_CLUB_TABS} />
+          </div>
+        ) : null}
 
         <Card variant="outlined" padding="lg" className="mt-8">
           <Text as="h2" variant="title">
