@@ -4,9 +4,9 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as doze
+## 1. Aplicar as migrations, nesta ordem, todas as treze
 
-São cumulativas — aplique as doze, em ordem, nunca só a primeira. Cole cada
+São cumulativas — aplique as treze, em ordem, nunca só a primeira. Cole cada
 arquivo no SQL Editor do projeto e execute, ou rode `supabase db push` se
 preferir a CLI.
 
@@ -235,6 +235,28 @@ preferir a CLI.
     (`tests/map-update-representative-profile-result.test.ts`), mas **a
     função SQL em si não tem teste automatizado nenhum** — a verificação é
     manual, seção própria mais abaixo neste arquivo (**passo 12**).
+13. `supabase/migrations/20260809000000_revoke_anon_execute_leak.sql` —
+    **corrige uma vulnerabilidade real, não é opcional**: `anon` tinha EXECUTE
+    nas quatro funções dos passos 10/11/12 (`register_representative`,
+    `activate_product`, `set_activation_status`,
+    `update_representative_profile`), apesar de cada uma delas já ter `revoke
+    ... from public` seguido de `grant ... to authenticated`. O `revoke from
+    public` nunca foi a causa — a concessão a `anon` vinha de um `ALTER
+    DEFAULT PRIVILEGES` do schema `public`, concedendo EXECUTE em funções
+    novas diretamente a `anon` no momento da criação, por fora de qualquer
+    `create or replace function`. Confirmado por teste manual real contra o
+    projeto (RPC HTTP direto, só `apikey`, sem `Authorization`, respondendo
+    HTTP 200 com um resultado tipado em vez de erro de permissão) — não por
+    revisão de código. Esta migration revoga EXECUTE de `anon`
+    explicitamente nas quatro funções existentes e corrige o default
+    privilege do schema para que nenhuma função `SECURITY DEFINER` futura
+    vaze do mesmo jeito. `submit_lead` não é tocado — seu `grant ... to anon`
+    é proposital (ADR-034). Ver ADR-048 no `README.md` principal para o
+    achado completo. **Um ambiente que aplicou só os passos 10/11/12 acima
+    fica com essa vulnerabilidade aberta**, mesmo que todo o resto deste
+    README seja seguido corretamente. **Verificação:** re-rodar o teste
+    manual que encontrou o furo — seção própria mais abaixo neste arquivo
+    (**passo 13**).
 
 ## 2. Confirm email — decidido: DESLIGADO
 
@@ -633,6 +655,65 @@ anônima (retestada no passo 13, após o fix do vazamento de EXECUTE),
 atualização válida, `license_id_invalid` (vazio), `phone_invalid` (formato),
 `city_invalid` (>500 caracteres), limpeza de `phone`/`city` para NULL como
 resultado válido, e `representative_not_found` para conta sem representante.
+
+## Verificação manual obrigatória — vazamento de EXECUTE para anon (passo 13)
+
+**Por que este roteiro existe separado dos passos 10/11/12, em vez de só
+confiar no item 1 de cada um deles.** Os roteiros dos passos 11 e 12 já têm,
+como primeiro item, a checagem "sem sessão nenhuma, a chamada deve falhar" —
+exatamente o que este achado (ADR-048 no `README.md` principal) precisava.
+Mas nenhum dos dois tinha sido executado de fato contra um projeto real
+ainda (as duas linhas "Executado e confirmado em" acima estavam em branco), e
+o do passo 10 cobria a rejeição anônima só via teste automatizado
+(`tests/register-representative.integration.test.ts`, que usa uma sessão
+anônima real do `supabase-js`), não via RPC HTTP puro. O furo real só foi
+achado chamando a API REST do Supabase diretamente, com **apenas** o header
+`apikey` — sem `Authorization` nenhum. Este roteiro fecha essa lacuna
+especificamente: RPC HTTP cru, não `supabase-js`, não SQL Editor (que
+conecta como dono e não passa por concessão nenhuma).
+
+**Pré-requisito:** a migration `20260809000000_revoke_anon_execute_leak.sql`
+(passo 13 da lista acima) já aplicada.
+
+Para cada uma das quatro funções abaixo, faça um `POST` para
+`{SUPABASE_URL}/rest/v1/rpc/{nome_da_funcao}` com header `apikey:
+{chave publicável}` e **sem** header `Authorization` — nem mesmo com o valor
+da própria chave publicável no lugar do JWT. Corpo JSON com parâmetros
+quaisquer sintaticamente válidos (o valor não importa; o que importa é a
+função nunca começar a executar):
+
+1. `register_representative` — `{"p_slug": "teste-anon", "p_display_name":
+   "Teste Anon", "p_license_id": "x", "p_phone": null, "p_city": null}`.
+2. `activate_product` — `{"p_product_id": "00000000-0000-0000-0000-000000000000"}`.
+3. `set_activation_status` — `{"p_product_id":
+   "00000000-0000-0000-0000-000000000000", "p_status": "published"}`.
+4. `update_representative_profile` — `{"p_phone": null, "p_city": null,
+   "p_license_id": "x"}`.
+
+**Observar, nas quatro:** a resposta é um erro de permissão (`42501` /
+"permission denied for function ..."), nunca HTTP 200 e nunca um `status`
+tipado. Se qualquer uma responder 200 com um resultado tipado (ex.
+`representative_not_found`, `slug_invalid`), a concessão ainda está errada —
+pare aqui e não considere a migration aplicada corretamente.
+
+**Contraprova, no mesmo teste:** repita a chamada 5 (`submit_lead`, com um
+`p_representative_id`/`p_product_id` válidos do catálogo e os demais campos
+preenchidos) sem `Authorization`. **Observar:** esta, sim, deve responder 200
+com um resultado — `anon` continua com EXECUTE nela de propósito (ADR-034).
+Se `submit_lead` também passar a falhar, a migration foi longe demais (o
+`alter default privileges` não deveria ter afetado um grant explícito já
+existente) — investigue antes de considerar o passo 13 concluído.
+
+**Executado e confirmado em 2026-08-03**, contra o projeto real do Pedro. As
+quatro funções (`activate_product`, `set_activation_status`,
+`register_representative`, `update_representative_profile`), chamadas via RPC
+HTTP cru sem header `Authorization`, retornaram `42501 permission denied for
+function ...` — nenhuma respondeu com um `status` tipado. Antes da migration
+`20260809000000`, `activate_product`/`set_activation_status` haviam
+respondido HTTP 200 com `{status: 'representative_not_found', ...}`,
+confirmando o furo original. A contraprova de `submit_lead` (mesma chamada,
+sem `Authorization`) retornou `true` — `anon` continua com EXECUTE nela, de
+propósito, sem regressão.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 

@@ -1,0 +1,97 @@
+-- Correção de um achado real de segurança, confirmado contra o projeto
+-- Supabase de verdade (não hipótese): `anon` tinha EXECUTE nas quatro funções
+-- `SECURITY DEFINER` que os passos 10/11/12 (`supabase/README.md`) e
+-- ADR-040/ADR-043/ADR-047 (`README.md` principal) documentam como
+-- `grant ... to authenticated` **apenas**. Nenhuma migration já aplicada é
+-- editada aqui — nova migration, mesma regra do projeto
+-- (`README.md:233-237`).
+--
+-- ============================================================================
+-- Como foi confirmado — teste manual real, não revisão de código
+-- ============================================================================
+--
+-- 1. `select routine_name, grantee, privilege_type from
+--    information_schema.role_routine_grants where routine_name in
+--    ('activate_product', 'set_activation_status', 'register_representative',
+--    'update_representative_profile', 'submit_lead');` — `anon` aparece com
+--    EXECUTE nas cinco, incluindo as quatro que deveriam ser só
+--    `authenticated`.
+-- 2. RPC HTTP direto contra `activate_product`, só com header `apikey`, SEM
+--    `Authorization` (ou seja, sem sessão nenhuma): respondeu HTTP 200 com
+--    `{status: 'representative_not_found', ...}` — um resultado TIPADO da
+--    função, não um erro `42501` de permissão. Se a concessão estivesse
+--    correta, o Postgres teria barrado a chamada antes de executar o corpo
+--    da função; o corpo nunca deveria rodar para um chamador anônimo.
+--
+-- ============================================================================
+-- Causa raiz — por que `revoke ... from public` (já presente em
+-- `20260806000000`/`20260807000000`/`20260808000000`) não bastou
+-- ============================================================================
+--
+-- Cada uma das quatro migrations já revoga de `public` corretamente. Isso não
+-- teve efeito porque a concessão vazada não vem de `public` — vem de um
+-- `ALTER DEFAULT PRIVILEGES` no schema `public` concedendo EXECUTE em funções
+-- novas DIRETAMENTE a `anon` (e/ou `authenticated`) no momento da criação,
+-- por fora do `create or replace function`. `revoke execute on function ...
+-- from public` revoga de um papel (`public`) que nunca foi o problema — a
+-- concessão a `anon` nunca passou por `public`, veio de um default privilege
+-- separado que corre automaticamente toda vez que uma função nova é criada.
+--
+-- Confirme rodando, no SQL Editor:
+--
+--   select nspname, defaclrole::regrole, defaclobjtype, defaclacl
+--   from pg_default_acl
+--   join pg_namespace on pg_namespace.oid = pg_default_acl.defaclnamespace
+--   where nspname = 'public';
+--
+-- Um `defaclacl` com `anon=X/...` para `defaclobjtype = 'f'` (function) é a
+-- causa confirmada.
+--
+-- ============================================================================
+-- O que esta migration faz — dois passos distintos, não confundir
+-- ============================================================================
+--
+-- 1. Revoga EXECUTE de `anon`, explicitamente, por nome e assinatura exata,
+--    nas quatro funções já existentes. Um `alter default privileges` sozinho
+--    NÃO alcançaria estas quatro — ele só muda o padrão para funções criadas
+--    DEPOIS de rodar; as que já existem mantêm a concessão que já receberam
+--    até serem revogadas explicitamente. Por isso o passo 1 é necessário
+--    mesmo com o passo 2 abaixo.
+-- 2. Muda o default privilege do schema `public`, para que nenhuma função
+--    `SECURITY DEFINER` futura (D7/subscription, por exemplo) vaze para
+--    `anon` do mesmo jeito de novo. Não altera `authenticated` — nenhuma das
+--    quatro funções deveria perder acesso para o papel autenticado real.
+--
+-- `submit_lead` (`20260801000000`/`20260802000000`) **não é tocado** — seu
+-- `grant execute ... to anon` é proposital (ADR-034: captura de lead é para
+-- visitante anônimo). Um grant explícito posterior sobrepõe um default
+-- privilege anterior — por isso mudar o default para `anon` no passo 2 não
+-- desfaz o grant explícito que `submit_lead` já tem; a mudança de default só
+-- vale para o que nasce sem grant explícito próprio.
+--
+-- ============================================================================
+-- Verificação — re-rodar o mesmo teste manual que encontrou o furo
+-- ============================================================================
+--
+-- Depois de aplicar: repetir o RPC HTTP direto (só `apikey`, sem
+-- `Authorization`) contra `activate_product`/`set_activation_status`/
+-- `register_representative`/`update_representative_profile` e confirmar que
+-- agora vem erro de permissão (`42501`), não mais um `status` tipado. Roteiro
+-- completo em `supabase/README.md`, seção "Verificação manual obrigatória —
+-- vazamento de EXECUTE para anon (passo 13)". Ver ADR-048 no `README.md`
+-- principal para o achado completo.
+
+-- ============================================================================
+-- Passo 1 — revoga de anon, explicitamente, nas quatro funções existentes
+-- ============================================================================
+
+revoke execute on function public.register_representative(text, text, text, text, text) from anon;
+revoke execute on function public.activate_product(uuid) from anon;
+revoke execute on function public.set_activation_status(uuid, text) from anon;
+revoke execute on function public.update_representative_profile(text, text, text) from anon;
+
+-- ============================================================================
+-- Passo 2 — corrige o default privilege do schema, para funções futuras
+-- ============================================================================
+
+alter default privileges in schema public revoke execute on functions from anon;
