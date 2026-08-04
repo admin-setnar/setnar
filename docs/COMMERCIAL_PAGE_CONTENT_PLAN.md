@@ -2,7 +2,10 @@
 
 > Plano de investigação — visual on-brand + widget interativo por produto na
 > Commercial Page
-> Status: **proposta, não implementada** — nenhum código deste documento existe
+> Status: **parcialmente implementada** — CP3 (ADR-056) e CP9 (ADR-057, como
+> protótipo não aprovado — ver nota de revisão em §3.3/§4) têm código; CP1,
+> CP4-CP8 e CP10 continuam só planejados. Ver nota de revisão em 2026-08-04
+> no final de §4 para o detalhe completo.
 > Escopo: o que falta entre a Commercial Page mínima que existe hoje
 > (identificação + CTA WhatsApp + lead form + aviso de compliance, ADR-055) e
 > o conteúdo rico que `templates/commercial-pages/` já tem pronto como
@@ -352,6 +355,13 @@ inteiro** — recomendo resolver esta pergunta específica (confirmação sobre 
 Política de Uso da Marca) antes de qualquer outra coisa deste plano, mesmo
 que o resto (§3.1/§3.2, os widgets do §4) avance em paralelo.
 
+**Nota de revisão (2026-08-04).** CP1 continua **sem confirmação da
+iGreen** — não decidido, exatamente como registrado acima. O que mudou:
+Pedro decidiu implementar CP9 mesmo assim, como protótipo interno não
+aprovado, para usar como peça de apresentação ao pedir essa mesma
+confirmação — ver ADR-057 (README.md) e a nota no início de §4/CP9 abaixo.
+Isso não fecha esta decisão; só muda a ordem em que o risco foi assumido.
+
 ## 3.4 GA4/Meta Pixel
 
 **Opção A — não adicionar.** `analytics_events` continua sendo o único
@@ -396,6 +406,9 @@ não deveria prosseguir — o resto (CP2-CP6) não depende desta resposta.
 fechadas, registrar como ADR-056 (ou dois ADRs, um por decisão) antes de CP3.
 
 ## CP3 — Componente "Tabs de conteúdo" + 1 produto (prova de conceito)
+
+**Implementado — ver ADR-056 (README.md).** Descrição abaixo mantida como
+registro do plano original; não repete o que o ADR já documenta em detalhe.
 
 *Depende de CP2.*
 
@@ -464,6 +477,12 @@ system atual (`Card` + lista), sem widget interativo nenhum.
 - Trust strip: lista curta de badges de confiança, mesma forma pros 7.
 
 ## CP9 — Visual on-brand (paleta iGreen)
+
+**Implementado como protótipo NÃO aprovado — ver ADR-057 (README.md).**
+Pedro decidiu prosseguir sem esperar CP1 (decisão de negócio, risco
+assumido conscientemente — ver nota em §3.3 acima). CP1 continua pendente;
+nada aqui deve ser lido como "a iGreen aprovou o visual". Descrição abaixo
+mantida como registro do plano original.
 
 *Depende de CP1 (confirmação de marca) — não prossiga sem isso.* Se
 confirmado: token de marca por vertical/Company, aplicado só nas Commercial
