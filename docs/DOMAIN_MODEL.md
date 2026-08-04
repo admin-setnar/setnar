@@ -13,7 +13,7 @@ This document is the definitive business specification of SETNAR. It exists so t
 
 SETNAR is being built incrementally, one validated stage at a time, per ROADMAP.md. A Domain Model is what keeps that incremental delivery coherent: it lets the team add Stage 2 (Optimize), Stage 3 (Sell), Stage 4 (Automate) and beyond without rewriting Stage 1, because the business concepts were modeled correctly from the start, even though only a subset of their behavior is implemented today.
 
-This document derives every decision from the five existing project documents (PRODUCT.md, ARCHITECTURE.md, DESIGN_SYSTEM.md, ROADMAP.md, ENGINEERING_GUIDELINES.md). It does not introduce features, entities, or business rules that are not implied or required by those documents. Where those documents are silent, this document makes the minimal, most conservative extension necessary for the model to be internally consistent, and flags it explicitly as an inferred decision rather than a sourced one.
+This document derives every decision from PRODUCT_CONSTITUTION.md first, and from the five other existing project documents (PRODUCT.md, ARCHITECTURE.md, DESIGN_SYSTEM.md, ROADMAP.md, ENGINEERING_GUIDELINES.md) to the extent they are themselves consistent with it. It does not introduce features, entities, or business rules that are not implied or required by those documents. Where those documents are silent, this document makes the minimal, most conservative extension necessary for the model to be internally consistent, and flags it explicitly as an inferred decision rather than a sourced one.
 
 This document describes the business. It intentionally says nothing about databases, APIs, frameworks, or code.
 
@@ -21,7 +21,7 @@ This document describes the business. It intentionally says nothing about databa
 
 # 2. Business Vision
 
-SETNAR exists because independent sales professionals — licensed representatives, consultants, agents, affiliates, franchisees, brokers — currently represent brands and sell products without any professional digital infrastructure of their own. They rely on scattered PDFs, generic link-in-bio tools, and disorganized WhatsApp threads. This is a credibility problem as much as a tooling problem: a prospective customer has no way to distinguish a serious independent professional from an opportunistic one.
+SETNAR exists because independent professionals authorized by an organization — licensed representatives, consultants, agents, affiliates, franchisees, brokers — currently represent brands and sell products without any professional digital infrastructure of their own. They rely on scattered PDFs, generic link-in-bio tools, and disorganized WhatsApp threads. This is a credibility problem as much as a tooling problem: a prospective customer has no way to distinguish a serious independent professional from an opportunistic one.
 
 SETNAR's business bet is that giving each of these professionals a *Digital Office* — a personalized, credible, always-on digital presence tied to the products they are authorized to sell — increases their conversion rate and, in turn, makes them willing to pay for the platform.
 
@@ -36,13 +36,13 @@ The business validates itself one stage and one vertical at a time (Stage 1 targ
 This is the single authoritative vocabulary of the SETNAR business. Every future document, conversation, or specification must use these terms with these exact meanings. Where a Portuguese-market term differs from the English one used internally, both are given.
 
 ### Company
-**Definition:** A business entity that recruits, authorizes, and organizes independent sales professionals to represent its products.
+**Definition:** A business entity that recruits, authorizes, and organizes independent professionals to represent its products.
 **Business meaning:** The tenant of the platform. Every other business object exists in the context of exactly one Company. A Company is the boundary of branding, product catalog, and administrative authority.
 **Example:** iGreen Energy is a Company. A future insurance brokerage onboarded in Stage 5 would be a different Company.
 **Relationships:** Owns Catalogs, employs/authorizes Representatives, defines Roles and Permissions, is the tenant boundary for Analytics and Billing.
 
 ### Representative
-**Definition:** An independent sales professional authorized by exactly one Company to sell that Company's Products under their own name and identity.
+**Definition:** An independent professional authorized by exactly one Company to sell that Company's Products under their own name and identity.
 **Business meaning:** The primary user and beneficiary of SETNAR. A Representative is not an employee — they operate independently but derive credibility and tooling from their affiliation with the Company.
 **Example:** A licensed iGreen representative who sells Conexão Green and Conexão Solar.
 **Relationships:** Belongs to exactly one Company; owns one Commercial Page per activated Product (or a unified Commercial Page presenting several); is the subject of Analytics; receives Leads.
@@ -76,6 +76,11 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 **Business meaning:** This is the core deliverable of the MVP and the literal "Digital Office." It is what a Representative shares instead of a PDF or a raw WhatsApp number.
 **Example:** `joao-silva.setnar.com.br` showing João's photo, his iGreen affiliation, and his activated Products.
 **Relationships:** Owned by exactly one Representative; references one or more Products; has one QR Code; is the target of Visitor traffic and the origin of Leads.
+
+### Digital Office
+**Definition:** The colloquial/marketing name for a Representative's Commercial Page as a whole (identity + activated Products + QR Code).
+**Business meaning:** Not a separate entity — always resolves to Commercial Page in this document and in code. Used in product and marketing prose where "Commercial Page" would read as overly technical.
+**Relationships:** Synonym of Commercial Page; carries no relationships of its own.
 
 ### QR Code
 **Definition:** A generated, scannable visual representation of a Commercial Page's (or, later, Campaign's) link.
@@ -157,7 +162,7 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 This is the Core Domain, and not, for example, Catalog Management or Analytics, because:
 
 - PRODUCT.md is explicit that SETNAR's value is not "creating pages" but "helping professionals generate more business opportunities." The mechanism for that — turning an identity + a set of authorized products into something a stranger will trust enough to act on — is the one thing SETNAR does that a generic tool (Linktree, a PDF, a website builder) cannot do as well, because those tools have no concept of "authorized representative of a real company selling a real regulated product."
-- It is the only domain area explicitly named in the MVP Goal ("validate whether independent sales professionals are willing to pay for a Digital Office") and is the sole subject of Stage 1 of the Roadmap.
+- It is the only domain area explicitly named in the MVP Goal ("validate whether independent representatives are willing to pay for a Digital Office") and is the sole subject of Stage 1 of the Roadmap.
 - Every later stage (Optimize, Sell, Automate, Enterprise, Ecosystem) is explicitly framed as *increasing the value of the same Commercial Page and the traffic it generates* — better marketing materials for it, a CRM to work the Leads it produces, AI to help write its content, White Label to let more Companies produce it. No later stage replaces it.
 
 Supporting and Generic Domains exist to make the Core Domain credible (Company/Catalog governance), measurable (Analytics), and eventually monetizable (Billing) and manageable at scale (Administration) — but none of them is the reason a customer pays.
@@ -218,7 +223,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Events produced:** CompanyRegistered, CompanyBrandingUpdated.
 
 ## 7.3 Representative Management Context
-**Purpose:** Represent the independent sales professional and their profile.
+**Purpose:** Represent the independent professional authorized by the Company, and their profile.
 **Responsibilities:** Representative profile management (name, photo, phone, city, social links), the Representative's relationship to a Company, Product Activation.
 **Owned entities:** Representative, Profile, Product Activation.
 **Business rules:** A Representative belongs to exactly one Company at a time. A Representative may only activate Products that exist in their Company's Catalog.
@@ -289,6 +294,14 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Relationships:** Sits above all other contexts within a Company boundary; depends on Identity & Access for Roles/Permissions.
 **Events produced:** RepresentativeSuspended, WhiteLabelConfigured.
 
+## 7.12 Compliance Context
+**Purpose:** Ensure every public claim a Commercial Page makes about a Product stays within the authorizing organization's rules and applicable regulation.
+**Responsibilities:** Compliance Notice authoring and resolution, mapping Products to their applicable Compliance Category.
+**Owned entities:** Compliance Notice, Compliance Category.
+**Business rules:** A Product cannot be presented on a Commercial Page without a resolvable Compliance Notice for its category. Compliance Notices are authored by the Company, never by the Representative.
+**Relationships:** Constrains Commercial Presence (a Commercial Page cannot publish a Product without a resolvable Notice); is authored by Company Management.
+**Events produced:** ComplianceNoticeResolved.
+
 ---
 
 # 8. Domain Entities
@@ -310,7 +323,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 
 ### 8.2 Representative
 
-**Business description:** An independent sales professional authorized by one Company to sell that Company's Products.
+**Business description:** An independent professional authorized by one Company to sell that Company's Products.
 **Purpose:** The subject of the Digital Office; the entity whose credibility and sales activity SETNAR exists to enable.
 **Responsibilities:** Maintaining an accurate Profile, activating Products they are authorized and willing to sell, owning and publishing their Commercial Page(s), working their Leads.
 **Identity:** Uniquely identified independently of their Company affiliation (a Representative's identity persists even if their Company affiliation changes, per the multi-tenant model, though PRODUCT.md does not define cross-Company transfer as an MVP feature — see Section 17).
@@ -319,7 +332,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Behaviors:** Complete/update Profile, activate/deactivate a Product, publish/unpublish a Commercial Page, create a Campaign, update a Lead's Pipeline Status.
 **Invariants:** A Representative cannot exist without a Company. A Representative cannot activate a Product that does not belong to their Company's Catalog.
 **Creation rules:** Created through a self-service registration flow scoped to a specific Company (per PRODUCT.md's "self-service and automatic activation").
-**Deletion rules:** Deactivating a Representative unpublishes their Commercial Pages but preserves their historical Leads and Analytics for the Company's record-keeping.
+**Deletion rules:** Deactivating a Representative unpublishes their Commercial Pages but preserves their historical Leads and Analytics for the Company's record-keeping. Independent of that retention, the Representative retains the right to export their own historical Leads, Analytics, and Commercial Page content in a portable form — per PRODUCT_CONSTITUTION.md Core Belief 3 ("a professional who leaves must be able to take their history and credibility with them").
 **Example:** A licensed iGreen representative.
 **Future evolution:** In Stage 5, a Representative may be assigned a Role beyond the default (e.g., Team Manager), without changing the entity's core shape.
 
@@ -1021,4 +1034,4 @@ flowchart TB
 
 ---
 
-*End of DOMAIN_MODEL.md — this document is the Business Domain Constitution of SETNAR. Every future architectural, product, or engineering decision must be traceable to a concept defined here.*
+*End of DOMAIN_MODEL.md — this document is the definitive business specification of SETNAR, governed by and subordinate to PRODUCT_CONSTITUTION.md. Every future architectural, product, or engineering decision must be traceable to a concept defined here.*
