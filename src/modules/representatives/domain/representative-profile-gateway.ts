@@ -1,6 +1,6 @@
 /**
  * Input for D5b's profile edit — `phone`/`city` optional (mirrors the
- * columns' own nullability), `licenseId` required (the column is `not null`).
+ * columns' own nullability), `authorizationId` required (the column is `not null`).
  * Field names 1:1 with `update_representative_profile`'s `p_`-prefixed
  * parameters (`supabase/migrations/20260808000000_add_update_representative_profile.sql`),
  * same split `RegisterRepresentativeInput`/`SupabaseRepresentativeOnboardingGateway`
@@ -15,7 +15,7 @@
 export interface UpdateRepresentativeProfileInput {
   readonly phone: string | null;
   readonly city: string | null;
-  readonly licenseId: string;
+  readonly authorizationId: string;
 }
 
 /**
@@ -26,7 +26,7 @@ export interface UpdateRepresentativeProfileInput {
  */
 export type UpdateRepresentativeProfileRejectionReason =
   | 'representative_not_found'
-  | 'license_id_invalid'
+  | 'authorization_id_invalid'
   | 'phone_invalid'
   | 'city_invalid';
 

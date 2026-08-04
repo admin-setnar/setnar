@@ -8,8 +8,8 @@ import { resolveRepresentativeActivation } from '@/modules/representatives/appli
 import { resolveCompanyVertical } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
 import { CONEXAO_CLUB_TABS } from '@/modules/representatives/domain/product-content/conexao-club';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
+import { AuthorizedRepresentativeIdentificationBlock } from '@/modules/representatives/presentation/authorized-representative-identification-block';
 import { ComplianceNotice } from '@/modules/representatives/presentation/compliance-notice';
-import { LicenseeIdentificationBlock } from '@/modules/representatives/presentation/licensee-identification-block';
 import { ProductContentTabs } from '@/modules/representatives/presentation/product-content-tabs';
 import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
 import { BrandTokensStyle } from '@/modules/tenancy/presentation/brand-tokens';
@@ -107,7 +107,7 @@ export default async function ProductPage({
         </Text>
 
         <div className="mt-8">
-          <LicenseeIdentificationBlock representative={representative} />
+          <AuthorizedRepresentativeIdentificationBlock representative={representative} />
         </div>
 
         <div className="mt-6">

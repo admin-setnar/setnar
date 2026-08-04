@@ -31,7 +31,7 @@ const GENERIC_ERROR_COPY: ProfileErrorCopy = {
  */
 const REJECTION_MESSAGES: Record<UpdateRepresentativeProfileRejectionReason, ProfileErrorCopy> = {
   representative_not_found: GENERIC_ERROR_COPY,
-  license_id_invalid: {
+  authorization_id_invalid: {
     title: 'Número de identificação inválido',
     description: 'Confira o número informado.',
   },

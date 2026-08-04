@@ -6,7 +6,7 @@ import { IconWrapper } from '@/shared/ui/icon-wrapper';
 import { Text } from '@/shared/ui/typography';
 
 /**
- * "Quem vai te atender" — identifies the licensed human being behind a
+ * "Quem vai te atender" — identifies the authorized human being behind a
  * Commercial Page, never a generic "seller" placeholder. Copy ("Licenciado
  * Autorizado iGreen Energy · ID {id}") is ported verbatim from the
  * compliance-signed-off wording in
@@ -21,7 +21,7 @@ import { Text } from '@/shared/ui/typography';
  * meant to move into the shared product layout once more than one product
  * page exists, unchanged.
  */
-export function LicenseeIdentificationBlock({
+export function AuthorizedRepresentativeIdentificationBlock({
   representative,
 }: {
   representative: Representative;
@@ -37,7 +37,7 @@ export function LicenseeIdentificationBlock({
           {representative.name}
         </Text>
         <Text as="p" variant="caption" className="mt-1">
-          Licenciado Autorizado iGreen Energy · ID {representative.licenseId}
+          Licenciado Autorizado iGreen Energy · ID {representative.authorizationId}
         </Text>
         {representative.city ? (
           <Text as="p" variant="caption">

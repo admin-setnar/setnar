@@ -29,7 +29,7 @@ export class SupabaseRepresentativeOnboardingGateway implements RepresentativeOn
     const { data, error } = await this.supabase.rpc('register_representative', {
       p_slug: input.slug,
       p_display_name: input.displayName,
-      p_license_id: input.licenseId,
+      p_authorization_id: input.authorizationId,
       p_phone: input.phone,
       p_city: input.city,
     });

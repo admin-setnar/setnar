@@ -29,7 +29,7 @@ export class SupabaseRepresentativeProfileGateway implements RepresentativeProfi
     const { data, error } = await this.supabase.rpc('update_representative_profile', {
       p_phone: input.phone,
       p_city: input.city,
-      p_license_id: input.licenseId,
+      p_authorization_id: input.authorizationId,
     });
 
     return mapUpdateRepresentativeProfileResult(data, error);

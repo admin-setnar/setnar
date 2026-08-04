@@ -20,7 +20,7 @@ export interface UpdateRepresentativeProfileRpcErrorLike {
 
 const REJECTION_REASONS: readonly UpdateRepresentativeProfileRejectionReason[] = [
   'representative_not_found',
-  'license_id_invalid',
+  'authorization_id_invalid',
   'phone_invalid',
   'city_invalid',
 ];

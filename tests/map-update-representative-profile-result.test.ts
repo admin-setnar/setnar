@@ -11,7 +11,7 @@ describe('mapUpdateRepresentativeProfileResult', () => {
 
   for (const reason of [
     'representative_not_found',
-    'license_id_invalid',
+    'authorization_id_invalid',
     'phone_invalid',
     'city_invalid',
   ] as const) {

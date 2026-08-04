@@ -51,7 +51,7 @@ export function OnboardingForm() {
     defaultValues: {
       slug: '',
       displayName: '',
-      licenseId: '',
+      authorizationId: '',
       phone: '',
       city: '',
     },
@@ -106,7 +106,7 @@ export function OnboardingForm() {
         )}
       </FormField>
 
-      <FormField label="Número de identificação" error={errors.licenseId?.message}>
+      <FormField label="Número de identificação" error={errors.authorizationId?.message}>
         {({ id, describedBy, invalid }) => (
           <Input
             id={id}
@@ -115,7 +115,7 @@ export function OnboardingForm() {
             aria-describedby={describedBy}
             invalid={invalid}
             disabled={isSubmitting}
-            {...register('licenseId')}
+            {...register('authorizationId')}
           />
         )}
       </FormField>

@@ -11,7 +11,7 @@
 export interface RegisterRepresentativeInput {
   readonly slug: string;
   readonly displayName: string;
-  readonly licenseId: string;
+  readonly authorizationId: string;
   readonly phone: string | null;
   readonly city: string | null;
 }
@@ -29,7 +29,7 @@ export type RegisterRepresentativeRejectionReason =
   | 'slug_invalid'
   | 'slug_taken'
   | 'display_name_invalid'
-  | 'license_id_invalid'
+  | 'authorization_id_invalid'
   | 'phone_invalid'
   | 'city_invalid';
 

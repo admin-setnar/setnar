@@ -6,7 +6,7 @@ import { representativeProfileSchema } from '@/modules/representatives/presentat
 const valid = {
   phone: '(11) 98888-7777',
   city: 'São Paulo',
-  licenseId: 'ID-123456',
+  authorizationId: 'ID-123456',
 };
 
 describe('representativeProfileSchema', () => {
@@ -26,21 +26,21 @@ describe('representativeProfileSchema', () => {
     );
   });
 
-  describe('licenseId', () => {
+  describe('authorizationId', () => {
     it('rejects an empty value', () => {
-      assert.equal(representativeProfileSchema.safeParse({ ...valid, licenseId: '' }).success, false);
+      assert.equal(representativeProfileSchema.safeParse({ ...valid, authorizationId: '' }).success, false);
     });
 
     it('rejects a value over 100 characters', () => {
       assert.equal(
-        representativeProfileSchema.safeParse({ ...valid, licenseId: 'A'.repeat(101) }).success,
+        representativeProfileSchema.safeParse({ ...valid, authorizationId: 'A'.repeat(101) }).success,
         false,
       );
     });
 
     it('accepts a value at exactly 100 characters', () => {
       assert.equal(
-        representativeProfileSchema.safeParse({ ...valid, licenseId: 'A'.repeat(100) }).success,
+        representativeProfileSchema.safeParse({ ...valid, authorizationId: 'A'.repeat(100) }).success,
         true,
       );
     });

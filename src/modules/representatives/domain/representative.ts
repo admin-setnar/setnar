@@ -17,7 +17,7 @@ export interface Representative {
   /** Subdomain label a Commercial Page resolves by, e.g. `joao-silva` (ADR-026). */
   readonly slug: string;
   readonly name: string;
-  readonly licenseId: string;
+  readonly authorizationId: string;
   readonly phone: string | null;
   readonly city: string | null;
   readonly avatarUrl: string | null;

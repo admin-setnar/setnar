@@ -55,7 +55,7 @@ export async function registerRepresentativeAction(
     const result = await registerRepresentative(gateway, {
       slug: parsed.data.slug,
       displayName: parsed.data.displayName,
-      licenseId: parsed.data.licenseId,
+      authorizationId: parsed.data.authorizationId,
       phone: parsed.data.phone ? formatPhoneToE164(parsed.data.phone) : null,
       city: parsed.data.city ? parsed.data.city : null,
     });
@@ -129,7 +129,7 @@ export async function setActivationStatusAction(
 }
 
 /**
- * D5b — saves `phone`/`city`/`licenseId` for the signed-in Representative.
+ * D5b — saves `phone`/`city`/`authorizationId` for the signed-in Representative.
  * Re-validates with the same Zod schema `RepresentativeProfileForm` already
  * uses client-side, same split every other form action in this file
  * establishes.
@@ -158,7 +158,7 @@ export async function updateRepresentativeProfileAction(
     return gateway.update({
       phone: parsed.data.phone ? formatPhoneToE164(parsed.data.phone) : null,
       city: parsed.data.city ? parsed.data.city : null,
-      licenseId: parsed.data.licenseId,
+      authorizationId: parsed.data.authorizationId,
     });
   });
 

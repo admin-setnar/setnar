@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 import {
+  AUTHORIZATION_ID_MAX_LENGTH,
   BR_PHONE_PATTERN,
   CITY_MAX_LENGTH,
   DISPLAY_NAME_MAX_LENGTH,
   hasAtLeastTwoWords,
-  LICENSE_ID_MAX_LENGTH,
   REPRESENTATIVE_SLUG_PATTERN,
 } from '@/modules/representatives/domain/representative-rules';
 
@@ -36,11 +36,11 @@ export const representativeOnboardingSchema = z.object({
     .min(1, 'Informe seu nome e sobrenome.')
     .max(DISPLAY_NAME_MAX_LENGTH, `Use no máximo ${DISPLAY_NAME_MAX_LENGTH} caracteres.`)
     .refine(hasAtLeastTwoWords, 'Informe nome e sobrenome.'),
-  licenseId: z
+  authorizationId: z
     .string()
     .trim()
     .min(1, 'Informe o número de identificação.')
-    .max(LICENSE_ID_MAX_LENGTH, `Use no máximo ${LICENSE_ID_MAX_LENGTH} caracteres.`),
+    .max(AUTHORIZATION_ID_MAX_LENGTH, `Use no máximo ${AUTHORIZATION_ID_MAX_LENGTH} caracteres.`),
   phone: z
     .string()
     .trim()

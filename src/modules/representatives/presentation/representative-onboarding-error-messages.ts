@@ -49,7 +49,7 @@ const REJECTION_MESSAGES: Record<RegisterRepresentativeRejectionReason, Onboardi
     title: 'Informe seu nome e sobrenome',
     description: 'Use até 80 caracteres.',
   },
-  license_id_invalid: {
+  authorization_id_invalid: {
     title: 'Número de identificação inválido',
     description: 'Confira o número informado.',
   },

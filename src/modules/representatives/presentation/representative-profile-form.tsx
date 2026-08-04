@@ -52,7 +52,7 @@ export function RepresentativeProfileForm({ representative }: { representative: 
     defaultValues: {
       phone: representative.phone ? formatE164ToBRPhone(representative.phone) : '',
       city: representative.city ?? '',
-      licenseId: representative.licenseId,
+      authorizationId: representative.authorizationId,
     },
     mode: 'onBlur',
   });
@@ -79,7 +79,7 @@ export function RepresentativeProfileForm({ representative }: { representative: 
       {failure ? <FormAlert tone="error" {...representativeProfileErrorCopy(failure)} /> : null}
       {saved ? <FormAlert tone="success" title="Perfil atualizado." /> : null}
 
-      <FormField label="Número de identificação" error={errors.licenseId?.message}>
+      <FormField label="Número de identificação" error={errors.authorizationId?.message}>
         {({ id, describedBy, invalid }) => (
           <Input
             id={id}
@@ -88,7 +88,7 @@ export function RepresentativeProfileForm({ representative }: { representative: 
             aria-describedby={describedBy}
             invalid={invalid}
             disabled={isSubmitting}
-            {...register('licenseId')}
+            {...register('authorizationId')}
           />
         )}
       </FormField>

@@ -28,10 +28,10 @@ export const REPRESENTATIVE_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 /**
  * "Nome e sobrenome" — the minimum shape the iGreen brand usage policy
- * requires for the licensee identification block
- * (`presentation/licensee-identification-block.tsx`). See ADR-040 for why
- * this is a form field (`p_display_name`) rather than copied unchecked from
- * `profiles.full_name`.
+ * requires for the authorized representative identification block
+ * (`presentation/authorized-representative-identification-block.tsx`). See
+ * ADR-040 for why this is a form field (`p_display_name`) rather than copied
+ * unchecked from `profiles.full_name`.
  */
 export const DISPLAY_NAME_MIN_WORDS = 2;
 
@@ -46,14 +46,16 @@ export const DISPLAY_NAME_MIN_WORDS = 2;
 export const DISPLAY_NAME_MAX_LENGTH = 80;
 
 /**
- * `license_id` — format validation only. No pattern is declared here on
- * purpose: there is no confirmed source, anywhere in this repository, for
- * the real shape of an iGreen licensee id. See the "BLOQUEADOR DE
- * LANÇAMENTO" warning in `20260806000000_add_register_representative.sql`'s
- * header — this ceiling is a placeholder, not a validated format, and must
- * not grow a regex here without that confirmation landing first.
+ * `authorization_id` (renamed from the platform's original iGreen-coupled
+ * name — ADR-060/ADR-061/ADR-062) — format validation only. No pattern is
+ * declared here on purpose: there is no confirmed source, anywhere in this
+ * repository, for the real shape of an iGreen authorization id. See the
+ * "BLOQUEADOR DE LANÇAMENTO" warning in
+ * `20260806000000_add_register_representative.sql`'s header — this ceiling
+ * is a placeholder, not a validated format, and must not grow a regex here
+ * without that confirmation landing first.
  */
-export const LICENSE_ID_MAX_LENGTH = 100;
+export const AUTHORIZATION_ID_MAX_LENGTH = 100;
 
 /** Same ceiling `submit_lead` already uses for `p_cidade` — no external format exists for a city name, just a ceiling against pathological input. */
 export const CITY_MAX_LENGTH = 500;

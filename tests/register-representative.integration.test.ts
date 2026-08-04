@@ -51,7 +51,7 @@ describe('register_representative RPC (Postgres, integration)', { skip: !canRun 
     const { data, error } = await supabase!.rpc('register_representative', {
       p_slug: `register-representative-anon-test-${randomUUID()}`,
       p_display_name: 'Anon Teste Sobrenome',
-      p_license_id: 'ANON-TEST-ID',
+      p_authorization_id: 'ANON-TEST-ID',
       p_phone: null,
       p_city: null,
     });

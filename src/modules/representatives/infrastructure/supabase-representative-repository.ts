@@ -92,7 +92,7 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
       id: representativeRow.id,
       slug: representativeRow.slug,
       name: representativeRow.display_name,
-      licenseId: representativeRow.authorization_id,
+      authorizationId: representativeRow.authorization_id,
       phone: representativeRow.phone,
       city: representativeRow.city,
       avatarUrl: representativeRow.avatar_url,

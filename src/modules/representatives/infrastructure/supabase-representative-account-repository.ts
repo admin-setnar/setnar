@@ -48,7 +48,7 @@ export class SupabaseRepresentativeAccountRepository implements RepresentativeAc
       id: data.id,
       slug: data.slug,
       name: data.display_name,
-      licenseId: data.authorization_id,
+      authorizationId: data.authorization_id,
       phone: data.phone,
       city: data.city,
       avatarUrl: data.avatar_url,

@@ -11,7 +11,7 @@ import type {
 const input: RegisterRepresentativeInput = {
   slug: 'joao-silva',
   displayName: 'João Silva',
-  licenseId: 'ID-123456',
+  authorizationId: 'ID-123456',
   phone: null,
   city: null,
 };

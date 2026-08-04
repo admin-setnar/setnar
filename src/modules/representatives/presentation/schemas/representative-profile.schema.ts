@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 import {
+  AUTHORIZATION_ID_MAX_LENGTH,
   BR_PHONE_PATTERN,
   CITY_MAX_LENGTH,
-  LICENSE_ID_MAX_LENGTH,
 } from '@/modules/representatives/domain/representative-rules';
 
 /**
@@ -30,11 +30,11 @@ export const representativeProfileSchema = z.object({
     .max(CITY_MAX_LENGTH, `Use no máximo ${CITY_MAX_LENGTH} caracteres.`)
     .optional()
     .or(z.literal('')),
-  licenseId: z
+  authorizationId: z
     .string()
     .trim()
     .min(1, 'Informe o número de identificação.')
-    .max(LICENSE_ID_MAX_LENGTH, `Use no máximo ${LICENSE_ID_MAX_LENGTH} caracteres.`),
+    .max(AUTHORIZATION_ID_MAX_LENGTH, `Use no máximo ${AUTHORIZATION_ID_MAX_LENGTH} caracteres.`),
 });
 
 export type RepresentativeProfileFormValues = z.infer<typeof representativeProfileSchema>;

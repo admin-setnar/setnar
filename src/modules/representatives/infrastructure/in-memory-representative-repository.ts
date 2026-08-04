@@ -20,7 +20,7 @@ interface FixtureRepresentativeRow {
   readonly id: string;
   readonly slug: string;
   readonly displayName: string;
-  readonly licenseId: string;
+  readonly authorizationId: string;
   readonly phone: string | null;
   readonly city: string | null;
   readonly avatarUrl: string | null;
@@ -62,7 +62,7 @@ const DEFAULT_ROWS: readonly FixtureRow[] = [
       id: 'rep-joao-silva',
       slug: 'joao-silva',
       displayName: 'João Silva',
-      licenseId: 'IGREEN-001',
+      authorizationId: 'IGREEN-001',
       phone: '+5511999999999',
       city: 'São Paulo',
       avatarUrl: null,
@@ -79,7 +79,7 @@ const DEFAULT_ROWS: readonly FixtureRow[] = [
       id: 'rep-maria-suspensa',
       slug: 'maria-suspensa',
       displayName: 'Maria Suspensa',
-      licenseId: 'IGREEN-002',
+      authorizationId: 'IGREEN-002',
       phone: null,
       city: null,
       avatarUrl: null,
@@ -116,7 +116,7 @@ function toRepresentative(fixture: FixtureRepresentativeRow): Representative {
     id: fixture.id,
     slug: fixture.slug,
     name: fixture.displayName,
-    licenseId: fixture.licenseId,
+    authorizationId: fixture.authorizationId,
     phone: fixture.phone,
     city: fixture.city,
     avatarUrl: fixture.avatarUrl,
