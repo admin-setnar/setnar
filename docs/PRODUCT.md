@@ -9,9 +9,9 @@
 
 # Vision
 
-SETNAR exists to empower independent sales professionals with professional digital tools that increase credibility, simplify customer interactions and improve sales conversion.
+SETNAR exists to be the infrastructure layer for authorized independent representation — giving every independent professional authorized by an organization a digital presence that is credible, compliant, and generated for them, not built by them.
 
-Our goal is to become the operating system for independent commercial professionals.
+Our goal is to be the layer authorizing organizations rely on instead of leaving digital representation to chance, and the layer independent professionals rely on instead of building that presence themselves.
 
 Instead of requiring technical knowledge, marketing experience or web development skills, SETNAR allows anyone to build a professional digital presence in minutes.
 
@@ -19,13 +19,13 @@ Instead of requiring technical knowledge, marketing experience or web developmen
 
 # Mission
 
-Help sales professionals sell more through simple, intelligent and accessible digital solutions.
+Give every representative authorized by an organization a digital presence that is credible to customers and stays inside the rules that organization sets — automatically, without either side needing to employ a developer, a designer, or a compliance reviewer to keep it that way.
 
 ---
 
 # Long-Term Vision
 
-Become the leading SaaS platform for independent sales professionals in Latin America.
+Become the infrastructure layer that authorizing organizations and the independent professionals they authorize rely on, across every category of authorized independent representation — starting with, but never limited to, the market SETNAR validates first.
 
 SETNAR should centralize everything a representative needs to operate digitally:
 
@@ -61,7 +61,7 @@ These limitations reduce trust, engagement and ultimately sales conversion.
 
 # Solution
 
-SETNAR provides each sales professional with a complete Digital Office.
+SETNAR provides each representative with a complete Digital Office.
 
 The platform automatically creates professional commercial pages personalized with the representative's information.
 
@@ -73,17 +73,19 @@ Instead of sharing files or multiple links, representatives share a single profe
 
 SETNAR is not a website builder.
 
-SETNAR is a Digital Sales Platform.
+SETNAR is the infrastructure that makes a representative's presence credible to the customer and compliant for the authorizing organization, at the same time.
 
 Our value is not creating pages.
 
-Our value is helping professionals generate more business opportunities.
+Our value is the trust between a representative and the organization that authorizes them — the reason a customer can act on that presence with confidence.
 
 ---
 
 # Target Audience
 
 Primary audience
+
+Any independent professional authorized by an organization to represent it — under their own name, effort, and risk. Today this includes, without being limited to:
 
 - Licensed representatives
 - Independent consultants
@@ -96,7 +98,7 @@ Primary audience
 
 Secondary audience
 
-Companies that manage distributed sales teams.
+Organizations that authorize and manage distributed representative teams.
 
 ---
 
@@ -144,7 +146,7 @@ Digital tools should be accessible even for users with minimal technical knowled
 
 The MVP has one objective:
 
-Validate whether independent sales professionals are willing to pay for a Digital Office.
+Validate whether independent representatives are willing to pay for a Digital Office.
 
 Nothing else.
 
@@ -192,11 +194,16 @@ The platform architecture must never become dependent on iGreen.
 
 The first customer is not the product.
 
+This is a direct application of PRODUCT_CONSTITUTION.md's Core Belief 6 — one relationship proven is worth more than many assumed. Expansion to a new authorizing organization or category follows validation; it never substitutes for it.
+
 ---
 
-# Product Evolution
+# Product Capabilities
 
-Phase 1
+SETNAR's capabilities group into six durable areas. These are not phases to
+complete in a fixed order — sequencing and validation gates for each one are
+defined in ROADMAP.md. This section describes what each area is for,
+permanently, independent of when it ships.
 
 Digital Presence
 
@@ -204,15 +211,11 @@ Digital Presence
 - QR Codes
 - Professional Profile
 
-Phase 2
-
 Analytics
 
 - Visits
 - Clicks
 - Sources
-
-Phase 3
 
 Marketing
 
@@ -220,23 +223,17 @@ Marketing
 - Campaigns
 - Smart Links
 
-Phase 4
-
 Sales
 
 - CRM
 - Lead Management
 - Sales Pipeline
 
-Phase 5
-
 Artificial Intelligence
 
 - Content Generation
 - Sales Assistant
 - Automated Campaigns
-
-Phase 6
 
 Enterprise
 
