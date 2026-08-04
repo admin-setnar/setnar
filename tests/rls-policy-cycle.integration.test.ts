@@ -95,7 +95,7 @@ describe('RLS policy cycle (Postgres, integration)', { skip: !canRun && skipReas
         `
         status,
         representative:representatives!inner (
-          id, slug, display_name, license_id, phone, city, avatar_url, status
+          id, slug, display_name, authorization_id, phone, city, avatar_url, status
         ),
         product:products!inner ( id, slug, name )
       `,

@@ -13,7 +13,7 @@ interface RepresentativeRow {
   id: string;
   slug: string;
   display_name: string;
-  license_id: string;
+  authorization_id: string;
   phone: string | null;
   city: string | null;
   avatar_url: string | null;
@@ -66,7 +66,7 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
         `
         status,
         representative:representatives!inner (
-          id, slug, display_name, license_id, phone, city, avatar_url, status
+          id, slug, display_name, authorization_id, phone, city, avatar_url, status
         ),
         product:products!inner ( id, slug, name, company:companies!inner ( slug ) )
       `,
@@ -92,7 +92,7 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
       id: representativeRow.id,
       slug: representativeRow.slug,
       name: representativeRow.display_name,
-      licenseId: representativeRow.license_id,
+      licenseId: representativeRow.authorization_id,
       phone: representativeRow.phone,
       city: representativeRow.city,
       avatarUrl: representativeRow.avatar_url,

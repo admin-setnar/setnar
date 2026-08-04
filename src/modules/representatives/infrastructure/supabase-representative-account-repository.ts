@@ -9,7 +9,7 @@ interface RepresentativeRow {
   id: string;
   slug: string;
   display_name: string;
-  license_id: string;
+  authorization_id: string;
   phone: string | null;
   city: string | null;
   avatar_url: string | null;
@@ -38,7 +38,7 @@ export class SupabaseRepresentativeAccountRepository implements RepresentativeAc
   async findByProfileId(profileId: string): Promise<Representative | null> {
     const { data, error } = await this.supabase
       .from('representatives')
-      .select('id, slug, display_name, license_id, phone, city, avatar_url')
+      .select('id, slug, display_name, authorization_id, phone, city, avatar_url')
       .eq('profile_id', profileId)
       .maybeSingle<RepresentativeRow>();
 
@@ -48,7 +48,7 @@ export class SupabaseRepresentativeAccountRepository implements RepresentativeAc
       id: data.id,
       slug: data.slug,
       name: data.display_name,
-      licenseId: data.license_id,
+      licenseId: data.authorization_id,
       phone: data.phone,
       city: data.city,
       avatarUrl: data.avatar_url,

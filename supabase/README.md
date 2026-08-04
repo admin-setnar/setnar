@@ -699,7 +699,7 @@ aplicação (chave publicável), nunca pelo SQL Editor.
    `representatives_set_updated_at` do passo 4 é automático).
 3. Ainda como **R**, chame de novo com `p_license_id := ''`.
    **Observar:** `status = 'license_id_invalid'`, e um SELECT confirma que
-   `phone`/`city`/`license_id` **não mudaram** — a validação roda antes do
+   `phone`/`city`/`authorization_id` **não mudaram** — a validação roda antes do
    UPDATE, tudo ou nada, nenhuma escrita parcial.
 4. Ainda como **R**, chame com `p_phone := 'não-é-telefone'` (e
    `p_license_id` válido).
