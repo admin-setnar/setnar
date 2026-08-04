@@ -4,9 +4,9 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as dezesseis
+## 1. Aplicar as migrations, nesta ordem, todas as dezessete
 
-São cumulativas — aplique as dezesseis, em ordem, nunca só a primeira. Cole
+São cumulativas — aplique as dezessete, em ordem, nunca só a primeira. Cole
 cada arquivo no SQL Editor do projeto e execute, ou rode `supabase db push`
 se preferir a CLI.
 
@@ -303,6 +303,33 @@ se preferir a CLI.
     passo 15 e confirmar que `authenticated` não aparece mais para
     `is_bot_user_agent` (`record_page_visit`/`record_whatsapp_click`
     continuam com `authenticated`, de propósito).
+17. `supabase/migrations/20260815000000_add_subscription_enforcement.sql` —
+    passo E1 (`docs/SPRINT_E_PLAN.md` §4/E1), fecha a metade de **leitura**
+    da regra 21 (`docs/DOMAIN_MODEL.md:595`, Subscription deve estar Active
+    para a Commercial Page **continuar** publicada, não só para ser
+    publicada). Cria `is_subscription_active(p_representative_id uuid)`,
+    `security definer`, `stable`, `grant execute` para `anon` **e**
+    `authenticated` (ao contrário dos passos 10-12, precisa valer para o
+    visitante anônimo — é chamada de dentro de uma policy de leitura
+    pública, mesmo padrão de `is_login_blocked`/`is_bot_user_agent`) — lê só
+    `subscriptions`, que tem RLS habilitado e zero policies desde a
+    `20260731000000`, então não há aresta de volta para reabrir o ciclo
+    42P17 do passo 9. Redefine `product_activations_select_published`
+    (`drop policy` + `create policy`, mesmo padrão do passo 9) somando
+    `and is_subscription_active(product_activations.representative_id)` ao
+    predicado — uma linha só é publicamente visível com `status =
+    'published'` **e** subscription ativa, as duas juntas. `status` da linha
+    **não** é reescrito quando a subscription cai; ela só some da
+    visibilidade pública (coerente com a semântica de `published_at` do
+    ADR-043 — nada aqui é destrutivo). Nenhuma linha de `subscriptions`
+    nasce no onboarding (decisão do Pedro, `SPRINT_E_PLAN.md` §3.1, Opção
+    B): ausência de linha para um `representative_id` já conta como "não
+    ativa" por definição de `exists`, sem precisar de um estado `pending`
+    à parte. O gate de **escrita** (`set_activation_status`) ainda não
+    checa Subscription — isso é o passo E2, migration separada, ainda não
+    implementada. Ver ADR-063 no `README.md` principal para o raciocínio
+    completo. **Verificação:** seção própria mais abaixo neste arquivo
+    (**passo 17**).
 
 ## 2. Confirm email — decidido: DESLIGADO
 
@@ -979,6 +1006,79 @@ policy own-row de `analytics_events_select_own`) — `0`, mas essa leitura não
 prova nada por si só (a chave anon sempre vê `0` nessa tabela, com ou sem
 dado real): o item 0 pelo SQL Editor é quem confirma de verdade antes de
 considerar a troca do ADR-054 sem custo.
+
+## Verificação manual obrigatória — enforcement de leitura da Subscription (passo 17)
+
+**Escopo.** Nenhum teste automatizado deste repositório exercita RLS contra
+um banco real (mesma limitação do passo 8) — este roteiro é a verificação
+real do passo 17. Usa o representante `teste-novo-a`/produto `conexao-green`
+dos passos 11-13 (já publicado, gate de escrita já satisfeito), então o
+único fator que muda entre os itens abaixo é o estado de `subscriptions`.
+
+**Pré-requisito:** a migration `20260815000000_add_subscription_enforcement.sql`
+(passo 17 da lista acima) já aplicada, e a página pública de `teste-novo-a`
+resolvendo normalmente antes de começar (confirmado no roteiro do passo 11,
+item 13) — isso isola o efeito desta migration do restante do elo.
+
+1. **Antes de inserir qualquer linha em `subscriptions`** para `teste-novo-a`
+   (estado real hoje: nenhuma linha nasce no onboarding, decisão do Pedro em
+   `SPRINT_E_PLAN.md` §3.1), visite a página pública
+   (`teste-novo-a.setnar.com/conexao-green`, ou via `curl -H 'Host: ...'` em
+   dev).
+   **Observar:** a página **para de resolver** — 404 genérico, mesmo
+   anti-enumeration de sempre (nem erro, nem log, mesmo sintoma descrito no
+   passo 9). Isto é o comportamento pretendido: ausência de linha =
+   não-ativa.
+2. Pelo SQL Editor (ignora RLS — é assim que se cria o cenário, mesmo padrão
+   do passo 8):
+   ```sql
+   insert into subscriptions (representative_id, status)
+   values ((select id from representatives where slug = 'teste-novo-a'), 'active');
+   ```
+   Visite a página pública novamente.
+   **Observar:** resolve e renderiza normalmente — a mesma linha de
+   `product_activations` que já era `published` desde o passo 11 volta a
+   ficar publicamente visível, sem nenhuma escrita nela.
+3. Pelo SQL Editor:
+   ```sql
+   update subscriptions set status = 'suspended'
+   where representative_id = (select id from representatives where slug = 'teste-novo-a');
+   ```
+   Visite a página pública de novo.
+   **Observar:** volta a parar de resolver — mesmo 404 genérico do item 1.
+4. Com a subscription ainda `suspended`, confirme pelo SQL Editor:
+   ```sql
+   select status, published_at from product_activations
+   where representative_id = (select id from representatives where slug = 'teste-novo-a')
+     and product_id = (select id from products where slug = 'conexao-green');
+   ```
+   **Observar:** `status` continua `'published'` e `published_at` continua o
+   mesmo timestamp anotado no passo 11 — a queda de visibilidade pública não
+   reescreveu nem apagou nada na linha; ela só saiu da leitura pública.
+5. Restaure `status = 'active'` em `subscriptions` (mesmo UPDATE do item 2,
+   trocando o valor) e confirme que a página volta a resolver — fecha o
+   roteiro no estado "assinatura ativa", coerente com o resto do ambiente de
+   teste usado pelos passos 11-13.
+6. **Grants**, mesmo double-check dos passos 13/15: RPC HTTP cru, `POST`
+   para `{SUPABASE_URL}/rest/v1/rpc/is_subscription_active`, header `apikey:
+   {chave publicável}`, **sem** `Authorization`, corpo
+   `{"p_representative_id": "<uuid de teste-novo-a>"}`.
+   **Observar:** HTTP 200 com `true` (subscription restaurada para `active`
+   no item 5) — confirma que `anon` tem EXECUTE de propósito, ao contrário
+   das quatro funções do ADR-048/passo 13.
+
+**Não coberto por este roteiro, de propósito:** `representatives_select_public`
+não é alterada por esta migration — o comentário da migration já registra
+que o efeito prático de bloquear a leitura em `product_activations` já
+impede `findPublishedActivation` de montar a página, então uma segunda
+policy de `representatives` com o mesmo predicado seria redundante; não
+verificado à parte se `representatives` em si vaza campos (phone/city) por
+outro caminho quando a única ativação publicada fica sem subscription —
+seria o mesmo tipo de vazamento que os passos 8/9 já cobriram para o caso
+geral, não específico desta migration.
+
+**Pendente de execução** — este roteiro ainda não foi rodado contra o
+projeto real do Pedro.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 
