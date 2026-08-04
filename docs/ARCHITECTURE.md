@@ -11,6 +11,8 @@
 
 This document defines the architectural principles, technical standards, and engineering decisions that govern the development of SETNAR.
 
+This document is subordinate to PRODUCT_CONSTITUTION.md. Where a technical decision here appears to conflict with a principle stated there, the Constitution prevails and this document must be revised.
+
 Every contributor must follow these guidelines to ensure consistency, maintainability, scalability and simplicity.
 
 Architecture is a long-term asset.
@@ -558,6 +560,16 @@ Sanitize everything.
 Escape everything.
 
 Authentication and authorization are mandatory.
+
+---
+
+# Compliance
+
+Compliance is non-negotiable infrastructure, per PRODUCT_CONSTITUTION.md (Core Belief 2) — not a facet of Security.
+
+Any public surface that makes a claim on behalf of an Authorizing Organization must have a resolvable compliance mechanism before it can publish.
+
+`ProductComplianceNotice` (ADR-055) is the existing reference implementation of this rule in code.
 
 ---
 

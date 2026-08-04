@@ -11,6 +11,8 @@
 
 This document defines the engineering standards adopted by SETNAR.
 
+This document is subordinate to PRODUCT_CONSTITUTION.md. Where a technical decision here appears to conflict with a principle stated there, the Constitution prevails and this document must be revised.
+
 Every contributor, whether human or AI, must follow these guidelines.
 
 Consistency is more important than personal preference.
@@ -679,6 +681,8 @@ AI is an engineering assistant.
 Not the architect.
 
 Every AI-generated implementation must be reviewed against:
+
+PRODUCT_CONSTITUTION.md, which takes priority over the documents below
 
 Product Vision
 
