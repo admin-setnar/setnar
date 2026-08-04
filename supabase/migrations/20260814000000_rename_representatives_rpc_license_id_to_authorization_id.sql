@@ -16,23 +16,56 @@
 -- rename (domínio TypeScript, componente, código de aplicação).
 --
 -- ============================================================================
+-- Correção registrada: `create or replace function` NÃO basta para renomear
+-- parâmetro — precisa de `drop function` antes
+-- ============================================================================
+--
+-- A primeira versão desta migration assumia que `create or replace function`
+-- aceitava trocar o NOME de um parâmetro de entrada contanto que a ORDEM e o
+-- TIPO não mudassem. Isso é falso, e o Postgres recusa com um erro
+-- específico para o caso, não um erro genérico:
+--
+--   ERROR: 42P13: cannot change name of input parameter "p_license_id"
+--   HINT:  Use DROP FUNCTION register_representative(text,text,text,text,text) first.
+--
+-- Reproduzido ao aplicar esta migration contra o projeto real do Pedro, na
+-- primeiríssima instrução (`create or replace function
+-- public.register_representative`) — a migration inteira falhou antes de
+-- qualquer coisa ser escrita no banco, então não há estado parcial para
+-- reverter aqui: nenhuma das duas funções chegou a mudar. Por isso esta
+-- correção edita o arquivo desta migration diretamente, em vez de criar uma
+-- migration nova (padrão diferente do usado em `20260805000000` para
+-- corrigir `20260804000000`): a regra do topo deste arquivo — "nenhuma
+-- migration já aplicada é editada" — protege contra editar algo que já
+-- surtiu efeito em algum ambiente; esta nunca surtiu efeito em nenhum, o
+-- HINT do próprio Postgres é a prova.
+--
+-- A correção: um `drop function if exists` por função, usando a assinatura
+-- ANTIGA (tipos, não nomes — DROP FUNCTION identifica por tipo de
+-- parâmetro, então o mesmo `drop` funciona tanto se o ambiente ainda tem a
+-- versão `p_license_id` quanto se, por algum motivo, já tiver uma versão
+-- parcial com `p_authorization_id`), logo antes de cada `create or replace
+-- function`. `if exists` mantém o arquivo seguro para reaplicar do zero
+-- (mesmo cuidado de idempotência que `20260802000000`/`20260804000000`
+-- já usam).
+--
+-- ============================================================================
 -- Por que isto é seguro para os call sites existentes
 -- ============================================================================
 --
--- `create or replace function` com uma assinatura DIFERENTE (nomes de
--- parâmetro mudam) não é compatível a nível de PostgREST/`supabase-js`: uma
--- chamada `.rpc('register_representative', { p_license_id: ... })` feita por
--- código ainda não atualizado pararia de casar a assinatura nova. Por isso
--- esta migration é aplicada JUNTO com a mudança de
+-- Uma assinatura DIFERENTE (nomes de parâmetro mudam) não é compatível a
+-- nível de PostgREST/`supabase-js`: uma chamada
+-- `.rpc('register_representative', { p_license_id: ... })` feita por código
+-- ainda não atualizado pararia de casar a assinatura nova. Por isso esta
+-- migration é aplicada JUNTO com a mudança de
 -- `supabase-representative-onboarding-gateway.ts`/
 -- `supabase-representative-profile-gateway.ts` (ambos atualizados no mesmo
 -- commit que esta migration, ver ADR-062) — não há uma janela de deploy em
 -- que schema novo e código de aplicação antigo convivem. `grant`s são
 -- reconcedidos explicitamente abaixo (mesmo padrão de `20260813000000`) por
--- clareza, não porque `create or replace function` os revogue — eles já
--- sobrevivem automaticamente a uma troca de nome de parâmetro, contanto que
--- o NOME DA FUNÇÃO e a ORDEM/TIPO dos parâmetros não mudem, o que é o caso
--- aqui.
+-- clareza — depois do `drop function`, a concessão anterior não existe mais
+-- (o `drop` remove a função inteira, `grant`s inclusive), então desta vez
+-- os `grant`s abaixo não são só clareza, são necessários.
 --
 -- ============================================================================
 -- Reversão
@@ -47,6 +80,8 @@
 -- ============================================================================
 -- register_representative — parâmetros/variável/status renomeados
 -- ============================================================================
+
+drop function if exists public.register_representative(text, text, text, text, text);
 
 create or replace function public.register_representative(
   p_slug              text,
@@ -186,6 +221,8 @@ grant execute on function public.register_representative(text, text, text, text,
 -- ============================================================================
 -- update_representative_profile — parâmetros/variável/status renomeados
 -- ============================================================================
+
+drop function if exists public.update_representative_profile(text, text, text);
 
 create or replace function public.update_representative_profile(
   p_phone             text,
