@@ -55,7 +55,7 @@ The product must never skip stages.
 
 ## Objective
 
-Validate that independent sales professionals are willing to pay for a Digital Office.
+Validate that independent representatives are willing to pay for a Digital Office.
 
 This stage focuses exclusively on solving one problem:
 
@@ -654,6 +654,8 @@ Business opportunities
 
 Validated learning
 
+Proof that the model already works for the organization currently served — expansion to a new authorizing organization or category never substitutes for that proof (PRODUCT_CONSTITUTION.md, Core Belief 6).
+
 Roadmaps should never be driven by assumptions alone.
 
 ---
@@ -664,11 +666,11 @@ The long-term vision of SETNAR is clear:
 
 From
 
-A platform that creates commercial pages.
+A platform validated for one authorizing organization and one category of representation.
 
 To
 
-The operating system for independent sales professionals.
+The infrastructure layer every authorizing organization relies on, across every category of authorized independent representation.
 
 Every release should move the product closer to that vision.
 
