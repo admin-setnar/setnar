@@ -17,6 +17,13 @@ interface RepresentativeCompanyRow {
   company_id: string;
 }
 
+interface CatalogProductRow {
+  id: string;
+  slug: string;
+  name: string;
+  company: { slug: string } | null;
+}
+
 /**
  * Supabase adapter for `RepresentativeCatalogRepository`. Three queries, all
  * scoped by the caller's own request-scoped session
@@ -52,7 +59,7 @@ export class SupabaseRepresentativeCatalogRepository implements RepresentativeCa
     const [productsResult, activationsResult] = await Promise.all([
       this.supabase
         .from('products')
-        .select('id, slug, name')
+        .select('id, slug, name, company:companies!inner ( slug )')
         .eq('company_id', representative.company_id)
         .order('name'),
       this.supabase
@@ -70,6 +77,15 @@ export class SupabaseRepresentativeCatalogRepository implements RepresentativeCa
     // on the second query.
     const activations = activationsResult.error ? [] : (activationsResult.data as OwnActivationRow[]);
 
-    return mergeRepresentativeCatalog(productsResult.data as RepresentativeProduct[], activations);
+    const products: RepresentativeProduct[] = (productsResult.data as unknown as CatalogProductRow[])
+      .filter((row) => row.company !== null)
+      .map((row) => ({
+        id: row.id,
+        slug: row.slug,
+        name: row.name,
+        companySlug: row.company!.slug,
+      }));
+
+    return mergeRepresentativeCatalog(products, activations);
   }
 }

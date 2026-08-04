@@ -28,6 +28,14 @@ export interface RepresentativeProduct {
   readonly id: string;
   readonly slug: string;
   readonly name: string;
+  /**
+   * Slug of the Company (DOMAIN_MODEL.md §8.1) this Product's Catalog
+   * belongs to — e.g. `igreen`. Exists so a Commercial Page can decide
+   * whether to apply a Company-specific visual (CP9, prototype, not
+   * approved by iGreen yet — README ADR-057) by checking this real value,
+   * never by assuming any single Company.
+   */
+  readonly companySlug: string;
 }
 
 /**

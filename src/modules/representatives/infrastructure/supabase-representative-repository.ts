@@ -24,6 +24,7 @@ interface ProductRow {
   id: string;
   slug: string;
   name: string;
+  company: { slug: string } | null;
 }
 
 interface ProductActivationRow {
@@ -67,7 +68,7 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
         representative:representatives!inner (
           id, slug, display_name, license_id, phone, city, avatar_url, status
         ),
-        product:products!inner ( id, slug, name )
+        product:products!inner ( id, slug, name, company:companies!inner ( slug ) )
       `,
       )
       .eq('status', 'published')
@@ -78,7 +79,7 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
     if (error || !data) return null;
 
     const { representative: representativeRow, product: productRow } = data;
-    if (!representativeRow || !productRow) return null;
+    if (!representativeRow || !productRow || !productRow.company) return null;
 
     // Defense-in-depth, not a duplicate of the RLS filter above: this does
     // not trust that the embedded rows this specific query returned still
@@ -101,6 +102,7 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
       id: productRow.id,
       slug: productRow.slug,
       name: productRow.name,
+      companySlug: productRow.company.slug,
     };
 
     return { representative, product };

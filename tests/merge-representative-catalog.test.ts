@@ -3,8 +3,8 @@ import { describe, it } from 'node:test';
 
 import { mergeRepresentativeCatalog } from '@/modules/representatives/infrastructure/merge-representative-catalog';
 
-const PRODUCT_A = { id: 'prod-a', slug: 'conexao-green', name: 'Conexão Green' };
-const PRODUCT_B = { id: 'prod-b', slug: 'conexao-club', name: 'Conexão Club' };
+const PRODUCT_A = { id: 'prod-a', slug: 'conexao-green', name: 'Conexão Green', companySlug: 'igreen' };
+const PRODUCT_B = { id: 'prod-b', slug: 'conexao-club', name: 'Conexão Club', companySlug: 'igreen' };
 
 describe('mergeRepresentativeCatalog', () => {
   it('marks a product with no matching activation as "not_activated"', () => {

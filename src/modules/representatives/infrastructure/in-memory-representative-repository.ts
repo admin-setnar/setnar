@@ -39,12 +39,14 @@ const CONEXAO_GREEN: RepresentativeProduct = {
   id: 'product-conexao-green',
   slug: 'conexao-green',
   name: 'Conexão Green',
+  companySlug: 'igreen',
 };
 
 const CONEXAO_SOLAR: RepresentativeProduct = {
   id: 'product-conexao-solar',
   slug: 'conexao-solar',
   name: 'Conexão Solar',
+  companySlug: 'igreen',
 };
 
 /**

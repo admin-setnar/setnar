@@ -5,12 +5,14 @@ import { after } from 'next/server';
 import { getAnalyticsGateway } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
+import { resolveCompanyVertical } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
 import { CONEXAO_CLUB_TABS } from '@/modules/representatives/domain/product-content/conexao-club';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
 import { ComplianceNotice } from '@/modules/representatives/presentation/compliance-notice';
 import { LicenseeIdentificationBlock } from '@/modules/representatives/presentation/licensee-identification-block';
 import { ProductContentTabs } from '@/modules/representatives/presentation/product-content-tabs';
 import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
+import { BrandTokensStyle } from '@/modules/tenancy/presentation/brand-tokens';
 import { Container } from '@/shared/layout/container';
 import { getClientIp } from '@/shared/lib/get-client-ip';
 import { Card } from '@/shared/ui/card';
@@ -69,6 +71,7 @@ export default async function ProductPage({
   }
 
   const { representative, product } = activation;
+  const companyVertical = resolveCompanyVertical(product.companySlug);
 
   // AN3 (docs/QR_ANALYTICS_PLAN.md §4) — best-effort visit tracking.
   // `after()` runs this once the response has already been sent, so a slow
@@ -93,7 +96,10 @@ export default async function ProductPage({
   });
 
   return (
-    <main id="conteudo" className="pt-16 pb-20">
+    <main id="conteudo" data-vertical={companyVertical?.vertical} className="pt-16 pb-20">
+      {companyVertical ? (
+        <BrandTokensStyle tokens={companyVertical.tokens} scope={companyVertical.vertical} />
+      ) : null}
       <Container width="narrow">
         <Text variant="eyebrow">{product.name}</Text>
         <Text as="h1" variant="heading" className="mt-2">
