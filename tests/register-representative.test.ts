@@ -12,7 +12,7 @@ const input: RegisterRepresentativeInput = {
   slug: 'joao-silva',
   displayName: 'João Silva',
   authorizationId: 'ID-123456',
-  phone: null,
+  phone: '+5511988887777',
   city: null,
 };
 

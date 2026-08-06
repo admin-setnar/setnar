@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { success } from '@/modules/auth/domain/auth';
 import { safeAuthCall } from '@/modules/auth/presentation/safe-auth-call';
 
-const user = { id: 'u1', name: 'Ana', email: 'ana@example.com', tenantId: 'setnar' };
+const user = { id: 'u1', name: 'Ana', email: 'ana@example.com', tenantId: 'setnar', phone: null };
 
 describe('safeAuthCall', () => {
   it('passes a normal result through unchanged, without logging', async () => {
@@ -96,7 +96,7 @@ describe('safeAuthCall', () => {
       // The use case call itself is irrelevant here — this test is only
       // about what happens to redirect() once safeAuthCall wraps it, the
       // same shape as `signIn(...); if (success) redirect(...)`.
-      await Promise.resolve(success({ id: 'u1', name: 'Ana', email: 'ana@example.com', tenantId: 'setnar' }));
+      await Promise.resolve(success({ id: 'u1', name: 'Ana', email: 'ana@example.com', tenantId: 'setnar', phone: null }));
       redirect('/app');
       reachedPastRedirect = true;
     });

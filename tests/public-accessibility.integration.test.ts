@@ -133,10 +133,10 @@ describe('central public page accessibility (Postgres, integration)', { skip: !c
   });
 
   for (const [label, value] of [['missing', null], ['empty', ''], ['invalid', 'not-a-phone']] as const) {
-    it(`hides persisted published when phone is ${label}`, async () => {
-      await service!.from('representatives').update({ phone: value }).eq('id', representativeId);
-      assert.equal(await publicActivationCount(), 0);
-      await service!.from('representatives').update({ phone: '+5511999999999' }).eq('id', representativeId);
+    it(`rejects a new phone write when the value is ${label}`, async () => {
+      const { error } = await service!.from('representatives').update({ phone: value }).eq('id', representativeId);
+      assert.ok(error, `the database unexpectedly accepted a ${label} phone`);
+      assert.equal(await publicActivationCount(), 1, 'the rejected write must preserve the valid public page');
     });
   }
 
@@ -235,18 +235,10 @@ describe('central public page accessibility (Postgres, integration)', { skip: !c
     await service!.from('representatives').update({ status: 'active' }).eq('id', representativeId);
   });
 
-  it('rejects a click when the phone is removed after render', async () => {
-    await service!.from('representatives').update({ phone: null }).eq('id', representativeId);
-    const { data, error } = await service!.rpc('record_whatsapp_click', {
-      p_representative_slug: representativeSlug,
-      p_product_slug: productSlug,
-      p_referrer: null,
-      p_ip_hash: `phone-removed-after-render-${randomUUID()}`,
-      p_user_agent: 'Mozilla/5.0',
-    });
-    assert.equal(error, null);
-    assert.equal(data, false);
-    await service!.from('representatives').update({ phone: '+5511999999999' }).eq('id', representativeId);
+  it('prevents the phone from being removed after render', async () => {
+    const { error } = await service!.from('representatives').update({ phone: null }).eq('id', representativeId);
+    assert.ok(error);
+    assert.equal(await publicActivationCount(), 1);
   });
 
   it('filters bots without persisting an event', async () => {

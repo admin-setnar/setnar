@@ -24,6 +24,7 @@ describe('mapRegisterRepresentativeResult', () => {
     'slug_taken',
     'display_name_invalid',
     'authorization_id_invalid',
+    'phone_required',
     'phone_invalid',
     'city_invalid',
   ] as const) {

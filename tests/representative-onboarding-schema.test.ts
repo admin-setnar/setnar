@@ -16,16 +16,18 @@ describe('representativeOnboardingSchema', () => {
     assert.equal(representativeOnboardingSchema.safeParse(valid).success, true);
   });
 
-  it('accepts phone and city omitted (optional fields)', () => {
+  it('rejects an omitted phone while keeping city optional', () => {
     const { phone, city, ...required } = valid;
-    assert.equal(representativeOnboardingSchema.safeParse(required).success, true);
+    assert.equal(representativeOnboardingSchema.safeParse(required).success, false);
+    assert.equal(representativeOnboardingSchema.safeParse({ ...required, phone }).success, true);
   });
 
-  it('accepts phone and city as empty strings', () => {
+  it('rejects an empty phone and accepts an empty city', () => {
     assert.equal(
       representativeOnboardingSchema.safeParse({ ...valid, phone: '', city: '' }).success,
-      true,
+      false,
     );
+    assert.equal(representativeOnboardingSchema.safeParse({ ...valid, city: '' }).success, true);
   });
 
   describe('slug', () => {
@@ -113,6 +115,10 @@ describe('representativeOnboardingSchema', () => {
   });
 
   describe('phone', () => {
+    it('rejects an empty phone', () => {
+      assert.equal(representativeOnboardingSchema.safeParse({ ...valid, phone: '' }).success, false);
+    });
+
     it('rejects a phone that does not match the BR mask', () => {
       assert.equal(
         representativeOnboardingSchema.safeParse({ ...valid, phone: '11988887777' }).success,

@@ -5,6 +5,8 @@ import {
   formatE164ToBRPhone,
   formatPhoneToE164,
   hasAtLeastTwoWords,
+  isRepresentativeProfileComplete,
+  isValidE164Phone,
   maskBRPhone,
 } from '@/modules/representatives/domain/representative-rules';
 
@@ -49,6 +51,20 @@ describe('formatPhoneToE164', () => {
 
   it('strips any non-digit characters before prefixing +55', () => {
     assert.equal(formatPhoneToE164('11 98888-7777'), '+5511988887777');
+  });
+});
+
+describe('professional phone/profile rules', () => {
+  it('accepts the canonical E.164 value and rejects absent or malformed values', () => {
+    assert.equal(isValidE164Phone('+5511988887777'), true);
+    assert.equal(isValidE164Phone(null), false);
+    assert.equal(isValidE164Phone('11988887777'), false);
+  });
+
+  it('requires both a valid public name and commercial phone for a complete profile', () => {
+    assert.equal(isRepresentativeProfileComplete({ name: 'João Silva', phone: '+5511988887777' }), true);
+    assert.equal(isRepresentativeProfileComplete({ name: 'João', phone: '+5511988887777' }), false);
+    assert.equal(isRepresentativeProfileComplete({ name: 'João Silva', phone: null }), false);
   });
 });
 

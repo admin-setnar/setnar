@@ -10,6 +10,7 @@ describe('getActivationViewState', () => {
       canPublish: false,
       isPubliclyAvailable: true,
       subscriptionBlocked: false,
+      profileBlocked: false,
     });
   });
 
@@ -19,6 +20,7 @@ describe('getActivationViewState', () => {
       canPublish: false,
       isPubliclyAvailable: false,
       subscriptionBlocked: true,
+      profileBlocked: false,
     });
   });
 
@@ -37,6 +39,24 @@ describe('getActivationViewState', () => {
       canPublish: false,
       isPubliclyAvailable: false,
       subscriptionBlocked: false,
+      profileBlocked: false,
     });
+  });
+
+  it('marks a stored published page unavailable while the professional profile is incomplete', () => {
+    assert.deepEqual(getActivationViewState('published', true, false), {
+      badge: { label: 'Indisponível — perfil incompleto', variant: 'warning' },
+      canPublish: false,
+      isPubliclyAvailable: false,
+      subscriptionBlocked: false,
+      profileBlocked: true,
+    });
+  });
+
+  it('prioritizes an incomplete profile over an inactive Subscription', () => {
+    const view = getActivationViewState('published', false, false);
+    assert.equal(view.profileBlocked, true);
+    assert.equal(view.subscriptionBlocked, false);
+    assert.equal(view.badge.label, 'Indisponível — perfil incompleto');
   });
 });

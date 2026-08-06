@@ -83,7 +83,12 @@ describe('signIn', () => {
 });
 
 describe('signUp', () => {
-  const base = { name: 'João Silva', email: 'novo@exemplo.com', password: 'senha1234' };
+  const base = {
+    name: 'João Silva',
+    phone: '+5511988887777',
+    email: 'novo@exemplo.com',
+    password: 'senha1234',
+  };
 
   it('creates an account when the terms are accepted', async () => {
     const result = await signUp(gateway, { ...base, acceptedTerms: true });
@@ -112,6 +117,26 @@ describe('signUp', () => {
     });
     assert.equal(result.status === 'error' && result.code, 'weak_password');
   });
+
+  it('does not call the gateway with an invalid canonical phone', async () => {
+    let called = false;
+    const rejectingGateway = {
+      ...gateway,
+      signUp: async () => {
+        called = true;
+        return { status: 'error', code: 'unknown' } as const;
+      },
+    } as unknown as AuthGateway;
+
+    const result = await signUp(rejectingGateway, {
+      ...base,
+      phone: '(11) 98888-7777',
+      acceptedTerms: true,
+    });
+
+    assert.equal(result.status, 'error');
+    assert.equal(called, false);
+  });
 });
 
 describe('signInWithProvider', () => {
@@ -124,6 +149,7 @@ describe('signInWithProvider', () => {
 describe('signUpSchema', () => {
   const valid = {
     name: 'João Silva',
+    phone: '(11) 98888-7777',
     email: 'joao@exemplo.com',
     password: 'senha1234',
     confirmPassword: 'senha1234',
@@ -132,6 +158,12 @@ describe('signUpSchema', () => {
 
   it('accepts a complete, consistent form', () => {
     assert.equal(signUpSchema.safeParse(valid).success, true);
+  });
+
+  it('requires a complete Brazilian commercial phone', () => {
+    for (const phone of [undefined, '', '   ', '(11) 9888', '(1) 98888-7777', '+5511988887777']) {
+      assert.equal(signUpSchema.safeParse({ ...valid, phone }).success, false);
+    }
   });
 
   it('reports mismatched passwords on the confirmation field', () => {

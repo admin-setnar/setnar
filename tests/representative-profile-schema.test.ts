@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import { representativeProfileSchema } from '@/modules/representatives/presentation/schemas/representative-profile.schema';
 
 const valid = {
+  displayName: 'João Silva',
   phone: '(11) 98888-7777',
   city: 'São Paulo',
   authorizationId: 'ID-123456',
@@ -14,16 +15,30 @@ describe('representativeProfileSchema', () => {
     assert.equal(representativeProfileSchema.safeParse(valid).success, true);
   });
 
-  it('accepts phone and city omitted (optional fields)', () => {
+  it('rejects an omitted phone while keeping city optional', () => {
     const { phone, city, ...required } = valid;
-    assert.equal(representativeProfileSchema.safeParse(required).success, true);
+    assert.equal(representativeProfileSchema.safeParse(required).success, false);
+    assert.equal(representativeProfileSchema.safeParse({ ...required, phone }).success, true);
   });
 
-  it('accepts phone and city as empty strings', () => {
+  it('rejects an empty phone and accepts an empty city', () => {
     assert.equal(
       representativeProfileSchema.safeParse({ ...valid, phone: '', city: '' }).success,
-      true,
+      false,
     );
+    assert.equal(representativeProfileSchema.safeParse({ ...valid, city: '' }).success, true);
+  });
+
+  describe('displayName', () => {
+    it('rejects empty, single-word and overlong public names', () => {
+      for (const displayName of ['', 'João', `${'A'.repeat(80)} B`]) {
+        assert.equal(representativeProfileSchema.safeParse({ ...valid, displayName }).success, false);
+      }
+    });
+
+    it('accepts a valid editable public name', () => {
+      assert.equal(representativeProfileSchema.safeParse({ ...valid, displayName: 'João Comercial' }).success, true);
+    });
   });
 
   describe('authorizationId', () => {
@@ -47,6 +62,10 @@ describe('representativeProfileSchema', () => {
   });
 
   describe('phone', () => {
+    it('rejects an empty phone', () => {
+      assert.equal(representativeProfileSchema.safeParse({ ...valid, phone: '' }).success, false);
+    });
+
     it('rejects a phone that does not match the BR mask', () => {
       assert.equal(
         representativeProfileSchema.safeParse({ ...valid, phone: '11988887777' }).success,
