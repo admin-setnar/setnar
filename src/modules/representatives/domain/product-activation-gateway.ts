@@ -40,11 +40,11 @@ export type ActivateProductResult =
  * The typed rejection reasons `set_activation_status` can return, again
  * verbatim from the SQL.
  *
- * The last three are the publish gate, deliberately granular rather than one
+ * The last four are the publish gate, deliberately granular rather than one
  * generic "cannot publish": the activation UI needs to know exactly what to
  * ask the Representative to fix, and only the FIRST failing precondition is
- * reported (order: not-active, then display name, then phone — a suspended
- * Representative must not be told to fill in their phone).
+ * reported (order: Representative status, Subscription, display name, then
+ * phone — an administrative block must be resolved before profile data).
  */
 export type SetActivationStatusRejectionReason =
   | 'representative_not_found'
@@ -52,6 +52,7 @@ export type SetActivationStatusRejectionReason =
   | 'invalid_status'
   | 'invalid_transition'
   | 'representative_not_active'
+  | 'subscription_not_active'
   | 'display_name_required'
   | 'phone_required';
 

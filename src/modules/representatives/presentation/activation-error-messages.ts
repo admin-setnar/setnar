@@ -26,14 +26,14 @@ const GENERIC_ERROR_COPY: ActivationErrorCopy = {
 };
 
 /**
- * Every reason here except `phone_required`/`representative_not_active` is
+ * Every reason here except the administrative/profile publish rejections is
  * unreachable through the hub's own UI in normal use (the hub only ever
  * offers "activate" for a Product already known to be in the Company's own
  * Catalog, and only offers "publish" for a Product already known to be
  * activated) — they exist for a direct RPC caller or a stale page, not a
  * click path this UI produces. Copy stays honest and actionable regardless:
  * "atualize a página" for the ones a stale render could cause,
- * `representative_not_active` and `phone_required` get real, specific
+ * those reachable rejections get real, specific
  * guidance because both ARE reachable from normal use (an operator
  * suspending the account; a Representative who never filled in their phone
  * in D5b).
@@ -52,6 +52,10 @@ const SET_STATUS_REJECTION_MESSAGES: Record<SetActivationStatusRejectionReason, 
   representative_not_active: {
     title: 'Sua conta está suspensa',
     description: 'Fale com o suporte para reativar antes de publicar.',
+  },
+  subscription_not_active: {
+    title: 'Regularize sua assinatura para publicar',
+    description: 'Ative ou regularize sua assinatura SETNAR e tente publicar novamente.',
   },
   display_name_required: {
     title: 'Complete seu nome antes de publicar',

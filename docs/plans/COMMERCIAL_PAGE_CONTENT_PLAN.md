@@ -2,24 +2,51 @@
 
 > Plano de investigação — visual on-brand + widget interativo por produto na
 > Commercial Page
-> Status: **parcialmente implementada** — CP3 (ADR-056) e CP9 (ADR-057, como
-> protótipo não aprovado — ver nota de revisão em §3.3/§4) têm código; CP1,
-> CP4-CP8 e CP10 continuam só planejados. Ver nota de revisão em 2026-08-04
-> no final de §4 para o detalhe completo.
 > Escopo: o que falta entre a Commercial Page mínima que existe hoje
 > (identificação + CTA WhatsApp + lead form + aviso de compliance, ADR-055) e
 > o conteúdo rico que `templates/commercial-pages/` já tem pronto como
 > referência, nunca conectado a runtime nenhum
+
+**Status:** Proposed — parcialmente implementado, com decisões em aberto
+**Authority:** Non-normative (ver `docs/plans/README.md`)
+**Code baseline:** Not identified na redação original. Estado verificado contra
+`23290c4` (branch `develop`) em 2026-08-05.
+**Last reviewed:** 2026-08-05
+**Superseded by:** —
+
+> **Este plano NÃO é uma especificação final.** Ele contém decisões que
+> continuam abertas, e nenhuma delas deve ser escolhida por quem estiver
+> apenas lendo o documento — nem por uma IA. Classificação exigida por este
+> cabeçalho:
+>
+> | Item | Classificação | Observação |
+> |---|---|---|
+> | §3.1 "no distractions" | **Aprovado e superado pelo código** | ADR-056 redefiniu como *CTA único*, não *zero conteúdo*. `DESIGN_SYSTEM.md` foi alinhado. |
+> | §3.2 conteúdo variável: schema vs. código | **Aprovado e superado pelo código** | ADR-056: vive em código (`product-content/`). |
+> | §3.3 paleta/identidade iGreen | **EM ABERTO — decisão mais sensível do documento** | CP1 segue **sem confirmação da iGreen**. CP9 foi implementado como *protótipo interno não aprovado* (ADR-057). Implementar não fechou a decisão. |
+> | §3.4 GA4/Meta Pixel | **EM ABERTO** | Depende de infraestrutura de consentimento que não existe. Precisa de ADR se for adotado. |
+> | CP3 (tabs de conteúdo) | **Implementado** | ADR-056, só Conexão Club |
+> | CP9 (visual on-brand) | **Implementado como protótipo não aprovado** | ADR-057 — bloqueado por CP1 |
+> | CP4–CP8, CP10 | **Somente planejados** | nenhum código |
+>
+> Nenhum item marcado "EM ABERTO" autoriza implementação. §3.3 é uma questão
+> de compliance de marca de terceiro, não uma preferência de produto.
 
 Mesmo contrato do `docs/QR_ANALYTICS_PLAN.md`/`docs/SPRINT_D_PLAN.md`: este
 documento **investiga e levanta decisões, não fecha nenhuma sozinho**. Onde
 há custo de produto, custo de reversão alto, ou risco de compliance de marca,
 as opções vêm lado a lado, com prós/contras, e a escolha é do Pedro. Os
 passos de implementação são pequenos, revisáveis e testáveis isoladamente. Os
-ADRs correspondentes só entram no `README.md` quando cada passo for de fato
-implementado — o próximo número livre é **ADR-056**; o próximo passo livre na
-lista numerada do `supabase/README.md` é o **17** (só se algum passo abaixo
-precisar mesmo de migration — ver §3.2).
+ADRs correspondentes só entram em `docs/adr/` quando cada passo for de fato
+implementado.
+
+> ⚠️ **Ponteiros obsoletos:** o texto original dizia "o próximo número livre é
+> ADR-056" e apontava o passo 17 do `supabase/README.md` — ambos já
+> consumidos. O texto original também dizia que ADRs entram no `README.md` —
+> desde 2026-08-05 os ADRs vivem em `docs/adr/` (um arquivo por decisão,
+> índice em `docs/adr/README.md`), migrados para fora da raiz. Números de ADR
+> e de migration citados em planos envelhecem; confira sempre
+> `docs/adr/README.md` e `supabase/migrations/`.
 
 ---
 
@@ -359,7 +386,7 @@ que o resto (§3.1/§3.2, os widgets do §4) avance em paralelo.
 iGreen** — não decidido, exatamente como registrado acima. O que mudou:
 Pedro decidiu implementar CP9 mesmo assim, como protótipo interno não
 aprovado, para usar como peça de apresentação ao pedir essa mesma
-confirmação — ver ADR-057 (README.md) e a nota no início de §4/CP9 abaixo.
+confirmação — ver [`ADR-057`](../adr/ADR-057-mecanismo-de-tokens-de-marca-por-verticalcompany-aplicado.md) e a nota no início de §4/CP9 abaixo.
 Isso não fecha esta decisão; só muda a ordem em que o risco foi assumido.
 
 ## 3.4 GA4/Meta Pixel
@@ -389,8 +416,8 @@ levantar, como o enunciado pediu.
 # 4. Plano de implementação, em passos pequenos
 
 Cada passo é revisável e testável isoladamente, mesmo processo de sempre:
-**auditar → Pedro revisa → implementar → `npm run verify` → ADR no
-`README.md` (a partir de ADR-056) + verificação manual documentada.**
+**auditar → Pedro revisa → implementar → `npm run verify` → ADR em
+`docs/adr/` (a partir de ADR-056) + verificação manual documentada.**
 
 ## CP1 — Confirmar a Política de Uso da Marca da iGreen (§3.3)
 
@@ -407,7 +434,7 @@ fechadas, registrar como ADR-056 (ou dois ADRs, um por decisão) antes de CP3.
 
 ## CP3 — Componente "Tabs de conteúdo" + 1 produto (prova de conceito)
 
-**Implementado — ver ADR-056 (README.md).** Descrição abaixo mantida como
+**Implementado — ver [`ADR-056`](../adr/ADR-056-no-distractions-passa-a-significar-cta-unico-nao.md).** Descrição abaixo mantida como
 registro do plano original; não repete o que o ADR já documenta em detalhe.
 
 *Depende de CP2.*
@@ -478,7 +505,7 @@ system atual (`Card` + lista), sem widget interativo nenhum.
 
 ## CP9 — Visual on-brand (paleta iGreen)
 
-**Implementado como protótipo NÃO aprovado — ver ADR-057 (README.md).**
+**Implementado como protótipo NÃO aprovado — ver [`ADR-057`](../adr/ADR-057-mecanismo-de-tokens-de-marca-por-verticalcompany-aplicado.md).**
 Pedro decidiu prosseguir sem esperar CP1 (decisão de negócio, risco
 assumido conscientemente — ver nota em §3.3 acima). CP1 continua pendente;
 nada aqui deve ser lido como "a iGreen aprovou o visual". Descrição abaixo
@@ -547,7 +574,7 @@ um passo pequeno dentro deste documento.
 **Registrado, separado, não bloqueante:**
 - **CP10** (GA4/Meta Pixel) — sub-plano próprio se decidido que sim.
 
-Cada passo: `npm run verify`, ADR novo no `README.md` (a partir de ADR-056),
+Cada passo: `npm run verify`, ADR novo em `docs/adr/` (a partir de ADR-056),
 e — pra qualquer passo que toque conteúdo legal/de compliance/promessa de
 desconto (a calculadora em particular) — confirmação explícita de que o
 texto/número não é uma alegação de resultado que o `README.md` já proíbe

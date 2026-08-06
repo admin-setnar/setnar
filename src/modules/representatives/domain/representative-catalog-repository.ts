@@ -55,4 +55,11 @@ export interface RepresentativeCatalogRepository {
    * Server Component.
    */
   listOwnCatalog(profileId: string): Promise<readonly RepresentativeCatalogEntry[]>;
+
+  /**
+   * Reads the canonical E1 decision for the signed-in Representative. Errors
+   * fail closed (`false`) so the hub never presents a page as public when its
+   * availability could not be confirmed.
+   */
+  isSubscriptionActive(representativeId: string): Promise<boolean>;
 }

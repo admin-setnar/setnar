@@ -43,9 +43,10 @@ export interface RepresentativeProduct {
  * §8.5's Product Activation, narrowed to what Commercial Page resolution
  * needs to know it can render.
  *
- * Resolving this pair does NOT confirm the Representative's Subscription is
- * Active (DOMAIN_MODEL.md §8.14, Business Rule 21). See the doc comment on
- * `RepresentativeRepository` for why that check is out of scope here.
+ * Public resolution is narrowed by E1's RLS policy: the pair is returned only
+ * while `is_subscription_active(representative.id)` is true. The type carries
+ * no separate Subscription field because successful resolution already
+ * includes that availability decision.
  */
 export interface RepresentativeActivation {
   readonly representative: Representative;

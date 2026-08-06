@@ -2,9 +2,27 @@
 
 > Plano de implementação — fechar o elo entre Autenticação (Sprint A/B) e
 > Commercial Page/Leads (Sprint C)
-> Status: **proposta, não implementada** — nenhum código deste documento existe
 > Escopo: seed do catálogo iGreen, provisionamento de Representative, ativação
 > de produto no `/app`, e o que falta pra uma Commercial Page realmente publicar
+
+**Status:** Implemented — arquivado
+**Authority:** Non-normative (ver `docs/plans/README.md`)
+**Code baseline:** Not identified na redação original. Estado verificado contra
+`23290c4` (branch `develop`) em 2026-08-05.
+**Last reviewed:** 2026-08-05
+**Superseded by:** D7 (Subscription) foi promovido a
+`docs/plans/SPRINT_E_PLAN.md`. Cada passo implementado tem ADR próprio em
+`docs/adr/` — esses ADRs, não este plano, são a fonte de verdade sobre o que
+existe.
+
+> **Aviso de leitura — este cabeçalho substitui o status original.** A linha
+> original dizia *"proposta, não implementada — nenhum código deste documento
+> existe"*, e isso deixou de ser verdade: **D1 a D5 foram implementados**
+> (ADR-037 a ADR-047, em [`docs/adr/`](../../adr/README.md) — migrados para
+> fora do `README.md` em 2026-08-05). D6 permanece parcial e D7 saiu deste plano.
+> Reimplementar qualquer passo daqui a partir do texto abaixo duplicaria código
+> que já está em produção. Trate o corpo deste documento como registro
+> histórico do raciocínio, não como trabalho pendente.
 
 Este documento é um plano, não um ADR. Ele **levanta** uma decisão de
 arquitetura (§3) em vez de fechá-la, e propõe passos pequenos o bastante pra
@@ -165,6 +183,13 @@ deste plano não contraria uma decisão anterior — ele executa uma.
 ---
 
 # 3. A decisão a fechar — como o Representative nasce a partir do User
+
+> ✅ **DECIDIDO E IMPLEMENTADO — esta seção é histórica.** Escolheu-se a
+> **Opção B (§3.2): passo explícito de onboarding pós-login**, não o trigger
+> `SECURITY DEFINER` do §3.1. Implementado em ADR-040 (`register_representative`),
+> ADR-041 (`RepresentativeOnboardingGateway`) e ADR-042 (ramificação do `/app`).
+> O texto abaixo permanece porque o raciocínio comparativo continua útil —
+> **não porque a escolha esteja aberta.**
 
 **Esta seção não decide. Ela expõe as duas opções com o custo real de cada
 uma.** A decisão é do Pedro.

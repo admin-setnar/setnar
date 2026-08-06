@@ -1,6 +1,7 @@
 import { SITE_URL } from '@/config/site';
 import type { Representative } from '@/modules/representatives/domain/representative';
 import type { RepresentativeCatalogEntry } from '@/modules/representatives/domain/representative-catalog-repository';
+import { getActivationViewState } from '@/modules/representatives/presentation/activation-view-state';
 import { ProductActivationCard } from '@/modules/representatives/presentation/product-activation-card';
 import { QrCodeCard } from '@/modules/representatives/presentation/qr-code-card';
 import { RepresentativeProfileForm } from '@/modules/representatives/presentation/representative-profile-form';
@@ -40,9 +41,11 @@ import { Text } from '@/shared/ui/typography';
 export function RepresentativeHub({
   representative,
   catalog,
+  subscriptionActive,
 }: {
   representative: Representative;
   catalog: readonly RepresentativeCatalogEntry[];
+  subscriptionActive: boolean;
 }) {
   const rootHost = new URL(SITE_URL).hostname;
 
@@ -65,10 +68,17 @@ export function RepresentativeHub({
       </Card>
 
       <div className="space-y-3">
-        {catalog.map((entry) => (
+        {catalog.map((entry) => {
+          const viewState = getActivationViewState(entry.state, subscriptionActive);
+
+          return (
           <div key={entry.product.id} className="space-y-2">
-            <ProductActivationCard product={entry.product} state={entry.state} />
-            {entry.state === 'published' ? (
+            <ProductActivationCard
+              product={entry.product}
+              state={entry.state}
+              subscriptionActive={subscriptionActive}
+            />
+            {viewState.isPubliclyAvailable ? (
               <>
                 <Text as="p" variant="caption" className="pl-1">
                   Página no ar:{' '}
@@ -88,7 +98,8 @@ export function RepresentativeHub({
               </>
             ) : null}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

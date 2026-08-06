@@ -47,6 +47,14 @@ interface CatalogProductRow {
 export class SupabaseRepresentativeCatalogRepository implements RepresentativeCatalogRepository {
   constructor(private readonly supabase: SupabaseClient) {}
 
+  async isSubscriptionActive(representativeId: string): Promise<boolean> {
+    const { data, error } = await this.supabase.rpc('is_subscription_active', {
+      p_representative_id: representativeId,
+    });
+
+    return error ? false : data === true;
+  }
+
   async listOwnCatalog(profileId: string): Promise<readonly RepresentativeCatalogEntry[]> {
     const { data: representative, error: representativeError } = await this.supabase
       .from('representatives')

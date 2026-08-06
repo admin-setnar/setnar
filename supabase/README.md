@@ -4,9 +4,9 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as dezessete
+## 1. Aplicar as migrations, nesta ordem, todas as dezoito
 
-São cumulativas — aplique as dezessete, em ordem, nunca só a primeira. Cole
+São cumulativas — aplique as dezoito, em ordem, nunca só a primeira. Cole
 cada arquivo no SQL Editor do projeto e execute, ou rode `supabase db push`
 se preferir a CLI.
 
@@ -325,11 +325,27 @@ se preferir a CLI.
     nasce no onboarding (decisão do Pedro, `SPRINT_E_PLAN.md` §3.1, Opção
     B): ausência de linha para um `representative_id` já conta como "não
     ativa" por definição de `exists`, sem precisar de um estado `pending`
-    à parte. O gate de **escrita** (`set_activation_status`) ainda não
-    checa Subscription — isso é o passo E2, migration separada, ainda não
-    implementada. Ver ADR-063 no `README.md` principal para o raciocínio
+    à parte. O gate de **escrita** é fechado pela migration seguinte,
+    separadamente. Ver ADR-063 no índice `docs/adr/README.md` para o raciocínio
     completo. **Verificação:** seção própria mais abaixo neste arquivo
     (**passo 17**).
+18. `supabase/migrations/20260816000000_add_subscription_publication_gate.sql`
+    — passo E2 (`docs/plans/SPRINT_E_PLAN.md` §4/E2), fecha a metade de
+    **escrita** da Regra 21. Redefine somente `set_activation_status` por
+    `create or replace function` e adiciona `subscription_not_active` ao gate
+    das transições `draft/unpublished -> published`, reutilizando
+    exclusivamente `is_subscription_active(v_representative_id)` do passo 17.
+    A ordem da primeira falha é `representative_not_active` ->
+    `subscription_not_active` -> `display_name_required` -> `phone_required`.
+    `activate_product` não muda, portanto `draft` continua permitido sem
+    assinatura; `published -> unpublished`, mesmo-estado e a semântica de
+    `published_at` também permanecem inalterados. Ver ADR-064 em
+    `docs/adr/README.md`. O app acompanha a mudança lendo a mesma função para
+    bloquear Publicar e não apresentar uma página inacessível como Publicada.
+    **Verificação:** teste automatizado de contrato em
+    `tests/subscription-publication-gate.test.ts`, mapeador em
+    `tests/map-product-activation-result.test.ts` e matriz manual do
+    **passo 18** mais abaixo.
 
 ## 2. Confirm email — decidido: DESLIGADO
 
@@ -1079,6 +1095,64 @@ geral, não específico desta migration.
 
 **Pendente de execução** — este roteiro ainda não foi rodado contra o
 projeto real do Pedro.
+
+## Verificação manual obrigatória — gate de escrita da Subscription (passo 18)
+
+**Escopo.** A suíte automatizada valida o contrato versionado da migration,
+mas não executa PL/pgSQL contra um banco descartável. Este roteiro valida E2
+contra a mesma conta de teste **R** e o produto **P1** usados nos passos 11 e
+17. Aplique primeiro as migrations 17 e 18. Faça alterações de fixture pelo
+SQL Editor e as chamadas a `set_activation_status` pela sessão autenticada de
+R; chamar a função pelo SQL Editor não testa o contrato real de autenticação.
+
+Antes de cada cenário, deixe P1 em `unpublished` (se estiver `published`, use
+o próprio RPC para despublicar). Anote os valores originais de `status`,
+`display_name` e `phone` de R e restaure-os ao final.
+
+1. **Representante ativo, sem Subscription.** Remova somente a linha de
+   `subscriptions` da fixture R, deixe `R.status = 'active'` e deixe também
+   `display_name`/`phone` vazios para provar prioridade. Chame
+   `set_activation_status(P1, 'published')`.
+   **Observar:** `subscription_not_active`. Nenhuma correção de perfil é
+   sugerida antes da regularização da assinatura, e P1 continua
+   `unpublished`.
+2. **Representante ativo, Subscription ativa.** Insira/reative a linha de R
+   com `status = 'active'`, preencha `display_name` e `phone`, e repita a
+   publicação. **Observar:** `updated`, P1 passa a `published` e
+   `published_at` mantém a semântica do passo 11.
+3. **Representante suspenso.** Despublique P1, deixe Subscription, nome e
+   telefone inválidos ao mesmo tempo, defina `R.status = 'suspended'` e tente
+   publicar. **Observar:** `representative_not_active` — deve vencer
+   `subscription_not_active`, `display_name_required` e `phone_required`.
+4. **Representante sem display name.** Restaure `R.status = 'active'` e a
+   Subscription ativa; deixe `display_name` vazio e `phone` vazio. Tente
+   publicar. **Observar:** `display_name_required`, provando que somente a
+   primeira falha de perfil é retornada.
+5. **Representante sem telefone.** Preencha `display_name`, mantenha `phone`
+   vazio e tente publicar. **Observar:** `phone_required`.
+6. **Transições sem regressão.** Com todos os dados válidos, publique P1 e
+   depois despublique: as duas chamadas retornam `updated`; uma nova chamada
+   para o mesmo estado é idempotente. Suspenda/remova a Subscription e chame
+   `activate_product` para um produto ainda não ativado: a nova linha continua
+   nascendo em `draft`. O destino explícito `draft` continua inválido, como no
+   ADR-043; não existe transição normativa `unpublished -> draft`.
+7. **Estado do hub.** Com Subscription inativa, abra `/app` nos estados
+   `draft`/`unpublished` e `published`. **Observar:** Publicar fica
+   desabilitado nos dois primeiros; no terceiro, o badge não diz “Publicado”,
+   mas “Indisponível — assinatura inativa”, e link público/QR Code não são
+   exibidos. Reative a Subscription e confirme que o estado “Publicado” e os
+   artefatos públicos voltam somente quando a página também resolve para um
+   visitante.
+8. **Grants.** Sem sessão, chame `set_activation_status` por RPC HTTP cru.
+   **Observar:** `42501 permission denied`, nunca um retorno tipado. Com a
+   sessão de R, a mesma RPC continua alcançável.
+
+Ao final, restaure R como `active`, com `display_name`/`phone` originais,
+Subscription `active` e P1 no estado desejado para o ambiente de teste.
+
+**Pendente de execução contra o projeto Supabase real.** Os testes locais
+cobrem o contrato da migration; este roteiro é a confirmação do comportamento
+PL/pgSQL e dos grants no ambiente aplicado.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 

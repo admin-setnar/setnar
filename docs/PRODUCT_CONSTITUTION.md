@@ -1,9 +1,16 @@
 # PRODUCT CONSTITUTION
 
 > Product Constitution
-> Version: 1.1
-> Status: Active
+> Version: 1.2
+> Status: Active — complete (see § 6)
+> Authority: Level 1 — highest (see `docs/README.md`)
 > Owner: SETNAR
+
+> **Changes in 1.2 (2026-08-05).** Core Belief 5 no longer reduces progress to
+> opportunities; Core Belief 12 requires abstraction before a customer-specific
+> capability enters the core; Core Belief 13 no longer equates the
+> professional's success with selling more. § 6 records that this document is
+> complete. No principle was removed and no new principle was added.
 
 ---
 
@@ -94,7 +101,14 @@ Each belief below is a standing test. A decision that violates one of these shou
 
 4. **Automation amplifies the professional; it never substitutes their identity or their decisions.** Every capability that removes operational work from a representative's day is worth building. None of them are worth building if they start speaking, deciding, or acting as the representative instead of for them. The line between assisting a professional and replacing one is not a technical detail — it is a permanent boundary.
 
-5. **Progress is measured in opportunities created and capability gained, never in artifacts shipped.** A page, a report, or a feature has no value in itself — only in the real commercial opportunity it produces for a real professional, and in the durable capability it adds to the platform. A roadmap full of shipped work that fails this test has not made SETNAR more valuable; it has only made it more complicated.
+5. **Progress is measured in value delivered, never in artifacts shipped.** A page, a report, or a feature has no value in itself. Value takes several forms, and reducing them to one produces a distorted roadmap:
+   - **trust** a professional gains with a customer who can now verify who they are;
+   - **risk removed** for the authorizing organization, whose representation stays inside its rules without being policed one professional at a time;
+   - **quality of representation** — a professional presented as well as their work deserves, without needing the skill to do it themselves;
+   - **commercial opportunity** created for a real professional;
+   - **durable capability** added to the platform itself.
+
+   A roadmap full of shipped work that produces none of these has not made SETNAR more valuable; it has only made it more complicated. Commercial opportunity is the most easily counted of the five, which is exactly why it must not be allowed to stand in for the other four.
 
 6. **One relationship proven is worth more than many assumed.** The right to serve a new category of independent professional, or a new authorizing organization, is earned by proving the model works for the one currently served. Expansion follows validation; it never substitutes for it.
 
@@ -108,10 +122,20 @@ Each belief below is a standing test. A decision that violates one of these shou
 
 11. **What is not written down does not bind the future.** A principle, rule, or architectural decision that exists only in someone's memory does not meaningfully exist. Documentation is what lets the next decision — made by a person or by an AI system — inherit the reasoning behind the last one, instead of guessing at it.
 
-12. **What is validated for one becomes permanent capability for all.** A capability proven for one organization or professional is not reinvented for the next one who needs it — it becomes a durable part of the platform itself. SETNAR is not a collection of custom deployments accumulating around its customers; it is a single platform whose baseline permanently rises with every validated improvement.
+12. **What is validated *and abstracted* for one becomes permanent capability for all.** A capability proven for one organization or professional is not reinvented for the next one who needs it. But the path from "it worked for one customer" to "it is part of the platform" runs through abstraction, and that step is not optional: **specific work does not become a permanent capability merely by having succeeded.** Not every customization deserves to be generalized — some are genuinely particular to one customer, and absorbing those into the core is how a product quietly becomes a collection of other people's requirements. The test is whether the underlying capability, stripped of the customer that motivated it, is something the platform should offer everyone. When the answer is yes, it is abstracted and it rises into the baseline permanently. When the answer is no, it stays where it is. SETNAR is not a collection of custom deployments accumulating around its customers; it is a single platform whose baseline rises with every validated *and generalizable* improvement.
 
-13. **The professional's success comes first, and the platform's success follows from it.** If SETNAR is thriving by its own metrics while the professionals on it are not selling more, a principle in this Constitution has already been violated — even if no other document has noticed yet.
+13. **The professional's success comes first, and the platform's success follows from it.** If SETNAR is thriving by its own metrics while the professionals on it are gaining nothing, a principle in this Constitution has already been violated — even if no other document has noticed yet.
+
+    "Gaining nothing" is deliberate, and broader than "not selling more." A sale depends on the professional's own effort, their market, their offer, and their price — variables SETNAR does not control and must never claim to. What SETNAR is accountable for is the conditions: whether a professional is findable, verifiable, credible, easy to contact, and correctly represented. A platform that delivers those conditions to professionals whose sales did not move has not failed this principle. A platform whose professionals are more visible in its dashboards than they are to their own customers has.
 
 ---
 
-*End of Part 1 of PRODUCT_CONSTITUTION.md. This document defines permanent principles; it does not describe implementations. Every future document — and every future version of PRODUCT.md, ROADMAP.md, ARCHITECTURE.md, and DOMAIN_MODEL.md — must remain compatible with it.*
+---
+
+# 6. Completeness of this document
+
+**This Constitution is complete as it stands.** There is no Part 2, no pending section, and nothing deliberately withheld. Earlier drafts closed with a note describing this as "Part 1," which was accurate while the document was being written and became misleading once it was adopted (ADR-058) — a constitution that appears unfinished invites readers to assume that some governing principle exists somewhere else. None does.
+
+Should a future principle be added, it is added here, as a numbered Core Belief, with a version increment — never as a separate document.
+
+*This document defines permanent principles; it does not describe implementations. Every future document — and every future version of PRODUCT.md, ROADMAP.md, ARCHITECTURE.md, and DOMAIN_MODEL.md — must remain compatible with it.*

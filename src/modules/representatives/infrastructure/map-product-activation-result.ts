@@ -48,6 +48,7 @@ const SET_STATUS_REJECTION_REASONS: readonly SetActivationStatusRejectionReason[
   'invalid_status',
   'invalid_transition',
   'representative_not_active',
+  'subscription_not_active',
   'display_name_required',
   'phone_required',
 ];

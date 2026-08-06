@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import type { CatalogActivationState } from '@/modules/representatives/domain/representative-catalog-repository';
 import type { RepresentativeProduct } from '@/modules/representatives/domain/representative';
+import { getActivationViewState } from '@/modules/representatives/presentation/activation-view-state';
 import {
   activateErrorCopy,
   setActivationStatusErrorCopy,
@@ -16,13 +17,6 @@ import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { FormAlert } from '@/shared/ui/form-alert';
 import { Text } from '@/shared/ui/typography';
-
-const STATE_BADGE: Record<CatalogActivationState, { label: string; variant: 'neutral' | 'warning' | 'success' }> = {
-  not_activated: { label: 'Não ativado', variant: 'neutral' },
-  draft: { label: 'Rascunho', variant: 'warning' },
-  published: { label: 'Publicado', variant: 'success' },
-  unpublished: { label: 'Despublicado', variant: 'neutral' },
-};
 
 /**
  * ProductActivationCard — D5.2/D5.3, one row of the hub per Product.
@@ -48,9 +42,11 @@ const STATE_BADGE: Record<CatalogActivationState, { label: string; variant: 'neu
 export function ProductActivationCard({
   product,
   state,
+  subscriptionActive,
 }: {
   product: RepresentativeProduct;
   state: CatalogActivationState;
+  subscriptionActive: boolean;
 }) {
   const [pending, setPending] = useState(false);
   // Tagged by which action produced it, not inferred from the failure's own
@@ -84,7 +80,7 @@ export function ProductActivationCard({
     }
   }
 
-  const badge = STATE_BADGE[state];
+  const viewState = getActivationViewState(state, subscriptionActive);
   const errorCopy = failure
     ? failure.kind === 'activate'
       ? activateErrorCopy(failure.value)
@@ -97,10 +93,17 @@ export function ProductActivationCard({
         <Text as="p" variant="body">
           <strong className="text-content">{product.name}</strong>
         </Text>
-        <Badge variant={badge.variant}>{badge.label}</Badge>
+        <Badge variant={viewState.badge.variant}>{viewState.badge.label}</Badge>
       </div>
 
       {errorCopy ? <FormAlert tone="error" {...errorCopy} /> : null}
+      {viewState.subscriptionBlocked ? (
+        <FormAlert
+          tone="error"
+          title="Regularize sua assinatura SETNAR"
+          description="Ative ou regularize sua assinatura para disponibilizar esta página ao público."
+        />
+      ) : null}
 
       <div className="flex gap-2">
         {state === 'not_activated' ? (
@@ -110,8 +113,14 @@ export function ProductActivationCard({
         ) : null}
 
         {state === 'draft' || state === 'unpublished' ? (
-          <Button size="sm" variant="primary" loading={pending} onClick={() => void handleSetStatus('published')}>
-            Publicar
+          <Button
+            size="sm"
+            variant="primary"
+            loading={pending}
+            disabled={!viewState.canPublish || pending}
+            onClick={() => void handleSetStatus('published')}
+          >
+            {viewState.canPublish ? 'Publicar' : 'Ative sua assinatura para publicar'}
           </Button>
         ) : null}
 

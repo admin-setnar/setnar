@@ -1,20 +1,69 @@
 # QR_ANALYTICS_PLAN.md
 
 > Plano de investigação — QR Codes + Analytics (Básico), o resto do Stage 1
-> Status: **proposta, não implementada** — nenhum código deste documento existe
 > Escopo: `docs/ROADMAP.md`, Stage 1 — "QR Codes" (geração, download, copiar
 > link), "Analytics (Básico)" (visitas, cliques no WhatsApp, referrer), e a
 > parte do "Dashboard" que ainda falta (QR Code, basic statistics — Products e
 > Links já existem no hub)
 
-Mesmo contrato do `docs/SPRINT_D_PLAN.md`: este documento **investiga e
+**Status:** Approved — parcialmente implementado
+**Authority:** Non-normative (ver `docs/plans/README.md`)
+**Code baseline:** Not identified na redação original. Estado verificado contra
+`23290c4` (branch `develop`) em 2026-08-05.
+**Last reviewed:** 2026-08-05
+**Superseded by:** —
+
+> **Aviso de leitura — este cabeçalho substitui o status original.** A linha
+> original dizia *"proposta, não implementada"*, e isso deixou de ser verdade.
+> Estado real, verificado no código:
+>
+> | Passo | Estado | Evidência |
+> |---|---|---|
+> | QR1 — QR Code client-side | **Implementado** | ADR-049, `qr-code-card.tsx`, dep `qrcode` |
+> | AN1 — tabela `analytics_events` | **Implementado** | ADR-050, `20260810000000` |
+> | AN2/AN4 — funções de escrita | **Implementado** | ADR-051/052, `20260811000000` |
+> | AN3/AN5 — chamadas do app | **Implementado** | ADR-053/054 |
+> | AN6 — exibir estatísticas no hub | **Não implementado** | não há caminho de leitura: `AnalyticsGateway` só expõe escrita |
+> | AN7 — retenção/purga dos eventos | **Não implementado** | levantado, não bloqueante |
+>
+> **Consequência que precisa estar clara para qualquer leitor, humano ou IA:**
+> o produto **registra** visitas e cliques, mas **não os mostra a ninguém**.
+> "Analytics" não é uma capacidade disponível ao representante hoje — só uma
+> coleta silenciosa. Ver `PRODUCT.md`, seção *What Exists Today*.
+>
+> **§3 não está mais em aberto — foi decidido.** A seção 3 abaixo apresenta
+> alternativas lado a lado, no tempo presente, como se nada estivesse
+> resolvido. **Seis das sete decisões já foram tomadas e implementadas.** Ler
+> §3 como um menu de escolhas é o erro mais provável neste documento:
+>
+> | Decisão | Resolução | Onde |
+> |---|---|---|
+> | §3.1 QR client-side ou com estado no servidor | **Client-side** | ADR-049 |
+> | §3.2 o que conta como "visita"/ruído de bot | **Decidido**, com filtro de bot | ADR-051 |
+> | §3.3 mecanismo de registro do clique | **Rota dedicada** | ADR-053 |
+> | §3.4 LGPD/consentimento | **Decidido**: `ip_hash` com salt próprio, sem cookie | ADR-050, ADR-054 |
+> | §3.5 eventos crus ou contador agregado | **Eventos crus** | ADR-050 |
+> | §3.6 função `SECURITY DEFINER` ou policy de INSERT | **`SECURITY DEFINER`** | ADR-051 |
+> | §3.7 onde as estatísticas aparecem no hub | **EM ABERTO** — é o único item vivo, e é o que bloqueia AN6 | — |
+>
+> Só §3.7 continua sendo uma pergunta. Todo o resto de §3 é registro
+> histórico do raciocínio que levou às decisões acima.
+
+Mesmo contrato do `docs/plans/archive/SPRINT_D_PLAN.md`: este documento **investiga e
 levanta decisões, não fecha nenhuma sozinho**. Onde há custo de produto ou
 custo de reversão alto, as opções vêm lado a lado, com prós/contras, e a
 escolha é do Pedro. Os passos de implementação são pequenos, revisáveis e
-testáveis isoladamente. Os ADRs correspondentes só entram no `README.md`
-quando cada passo for de fato implementado — o próximo número livre é
-**ADR-049**; o próximo passo livre na lista numerada do `supabase/README.md`
-é o **14**.
+testáveis isoladamente. Os ADRs correspondentes só entram em `docs/adr/`
+quando cada passo for de fato implementado.
+
+> ⚠️ **Ponteiros obsoletos, corrigidos.** O texto original dizia "o próximo
+> número livre é ADR-049" e "o próximo passo livre do `supabase/README.md` é o
+> 14". Ambos foram consumidos. O texto original também dizia que ADRs entram
+> no `README.md` — desde 2026-08-05 os ADRs vivem em `docs/adr/` (um arquivo
+> por decisão, índice em `docs/adr/README.md`). **Não use números de ADR ou de
+> migration citados em qualquer plano** — eles envelhecem no instante em que o
+> passo seguinte é implementado. A única fonte confiável é `docs/adr/README.md`
+> (último ADR) e a pasta `supabase/migrations/` (último timestamp).
 
 ---
 
@@ -23,11 +72,13 @@ quando cada passo for de fato implementado — o próximo número livre é
 A Sprint D fechou o elo Auth → Commercial Page. O que falta do Stage 1, lido
 direto do `ROADMAP.md`:
 
-| Item do ROADMAP | Estado hoje |
-|---|---|
-| QR Codes: geração automática, download, copiar link | ❌ nada implementado |
-| Analytics (Básico): visitas, cliques no WhatsApp, origem/referrer | ❌ nada implementado |
-| Dashboard: Products, Links, QR Codes, basic statistics | Products/Links ✅ (`RepresentativeHub`); QR Codes e statistics ❌ |
+> ⚠️ **Tabela histórica — descrevia o estado em que este plano foi escrito, não o estado atual.** Mantida como registro do ponto de partida. O estado verificado em 2026-08-05 está no cabeçalho deste documento.
+
+| Item do ROADMAP | Estado quando este plano foi escrito | Estado em 2026-08-05 |
+|---|---|---|
+| QR Codes: geração automática, download, copiar link | ❌ nada implementado | ✅ implementado (ADR-049) |
+| Analytics (Básico): visitas, cliques no WhatsApp, origem/referrer | ❌ nada implementado | ⚠️ gravado, **nunca exibido** (ADR-050/051/053) |
+| Dashboard: Products, Links, QR Codes, basic statistics | Products/Links ✅; QR Codes e statistics ❌ | Products/Links/QR Codes ✅; **statistics ❌** |
 
 Importante: **isto não é modelagem nova.** `docs/DOMAIN_MODEL.md` já define o
 vocabulário inteiro — `QR Code` (§8.7), `Visitor` (§8.8), `Metric Aggregate`
@@ -376,7 +427,7 @@ decisão do Pedro, mas sem grande peso.
 
 Cada passo é revisável e testável isoladamente. Processo por passo, o mesmo
 de sempre: **auditar → Pedro revisa → implementar → `npm run verify` → ADR
-no `README.md` (a partir de ADR-049) + entrada na lista numerada do
+em `docs/adr/` (a partir de ADR-049) + entrada na lista numerada do
 `supabase/README.md` (a partir do passo 14) + roteiro de "Verificação manual
 obrigatória".**
 
@@ -513,7 +564,7 @@ paralelo com AN2–AN5, já que só lê.*
 **Registrado, não agendado:**
 - **AN7** — retenção/purga, revisitar antes do Stage 2.
 
-Cada passo: `npm run verify`, ADR novo no `README.md` (a partir de ADR-049),
+Cada passo: `npm run verify`, ADR novo em `docs/adr/` (a partir de ADR-049),
 entrada nova na lista numerada do `supabase/README.md` (a partir do passo
 14) com o roteiro de "Verificação manual obrigatória" no formato já usado —
 e, para AN2/AN4 especificamente, o double-check de grants do ADR-048 antes

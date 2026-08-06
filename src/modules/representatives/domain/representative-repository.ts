@@ -5,19 +5,11 @@ import type { RepresentativeActivation } from '@/modules/representatives/domain/
  * representatives actually live (in-memory fixture for tests, Supabase in
  * production) — same split as `TenantRepository`.
  *
- * KNOWN LIMITATION, explicitly out of scope for this step: this port does
- * NOT check whether the Representative's Subscription is Active
- * (DOMAIN_MODEL.md §8.14, Business Rule 21 — "a Commercial Page cannot
- * remain Published if its owner's Subscription is not Active"). The
- * `SECURITY DEFINER` function that would let that check run safely against
- * the anon/publishable key (sketched as `is_subscription_active(uuid)` in
- * the RLS design note atop
- * `supabase/migrations/20260731000000_create_representative_domain.sql`)
- * does not exist yet — `subscriptions` currently has zero RLS policies, so
- * nothing can read it through this key at all. A Representative whose
- * Subscription has lapsed still resolves here as long as their
- * `product_activations` row is `published`. Callers must not treat a
- * non-null result as "safe to render publicly" until that check is added.
+ * E1 (`20260815000000_add_subscription_enforcement.sql`) narrows the public
+ * `product_activations` policy with `is_subscription_active`. A non-null pair
+ * returned through the public Supabase adapter is therefore safe to render
+ * with respect to Business Rule 21; the application predicates remain
+ * defense in depth, while RLS owns the visibility decision.
  */
 export interface RepresentativeRepository {
   /**

@@ -46,9 +46,13 @@ export default async function AppHomePage() {
   }
 
   const representative = await (await getRepresentativeAccountRepository()).findByProfileId(user.id);
-  const catalog = representative
-    ? await (await getRepresentativeCatalogRepository()).listOwnCatalog(user.id)
-    : [];
+  const catalogRepository = representative ? await getRepresentativeCatalogRepository() : null;
+  const [catalog, subscriptionActive] = representative && catalogRepository
+    ? await Promise.all([
+        catalogRepository.listOwnCatalog(user.id),
+        catalogRepository.isSubscriptionActive(representative.id),
+      ])
+    : [[], false];
 
   return (
     <main id="conteudo" className="pt-16 pb-20">
@@ -71,7 +75,11 @@ export default async function AppHomePage() {
         </div>
 
         {representative ? (
-          <RepresentativeHub representative={representative} catalog={catalog} />
+          <RepresentativeHub
+            representative={representative}
+            catalog={catalog}
+            subscriptionActive={subscriptionActive}
+          />
         ) : (
           <Card variant="raised" padding="lg" className="mt-8">
             <Text as="h2" variant="title" className="mb-4">

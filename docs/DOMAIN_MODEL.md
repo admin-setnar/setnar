@@ -1,9 +1,14 @@
 # DOMAIN_MODEL.md
 
 > Business Domain Specification
-> Version: 1.0
+> Version: 2.0
 > Status: Active
+> Authority: Level 4 — business language and modelling (see `docs/README.md`)
 > Product: SETNAR
+
+> **Read § 3.1 before acting on anything in this document.** Most of what is
+> modelled here does not exist in code and is not scheduled to. A modelled
+> entity is a piece of vocabulary, never an instruction to build.
 
 ---
 
@@ -25,7 +30,11 @@ SETNAR exists because independent professionals authorized by an organization �
 
 SETNAR's business bet is that giving each of these professionals a *Digital Office* — a personalized, credible, always-on digital presence tied to the products they are authorized to sell — increases their conversion rate and, in turn, makes them willing to pay for the platform.
 
-The business is deliberately **not** a website builder. A website builder's unit of value is a page. SETNAR's unit of value is a *sales opportunity created for a specific professional through a specific product they represent*. Every business concept in this model exists to support that unit of value: a Representative belonging to a Company, offering Products from a Catalog, through a Commercial Page, generating traceable interest (visits, clicks, Leads) that can be worked into a Conversion.
+The business is deliberately **not** a website builder. A website builder's unit of value is a page.
+
+**SETNAR's central unit of value is a trustworthy, professional, authorized interaction between an independent representative and a potential customer.** Leads, opportunities and conversions are measurable outcomes of that interaction, but they are not its only manifestation of value: a visitor who takes the representative seriously, an authorizing organization protected from misrepresentation, and a professional who can be found and verified are all value delivered, whether or not a sale follows.
+
+This correction matters for modelling. Defining value as "a sales opportunity per product" would justify optimizing exclusively for conversion events and would put the model in conflict with PRODUCT_CONSTITUTION.md Core Beliefs 1 and 7 — credibility earned through transparency, and two parties served whose interests are not automatically aligned. Every business concept in this model exists to support that trustworthy interaction: a Representative belonging to a Company, offering Products from a Catalog, through a Commercial Page, generating traceable interest that can be worked into a Conversion.
 
 The business validates itself one stage and one vertical at a time (Stage 1 targets iGreen representatives specifically), but the domain itself is never modeled around any single company. iGreen is the first tenant of a multi-tenant business, not a template the business is built around. This distinction is the single most important modeling decision in this document and it recurs throughout: every entity that could be tempted to assume "the company" or "the product type" instead assumes "a Company" and "a Product," scoped generically.
 
@@ -73,14 +82,9 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 
 ### Commercial Page
 **Definition:** The public-facing, personalized digital page that presents a Representative and the Products they have activated, ending in a call to action (WhatsApp contact).
-**Business meaning:** This is the core deliverable of the MVP and the literal "Digital Office." It is what a Representative shares instead of a PDF or a raw WhatsApp number.
+**Business meaning:** The core deliverable of the MVP. It is what a Representative shares instead of a PDF or a raw WhatsApp number.
 **Example:** `joao-silva.setnar.com.br` showing João's photo, his iGreen affiliation, and his activated Products.
 **Relationships:** Owned by exactly one Representative; references one or more Products; has one QR Code; is the target of Visitor traffic and the origin of Leads.
-
-### Digital Office
-**Definition:** The colloquial/marketing name for a Representative's Commercial Page as a whole (identity + activated Products + QR Code).
-**Business meaning:** Not a separate entity — always resolves to Commercial Page in this document and in code. Used in product and marketing prose where "Commercial Page" would read as overly technical.
-**Relationships:** Synonym of Commercial Page; carries no relationships of its own.
 
 ### QR Code
 **Definition:** A generated, scannable visual representation of a Commercial Page's (or, later, Campaign's) link.
@@ -153,6 +157,127 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 **Definition:** A controlled, named value describing the current lifecycle position of an entity (e.g., a Commercial Page's Status of Draft/Published, a Lead's Pipeline Status, a Subscription's Status of Active/Suspended/Canceled).
 **Business meaning:** Status is never a free-text field; every Status is a closed set of values with explicit, governed transitions (see Section 14, State Machines).
 
+### Digital Office
+**Definition:** Defined in `PRODUCT.md` § *"Digital Office" — formal definition*, which is the authority on the term because it is a commercial category rather than a domain concept. Not restated here.
+**Modelling consequence, which is this document's concern:** **it is not a domain entity, and no entity, aggregate, Bounded Context or table is to be created to mirror it.** Should a technical object ever be justified under this name, it requires a decision recorded as an ADR — never an inference from a commercial term.
+**Relationships:** None of its own. It denotes a set of things that each carry their own relationships.
+
+### Digital presence
+**Definition:** The public, discoverable, verifiable expression of a Representative's professional identity and authorized offer.
+**Business meaning:** The problem area the first product addresses. A means, not the end — the end is trustworthy representation and commercial capability.
+
+### Ecosystem
+**Definition:** The long-term direction in which further commercial capabilities are added progressively on top of the digital-presence base.
+**Business meaning:** A direction, not a current state. **SETNAR is not an ecosystem today** and must not be described as one publicly (`PRODUCT.md` § *Public Positioning and Communication*).
+
+### Multi-tenancy (architectural)
+**Definition:** The property, in force since the first commit, that every business object is scoped to exactly one Company and that no code path assumes a single Company.
+**Business meaning:** A permanent constraint, never a feature. Distinct from *multi-organization operations*.
+
+### Multi-organization operations
+**Definition:** The prospective operational product for an authorizing organization — institutional onboarding, administration, per-tenant policies, white label, permission management.
+**Business meaning:** A candidate capability (ROADMAP.md Stage 5). Does not exist. Naming it separately keeps it from being confused with architectural multi-tenancy, which does.
+
+### Custom development *(also: personalized development)*
+**Definition:** Bespoke software work performed by SETNAR for a third party, outside the SaaS product.
+**Business meaning:** A complementary business model, governed by `PRODUCT.md` § *Complementary Business Model*. **Not part of this domain model.** Client-specific work introduces no entity, aggregate or invariant here unless and until it is abstracted into a platform capability by explicit decision. Use "custom development" in English text; "personalized development" is the same thing and should be avoided as a second label.
+
+### Terms this vocabulary refuses to use loosely
+
+**"Client," used of a person or organization, is ambiguous and must never appear unqualified.** It can mean five different parties. Use the precise term:
+
+| Instead of "client", say | When you mean |
+|---|---|
+| **Authorizing Organization** (or *Company*, the modelling term) | The organization that authorizes representation — e.g. iGreen |
+| **Representative** | The independent professional using SETNAR |
+| **Visitor** / **Lead** / **Customer** | The end consumer the Representative sells to |
+| **Tenant** | The isolation boundary, when speaking architecturally |
+| **Custom-development client** | A third party commissioning bespoke work — see `PRODUCT.md` § *Complementary Business Model*. Never a tenant, never a Company in the modelling sense |
+
+**The technical sense is exempt and unambiguous:** *client-side*, *client bundle*, *client validation* mean the browser. No qualification is needed there, and it must not be confused with any party above.
+
+Likewise, **Company** and **Authorizing Organization** denote the same thing: `Company` is the modelling and code term; *authorizing organization* is the prose term used in the Constitution and in public communication. **Professional**, **Representative** and **independent representative** also denote the same actor; `Representative` is the canonical term in code and in this document. **Product activation** is the act; **Commercial Page** is what it produces.
+
+**"Customer" carries two meanings and must always be qualified.** This is the most dangerous remaining ambiguity in the vocabulary, because both meanings are correct and they point at opposite ends of the business:
+
+| Phrase | Who |
+|---|---|
+| **SETNAR's paying customer** | Whoever pays SETNAR — today a Representative, in Stage 5 possibly a Company |
+| **The Representative's customer** (or *end consumer*) | The person who buys the Product the Representative represents |
+
+Unqualified "customer" is only acceptable where the surrounding sentence makes the referent unmistakable. In a metric, a rule, or an invariant, it must be qualified — "paying customers" as a business metric means **SETNAR's** paying customers, and is written that way wherever it could be read otherwise.
+
+**Surface names**, which have drifted and are now fixed: the SETNAR marketing site is the **institutional landing** ("landing" alone is acceptable shorthand); a Representative's public page is the **Commercial Page**. *Public page*, *landing page*, and *marketing site* are loose synonyms that must not appear in specifications, rules, or invariants — only, at most, in explanatory prose where the referent is obvious.
+
+Do not coin further synonyms without adding them here.
+
+---
+
+# 3.1 Domain Status — what exists, what is planned, what is only a concept
+
+**This section governs how every other section of this document is read.**
+
+A concept can be correctly modelled and completely unbuilt. Both are normal. What is not acceptable is confusing the two — so every entity, context and capability below carries one of three statuses:
+
+| Status | Meaning | What an implementer may do |
+|---|---|---|
+| **Implemented** | Exists in the code today | Do not rebuild it. Verify before changing it |
+| **Planned** | Decided, with a plan, not yet built | Build only under an approved execution plan (`docs/README.md`) |
+| **Conceptual** | Modelled for coherence; not decided, not scheduled | **Do not build it.** Its presence here is not authorization, a commitment, or a promise |
+
+> **Rule.** A *Conceptual* entity appearing in this document is never an instruction to implement it. This document exists so that the vocabulary stays stable as the product grows — modelling something early is how the model avoids being rewritten later, not how work is queued.
+
+## Implemented Domain
+
+Verified against the working tree based on commit `23290c4`, including Sprint E/E2, on 2026-08-05. This table is re-verified at every sprint close — see `docs/README.md` § *When this documentation is re-verified*. If its date is older than the last closed sprint, treat it as unverified and check the code.
+
+| Concept | § | Note |
+|---|---|---|
+| Company | 8.1 | Exists as a real record; no self-service registration or administration |
+| Representative | 8.2 | Name, authorization identifier, phone, city, slug. **No photo, no social links** |
+| Catalog | 8.3 | The *governance* is implemented — a Product belongs to a Company, and activation is constrained by it — but there is **no Catalog table or entity**, deliberately (ADR-028). The concept is in force; the object does not exist |
+| Product | 8.4 | Seeded, not managed through the product |
+| Product Activation | 8.5 | Full write path with ordered publication preconditions, including active Subscription |
+| Commercial Page | 8.6 | One per (Representative × Product); resolves by subdomain |
+| QR Code | 8.7 | Rendered client-side from the resolved address; not persisted |
+| Visitor | 8.8 | As anonymous events only |
+| Lead | 8.12 | **Capture only.** No Pipeline Status, no working surface |
+| Subscription | 8.14 | Record exists; enforced on publication, public read and representative-facing availability state through the same rule; **activated manually** |
+
+## Validated or Planned Domain
+
+Decided, tracked in a plan, not yet built.
+
+| Concept | § | Where |
+|---|---|---|
+| Metric Aggregate | 8.9 | Events are recorded; **no aggregation and no read path** (`docs/plans/QR_ANALYTICS_PLAN.md` AN6) |
+
+## Conceptual Future Domain
+
+**None of the following exists. None is scheduled. None may be presented publicly as existing.**
+
+| Concept | § | Status |
+|---|---|---|
+| Campaign, Smart QR Code | 8.10 | Conceptual |
+| Material | 8.11 | Conceptual |
+| Activity / Timeline Entry | 8.13 | Conceptual |
+| Pipeline Status, Conversion | 3, 14.2 | Conceptual |
+| Role, Permission | 8.15, 8.16 | Conceptual — authorization today is table-level isolation, not a role model |
+| Marketing Enablement Context | 7.7 | Conceptual |
+| Sales Operations Context (CRM) | 7.8 | Conceptual |
+| AI Assistance Context | 7.9 | Conceptual |
+| Administration Context | 7.11 | Conceptual |
+| Multi-organization operations, White Label | 18 | Conceptual |
+| Marketplace, Product Distribution, Developer Platform | 18 | Conceptual — lowest confidence in the whole model |
+
+Contexts partly real: **Identity & Access** (7.1) exists as authentication without roles or permissions; **Company Management** (7.2) exists as data without a management surface; **Analytics** (7.6) exists as collection without reporting; **Billing** (7.10) exists as a record without billing; **Compliance** (7.12) is implemented for per-product notices (ADR-055) and conceptual beyond that.
+
+## How to read the rest of this document
+
+Sections 8–18 describe the **complete** business model, including everything above marked Conceptual, deliberately and in full detail. That completeness is the point: it is what lets later stages extend the model instead of rewriting it.
+
+It is also the single largest misreading risk in this repository. **Detail is not readiness.** An entity described across fifteen lines of invariants and lifecycle is not thereby closer to being built than one described in two.
+
 ---
 
 # 4. Core Domain
@@ -204,6 +329,8 @@ Generic Domains solve problems that are not unique to SETNAR's business and coul
 # 7. Bounded Contexts
 
 Each Bounded Context corresponds to a business capability area and maps directly to a System Module named in ARCHITECTURE.md, keeping the same name so architecture and domain vocabulary never diverge.
+
+> **Status (§ 3.1).** Twelve contexts are described; **four exist as code modules today** (Identity & Access, Company/Representative management, Commercial Presence, Compliance), three exist partially (Analytics as collection, Billing as a record, Catalog Management as seeded data), and five are Conceptual (Marketing Enablement, Sales Operations, AI Assistance, Administration, and the enterprise portion of Company Management). A context described here is a boundary reserved in the vocabulary, not a module to create.
 
 ## 7.1 Identity & Access Context
 **Purpose:** Know who is acting and what they are permitted to do.
@@ -374,7 +501,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 
 ### 8.6 Commercial Page
 
-**Business description:** The public digital page presenting a Representative and their activated Products — the literal Digital Office.
+**Business description:** The public digital page presenting a Representative and an activated Product. It is the central artifact of the Digital Office, not a synonym for it — a Representative with several activated Products has several Commercial Pages and one Digital Office (ADR-029).
 **Purpose:** Convert a stranger's attention into a Lead by presenting a credible, professional, personalized offer.
 **Responsibilities:** Presenting Representative identity, presenting activated Products, exposing a call-to-action (WhatsApp), carrying a QR Code.
 **Identity:** Uniquely identified by its own shareable address, owned by exactly one Representative.
@@ -486,6 +613,8 @@ Each Bounded Context corresponds to a business capability area and maps directly
 
 # 9. Value Objects
 
+> **Status (§ 3.1).** Phone Number, Email Address, Slug/Page Address and Referrer Source correspond to real values in the code. **Social Link, Business Hours and Money/Commission Value do not exist anywhere** — no field, no column, no interface. They are modelled so that the vocabulary is ready if they arrive; they are not a specification to build against, and Money/Commission is explicitly labelled a placeholder.
+
 Value Objects have no identity of their own; two Value Objects with the same attributes are interchangeable. They are immutable — any "change" produces a new value rather than mutating the old one, because their entire business meaning is the value itself.
 
 - **Phone Number** — a validated contact number used for the Representative's WhatsApp call-to-action. Immutable because a "changed" phone number is a different fact, not an edit to the same fact — the Representative's Profile references a new Phone Number Value Object, it does not mutate the old one in place.
@@ -501,6 +630,8 @@ Value Objects have no identity of their own; two Value Objects with the same att
 ---
 
 # 10. Aggregates
+
+> **Status (§ 3.1).** These are **modelling boundaries, not a required code structure.** The Representative and Catalog aggregates correspond to how consistency is actually enforced today (in database functions and constraints, not in aggregate classes). The Campaign, Lead and Subscription aggregates describe entities that are Conceptual or minimal. **No aggregate class hierarchy is prescribed by this section**, and building one because this section exists would be inventing structure for entities that mostly do not exist.
 
 An Aggregate defines a transactional consistency boundary: everything inside it must be consistent together, and external references only ever point to the Aggregate Root, never to its internal entities directly.
 
@@ -559,6 +690,8 @@ An Aggregate defines a transactional consistency boundary: everything inside it 
 
 Organized by domain, all rules stated here are either directly sourced from the five project documents or are the minimal necessary inference to keep the model consistent (marked *[Inferred]*).
 
+> **Status (§ 3.1).** A rule about a Conceptual entity is a rule that will apply *if* that entity is ever built — it is not in force today and nothing is violating it by not enforcing it. Rules 1–3, 5–10, 21 and 26 are enforced in the code. **Rule 21 uses the same `is_subscription_active` decision at publication time and on public read.** Rules 15–20 and 23–25 concern Conceptual entities and are dormant. Rule 7 is enforced in a narrower form than stated: name and phone are required to publish; **photo is not, because profile photos are not implemented**.
+
 ### Company & Catalog
 1. A Company must exist before any Catalog, Representative, or Commercial Page can exist under it.
 2. A Catalog belongs to exactly one Company.
@@ -609,6 +742,8 @@ Organized by domain, all rules stated here are either directly sourced from the 
 
 Domain Services represent business processes that do not belong naturally to a single entity because they coordinate across several.
 
+> **Status (§ 3.1).** Representative Onboarding, Commercial Page Publication and Catalog Compliance exist in some form today. **Lead Attribution, Pipeline Progression, Subscription Enforcement and AI Content Suggestion do not exist** — Subscription enforcement today is a read-time check, not a service that reacts to status changes. Naming a service here does not schedule it.
+
 - **Representative Onboarding Service** — orchestrates the self-service registration flow: creating the Representative, linking them to the correct Company, and automatically generating their initial Commercial Page (per PRODUCT.md's "self-service and automatic activation").
 - **Commercial Page Publication Service** — validates all publication preconditions across the Representative, Product Activation, and Subscription Aggregates (Profile completeness, at least one active Product, active Subscription) before allowing a Page's Status to move to Published.
 - **Lead Attribution Service** — determines, at the moment a conversion-intent Visitor Event occurs (e.g., a WhatsApp click), whether it should be attributed to a Campaign or to the Commercial Page directly, and creates the corresponding Lead.
@@ -620,6 +755,8 @@ Domain Services represent business processes that do not belong naturally to a s
 ---
 
 # 13. Domain Events
+
+> **Status (§ 3.1).** This table is the business vocabulary of events, **not an implemented event bus**. There is no event infrastructure in the codebase: no publishing, no subscription, no durable event log. Every row describes a business moment that matters and how it would propagate — a naming convention for when such moments are handled, whether or not any mechanism ever carries them. Events touching Campaign, Lead lifecycle, Role and AI are Conceptual in full.
 
 | Event | When | Why | Consequences | Consumers |
 |---|---|---|---|---|
@@ -646,6 +783,8 @@ Domain Services represent business processes that do not belong naturally to a s
 ---
 
 # 14. State Machines
+
+> **Status (§ 3.1).** **14.1 (Commercial Page)** is real, in a narrower form: publication is gated on four ordered preconditions (active Representative, active Subscription, display name, phone), and an inactive Subscription hides an already-published page on read rather than transitioning it to Unpublished — there is still no reactive process that rewrites the stored state. **14.2 (Lead Pipeline)** is Conceptual in full: no Lead has a status, because there is no pipeline. **14.3 (Subscription)** exists as stored values changed by hand; there is no automated lifecycle, no grace period and no billing event to drive one. **14.4 (Product)** reflects seeded data, not a managed lifecycle.
 
 ### 14.1 Commercial Page
 
@@ -709,6 +848,8 @@ Domain Services represent business processes that do not belong naturally to a s
 ---
 
 # 15. Business Workflows
+
+> **Status (§ 3.1).** **15.1** happens today, end to end. **15.2** happens only as far as Lead capture — there is no conversion tracking and nothing downstream of the captured Lead. **15.3 (Campaign)** does not happen at all. **15.4 (Subscription Lapse → Page Enforcement)** happens partially: a lapsed Subscription stops the page from being served, but nothing detects the lapse, notifies anyone, or unpublishes anything.
 
 ### 15.1 Representative Registration → First Commercial Page
 
@@ -829,6 +970,8 @@ Things that must never happen, anywhere in the system, at any stage:
 
 # 18. Future Expansion
 
+> **Status: Conceptual, in full.** Nothing in this section is decided, scheduled, or authorized. It exists to demonstrate that the model can absorb later stages without redesign — that is an argument about the model's shape, **not a plan and not a commitment**. Read it as "if this happens, here is where it would attach," never as "this will happen." The corresponding stages in `ROADMAP.md` are themselves candidate capabilities.
+
 This model is deliberately shaped so that later Roadmap stages extend it without altering existing entities, relationships, or invariants.
 
 **CRM (Stage 3 — already modeled above):** Lead, Activity, and Pipeline Status are first-class citizens in this document precisely so that Stage 3 requires no redesign — only the activation of behavior (workflows, UI) already anchored to entities and rules defined here.
@@ -853,7 +996,11 @@ This section explains, in business terms, how this Domain Model is expected to r
 - **Application Layer:** The Domain Services in Section 12 and the Workflows in Section 15 correspond to the Application layer's responsibility of orchestrating use cases across entities — they coordinate, but the business rules they enforce originate in the Domain layer, not in the orchestration itself.
 - **Infrastructure Layer:** Nothing in this document should be implemented as Infrastructure directly containing business rules. Infrastructure (per ARCHITECTURE.md) is what makes Domain Events durable, what actually sends notifications, what stores Analytics aggregates — but the *meaning* of an Analytics record (Section 8.9, Constraint 7) is Domain, not Infrastructure.
 - **Presentation Layer:** The Commercial Page as a public artifact touches Presentation concerns (per DESIGN_SYSTEM.md), but the Commercial Page as a Domain Entity (Section 8.6) is concerned only with its ownership, content references, publication state, and invariants — never with layout, color, or component choice.
-- **Bounded Context ↔ Module mapping:** Each Bounded Context in Section 7 is designed to map one-to-one to a System Module named in ARCHITECTURE.md (Authentication↔Identity & Access, Companies↔Company Management, Products↔Catalog Management, Users↔Representative Management, Commercial Pages↔Commercial Presence, Analytics↔Analytics, Media Library↔Marketing Enablement's Material, Campaigns↔Marketing Enablement, CRM↔Sales Operations, AI↔AI Assistance, Billing↔Billing, Administration↔Administration). This alignment is intentional so that "business domain first, folder structure second" (ENGINEERING_GUIDELINES.md's explicit folder-organization principle) has a direct, unambiguous source of truth: this document.
+- **Bounded Context ↔ Module mapping:** each Bounded Context in Section 7 is *intended* to correspond to a System Module named in ARCHITECTURE.md, so that "business domain first, folder structure second" has an unambiguous vocabulary to draw on.
+
+  **That correspondence is an intention, not an invariant, and it is already loose in both directions.** Modules exist in the codebase that map to no context (`tenancy`, `marketing` — infrastructure and a surface, not business domains), and one module carries several contexts at once (`representatives`). Neither is a defect: a module boundary follows what changes together, which is not always where the domain vocabulary draws a line.
+
+  A future reader must not use this section to argue that a module should be split, renamed, or created in order to match a context. `ARCHITECTURE.md` § *System Modules* is the authority on module boundaries; this document is the authority on the language those boundaries are described in.
 
 ---
 

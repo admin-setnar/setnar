@@ -2,20 +2,49 @@
 
 > Plano de investigação — Subscription/Billing (D7): o gate que falta pro Stage 1
 > medir a própria hipótese
-> Status: **proposta, não implementada** — nenhum código deste documento existe
 > Escopo: `docs/ROADMAP.md` Stage 1 (item de cobrança, nunca antes fechado);
 > `docs/DOMAIN_MODEL.md` Regra 21 (§14.1/§8.14); o item **D7** que
 > `docs/SPRINT_D_PLAN.md` deixou registrado como "fora do elo, listado pra não
-> sumir"; e o desvio consciente que `ADR-043` já documentou (README.md) sem
+> sumir"; e o desvio consciente que [`ADR-043`](../adr/ADR-043-caminho-de-escrita-da-ativacao-de-produto-por.md) já documentou sem
 > resolver
 
-Mesmo contrato dos planos anteriores (`SPRINT_D_PLAN.md`, `QR_ANALYTICS_PLAN.md`):
+**Status:** Approved — parcialmente implementado (E1, E2 e E4)
+**Authority:** Non-normative (ver `docs/plans/README.md`)
+**Code baseline:** Not identified na redação original. Estado verificado contra
+`23290c4` (branch `develop`) em 2026-08-05.
+**Last reviewed:** 2026-08-05
+**Superseded by:** —
+
+> **Aviso de leitura — este cabeçalho substitui o status original.** A linha
+> original dizia *"proposta, não implementada"*. Estado real, verificado no
+> código:
+>
+> | Passo | Estado | Evidência |
+> |---|---|---|
+> | E1 — `is_subscription_active` + policy de leitura | **Implementado** | ADR-063, `20260815000000` |
+> | E2 — 4ª precondição no gate de escrita | **Implementado** | ADR-064, `20260816000000` |
+> | E3 — ativação/reativação manual | **Não implementado** | — |
+> | E4 — UI de estado bloqueado no `/app` | **Implementado** | ADR-064, leitura via `is_subscription_active` |
+> | E5 — preview dentro do `/app` | **Não implementado** | — |
+> | E6 — fechar a referência no ADR existente | **Não implementado** | — |
+>
+> **Consequência que precisa estar clara:** a Subscription é hoje enforçada
+> na publicação **e** na leitura pública, pela mesma função, e gerenciada **manualmente** (não há gateway de
+> pagamento, nem job, nem webhook). A hipótese "o representante paga" ainda
+> **não é medida pelo produto**.
+
+Mesmo contrato dos planos anteriores (`docs/plans/archive/SPRINT_D_PLAN.md`, `QR_ANALYTICS_PLAN.md`):
 este documento **investiga e levanta decisões, não fecha nenhuma sozinho**. Onde
 há custo de produto ou custo de reversão alto, as opções vêm lado a lado, com
 prós/contras, e a escolha é do Pedro. Os passos de implementação são pequenos,
-revisáveis e testáveis isoladamente. ADRs entram no `README.md` só quando cada
-passo for de fato implementado — o próximo número livre é **ADR-063**; o
-próximo passo livre da lista numerada do `supabase/README.md` é o **17**.
+revisáveis e testáveis isoladamente. ADRs entram em `docs/adr/` só quando cada
+passo for de fato implementado.
+
+> ⚠️ **Ponteiro obsoleto:** o texto original dizia "o próximo número livre é
+> ADR-063" — já consumido por E1. O texto original também dizia que ADRs
+> entram no `README.md` — desde 2026-08-05 os ADRs vivem em `docs/adr/`.
+> Números de ADR e de migration citados em planos envelhecem; confira sempre
+> `docs/adr/README.md` e `supabase/migrations/`.
 
 ---
 
@@ -29,7 +58,7 @@ o onboarding (D3.B) publica de graça. Isso não é um bug: é um desvio
 `20260807000000_add_product_activation_write_path.sql` diz, textualmente, que
 Subscription ativa "é D7, fora deste elo"; `representative-repository.ts:8-21`
 avisa que "callers must not treat a non-null result as safe to render publicly
-until that check is added"; e `ADR-033` (README.md) já criou a tabela
+until that check is added"; e [`ADR-033`](../adr/ADR-033-identificacao-do-licenciado-e-componente-estrutural.md) já criou a tabela
 `subscriptions` exatamente para este momento, gerenciada manualmente
 (`provider = 'manual'`) até existir um gateway de cobrança real.
 
@@ -55,8 +84,8 @@ assinatura cai.
 
 ## 2.1 Ponto de escrita (já existe, falta a 4ª precondição)
 
-`set_activation_status` (`20260807000000`) já tem um gate de publicação com
-três precondições em ordem: `representatives.status = 'active'` →
+No baseline auditado antes de E2, `set_activation_status` (`20260807000000`)
+tinha um gate de publicação com três precondições em ordem: `representatives.status = 'active'` →
 `display_name` preenchido → `phone` preenchido. O cabeçalho da própria
 migration já reserva o lugar da quarta, só não a implementa. Isto é o alvo
 óbvio, mas sozinho não basta — ver 2.2.
@@ -177,7 +206,7 @@ o produto trata como inexistente.
 # 4. Plano de implementação, em passos pequenos
 
 Mesmo processo do lead capture e da Sprint D: **auditar → Pedro revisa →
-implementar → `npm run verify` → ADR no `README.md` + entrada no
+implementar → `npm run verify` → ADR em `docs/adr/` + entrada no
 `supabase/README.md`.**
 
 ## E1 — `is_subscription_active(uuid)` + policy de leitura (fecha §2.2, Opção A do §3.2)
@@ -196,6 +225,12 @@ anti-enumeration de sempre); com linha `status = 'suspended'`, não resolve.
 **Não depende de nada. Revisável e implementável sozinho.**
 
 ## E2 — 4ª precondição no gate de escrita (fecha §2.1)
+
+> **Implementado em `20260816000000_add_subscription_publication_gate.sql`**
+> ([ADR-064](../adr/ADR-064-setactivationstatus-reutiliza-issubscriptionactive-no-gate-de-publicacao.md)).
+> A migration redefine somente `set_activation_status`, preserva
+> `activate_product` e adiciona `subscription_not_active` exatamente entre
+> `representative_not_active` e as precondições de perfil.
 
 Migration nova redefinindo `set_activation_status` (`create or replace
 function`, mesmo corpo + um `if`). Ordem proposta: `representative_status` →
@@ -219,6 +254,12 @@ ordem" que o arquivo já usa. Zero código de aplicação.
 
 ## E4 — UI: estado bloqueado no `/app`
 
+> **Implementado junto ao fechamento de consistência do ADR-064.** O hub lê
+> `is_subscription_active` pelo repositório autenticado, desabilita Publicar
+> sem assinatura, troca o badge de uma linha armazenada como `published` por
+> “Indisponível — assinatura inativa” e não mostra link/QR Code enquanto a
+> policy pública negar acesso.
+
 `ProductActivationCard` passa a receber se a subscription está ativa (nova
 prop, mesmo formato que `state` já chega hoje via
 `RepresentativeCatalogRepository`). Quando `state` é `draft`/`unpublished` e a
@@ -230,8 +271,8 @@ confundir com o WhatsApp comercial dele). Copy de erro nova
 o clique acontecer mesmo assim (sessão antiga, corrida) — defesa em
 profundidade, servidor continua sendo a fonte da verdade.
 
-**Achado da verificação manual do passo 17 (`supabase/README.md`), registrado
-aqui e não implementado ainda:** com `subscriptions.status = 'suspended'`, a
+**Achado da verificação manual do passo 17 (`supabase/README.md`) que ampliou
+o aceite de E4 e foi implementado no ADR-064:** com `subscriptions.status = 'suspended'`, a
 página pública corretamente para de resolver (E1 funcionando como projetado),
 mas `ProductActivationCard`
 (`src/modules/representatives/presentation/product-activation-card.tsx:23`)
@@ -248,7 +289,8 @@ pré-publicação — algo como "publicado, mas assinatura inativa" — para o c
 `ProductActivationCard` receba o mesmo dado de subscription já previsto acima
 para os outros dois estados; não é uma segunda fonte de dado, é o mesmo sinal
 aplicado a um terceiro cruzamento de estados que a descrição original de E4
-não cobria. Não implementado nesta revisão — só mapeado.
+não cobria. A implementação agora troca o badge, suprime link/QR Code e mantém
+a despublicação disponível.
 
 **Depende de E2.**
 
@@ -299,5 +341,6 @@ acima é a sequência com feedback mais rápido sobre a hipótese do MVP.
 3. **§3.3** — CTA e formulário de lead desabilitados no preview. **Confirmado.**
 
 E1 implementado em `supabase/migrations/20260815000000_add_subscription_enforcement.sql`
-(ADR-063, README.md). E2–E6 seguem a ordem da tabela acima, ainda não
-implementados.
+([`ADR-063`](../adr/ADR-063-issubscriptionactiveuuid-productactivationsselectpublished-redefinida-enforcement-de-leitura-da-regra.md)); E2 implementado em
+`supabase/migrations/20260816000000_add_subscription_publication_gate.sql`
+([`ADR-064`](../adr/ADR-064-setactivationstatus-reutiliza-issubscriptionactive-no-gate-de-publicacao.md)); E4 também foi fechado pelo mesmo ADR para que o estado do hub reflita a disponibilidade pública. E3, E5 e E6 seguem ainda não implementados.
