@@ -1,32 +1,35 @@
 /**
- * Input for D5b's profile edit — `phone`/`city` optional (mirrors the
- * columns' own nullability), `authorizationId` required (the column is `not null`).
+ * Input for the professional-profile edit. The public display name, phone,
+ * and authorization id are required; only city remains optional.
  * Field names 1:1 with `update_representative_profile`'s `p_`-prefixed
  * parameters (`supabase/migrations/20260808000000_add_update_representative_profile.sql`),
  * same split `RegisterRepresentativeInput`/`SupabaseRepresentativeOnboardingGateway`
  * already use.
  *
- * `phone`/`city` are a FULL REPLACE, not a merge with the current row — same
+ * These values are a FULL REPLACE, not a merge with the current row — same
  * semantics the SQL function documents. The presentation layer (D5b's form)
  * is responsible for pre-filling both with the Representative's current
  * values, so "not editing a field" and "submitting its current value" are the
  * same thing from here down.
  */
 export interface UpdateRepresentativeProfileInput {
-  readonly phone: string | null;
+  readonly displayName: string;
+  readonly phone: string;
   readonly city: string | null;
   readonly authorizationId: string;
 }
 
 /**
- * The 4 typed rejection reasons `update_representative_profile` can return,
+ * The typed rejection reasons `update_representative_profile` can return,
  * reused verbatim from the `status` vocabulary documented in that
  * migration's header — same "don't rename a second, driftable copy"
  * reasoning `ActivateProductRejectionReason` already documents.
  */
 export type UpdateRepresentativeProfileRejectionReason =
   | 'representative_not_found'
+  | 'display_name_invalid'
   | 'authorization_id_invalid'
+  | 'phone_required'
   | 'phone_invalid'
   | 'city_invalid';
 
@@ -49,8 +52,8 @@ export type UpdateRepresentativeProfileResult =
  * `RepresentativeOnboardingGateway.register()` is a one-time write, called
  * exactly once per account, before a Representative row exists; `update()`
  * below is a repeatable write against a row that already exists — different
- * enough preconditions and error vocabularies (8 rejection reasons there,
- * 4 here, no overlap) that folding one into the other would force every
+ * enough preconditions and error vocabularies that folding one into the
+ * other would force every
  * caller to handle rejection reasons that can never apply to it.
  *
  * See ADR-044 (`README.md`) for why this is a `SECURITY DEFINER` function

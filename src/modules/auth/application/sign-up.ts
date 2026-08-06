@@ -1,5 +1,6 @@
 import { failure, type AuthResult, type SignUpData } from '@/modules/auth/domain/auth';
 import type { AuthGateway } from '@/modules/auth/domain/auth-gateway';
+import { isValidE164Phone } from '@/shared/domain/br-phone';
 
 /**
  * Sign-up use case.
@@ -8,7 +9,7 @@ import type { AuthGateway } from '@/modules/auth/domain/auth-gateway';
  * rule, and a rule that only exists in the UI is a rule that can be skipped.
  */
 export async function signUp(gateway: AuthGateway, data: SignUpData): Promise<AuthResult> {
-  if (!data.acceptedTerms) {
+  if (!data.acceptedTerms || !isValidE164Phone(data.phone)) {
     return failure('unknown');
   }
 

@@ -19,7 +19,7 @@ interface OnboardingErrorCopy {
 export type RegisterRepresentativeFailure = Exclude<RegisterRepresentativeResult, { status: 'created' }>;
 
 /**
- * Translates the 8 typed rejection reasons into wording the user can act on.
+ * Translates the typed rejection reasons into wording the user can act on.
  * Same copy rule as `auth-error-messages.ts`: state what happened and how to
  * recover, never expose technical detail, never apologise.
  *
@@ -56,6 +56,10 @@ const REJECTION_MESSAGES: Record<RegisterRepresentativeRejectionReason, Onboardi
   phone_invalid: {
     title: 'Telefone inválido',
     description: 'Digite um telefone válido, como (11) 98888-7777.',
+  },
+  phone_required: {
+    title: 'Informe o telefone comercial',
+    description: 'Esse número será usado no botão de WhatsApp das suas páginas.',
   },
   city_invalid: {
     title: 'Cidade inválida',

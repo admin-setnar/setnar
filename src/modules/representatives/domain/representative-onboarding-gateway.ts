@@ -12,12 +12,12 @@ export interface RegisterRepresentativeInput {
   readonly slug: string;
   readonly displayName: string;
   readonly authorizationId: string;
-  readonly phone: string | null;
+  readonly phone: string;
   readonly city: string | null;
 }
 
 /**
- * The 8 typed rejection reasons `register_representative` can return,
+ * The typed rejection reasons `register_representative` can return,
  * reused verbatim (not renamed) from the `status` vocabulary documented in
  * that migration's header and in ADR-040 — a second, differently-spelled
  * copy here would be exactly the two-sources-of-truth drift risk ADR-036
@@ -30,6 +30,7 @@ export type RegisterRepresentativeRejectionReason =
   | 'slug_taken'
   | 'display_name_invalid'
   | 'authorization_id_invalid'
+  | 'phone_required'
   | 'phone_invalid'
   | 'city_invalid';
 

@@ -1,3 +1,12 @@
+import {
+  BR_PHONE_PATTERN as SHARED_BR_PHONE_PATTERN,
+  E164_PHONE_PATTERN as SHARED_E164_PHONE_PATTERN,
+  formatE164ToBRPhone as sharedFormatE164ToBRPhone,
+  formatPhoneToE164 as sharedFormatPhoneToE164,
+  isValidE164Phone as sharedIsValidE164Phone,
+  maskBRPhone as sharedMaskBRPhone,
+} from '@/shared/domain/br-phone';
+
 /**
  * Representative onboarding business rules.
  *
@@ -71,7 +80,10 @@ export const CITY_MAX_LENGTH = 500;
  * shape avoids elsewhere. Keep the two definitions in sync by hand if the
  * mask ever changes.
  */
-export const BR_PHONE_PATTERN = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
+export const BR_PHONE_PATTERN = SHARED_BR_PHONE_PATTERN;
+
+/** Canonical persisted shape for a commercial phone. */
+export const E164_PHONE_PATTERN = SHARED_E164_PHONE_PATTERN;
 
 /**
  * Converts the masked BR phone the form collects ("(11) 98888-7777") into
@@ -80,8 +92,11 @@ export const BR_PHONE_PATTERN = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
  * makes, duplicated here for the same reason `BR_PHONE_PATTERN` is above.
  */
 export function formatPhoneToE164(rawPhone: string): string {
-  const digits = rawPhone.replace(/\D/g, '');
-  return `+55${digits}`;
+  return sharedFormatPhoneToE164(rawPhone);
+}
+
+export function isValidE164Phone(value: string | null): value is string {
+  return sharedIsValidE164Phone(value);
 }
 
 /**
@@ -97,10 +112,7 @@ export function formatPhoneToE164(rawPhone: string): string {
  * again) rather than showing something malformed.
  */
 export function formatE164ToBRPhone(e164Phone: string): string {
-  const match = /^\+55(\d{2})(\d{4,5})(\d{4})$/.exec(e164Phone);
-  if (!match) return '';
-  const [, ddd, prefix, suffix] = match;
-  return `(${ddd}) ${prefix}-${suffix}`;
+  return sharedFormatE164ToBRPhone(e164Phone);
 }
 
 /**
@@ -115,15 +127,7 @@ export function formatE164ToBRPhone(e164Phone: string): string {
  * input never looks broken mid-type.
  */
 export function maskBRPhone(rawValue: string): string {
-  const digits = rawValue.replace(/\D/g, '').slice(0, 11);
-
-  if (digits.length === 0) return '';
-  if (digits.length <= 2) return `(${digits}`;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  return sharedMaskBRPhone(rawValue);
 }
 
 /**
@@ -136,4 +140,16 @@ export function hasAtLeastTwoWords(value: string): boolean {
   const trimmed = value.trim();
   if (trimmed.length === 0) return false;
   return trimmed.split(/\s+/).length >= DISPLAY_NAME_MIN_WORDS;
+}
+
+export function isRepresentativeProfileComplete(representative: {
+  readonly name: string;
+  readonly phone: string | null;
+}): boolean {
+  const name = representative.name.trim();
+  return (
+    name.length <= DISPLAY_NAME_MAX_LENGTH &&
+    hasAtLeastTwoWords(name) &&
+    isValidE164Phone(representative.phone)
+  );
 }

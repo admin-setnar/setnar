@@ -13,18 +13,20 @@ import { cn } from '@/shared/lib/cn';
  * technical detail and never apologise.
  */
 export interface FormAlertProps {
+  id?: string;
   tone: 'error' | 'success';
   title: string;
   description?: string;
   className?: string;
 }
 
-export function FormAlert({ tone, title, description, className }: FormAlertProps) {
+export function FormAlert({ id, tone, title, description, className }: FormAlertProps) {
   const isError = tone === 'error';
   const Icon = isError ? AlertCircle : CheckCircle2;
 
   return (
     <div
+      id={id}
       role={isError ? 'alert' : 'status'}
       className={cn(
         'flex items-start gap-2.5 rounded-md border p-3 text-sm',

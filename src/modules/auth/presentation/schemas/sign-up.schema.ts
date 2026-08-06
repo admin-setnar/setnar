@@ -7,6 +7,7 @@ import {
   PASSWORD_MAX_LENGTH,
   PASSWORD_MIN_LENGTH,
 } from '@/modules/auth/domain/auth-rules';
+import { BR_PHONE_PATTERN } from '@/shared/domain/br-phone';
 
 /**
  * Client-side validation for account creation.
@@ -21,6 +22,11 @@ export const signUpSchema = z
       .trim()
       .min(NAME_MIN_LENGTH, 'Informe o seu nome completo.')
       .max(NAME_MAX_LENGTH, 'Use no máximo 80 caracteres.'),
+    phone: z
+      .string()
+      .trim()
+      .min(1, 'Informe o telefone comercial.')
+      .regex(BR_PHONE_PATTERN, 'Digite um telefone válido, como (11) 98888-7777.'),
     email: z
       .string()
       .min(1, 'Informe o seu e-mail.')

@@ -33,16 +33,14 @@ import {
  * one that actually guarantees nothing malformed reaches the gateway — same
  * split `modules/auth/presentation/actions.ts` already uses.
  *
- * D3.B.5: success now navigates via `redirect('/app')`, called *inside* the
+ * Success navigates to `redirect('/app/paginas')`, called *inside* the
  * `safeOnboardingCall` callback so its `NEXT_REDIRECT` throw is recognised
  * and re-thrown, not swallowed — see `safe-onboarding-call.ts` and ADR-020,
  * same care `signUpAction`/`signInAction` already take. A normal return is
  * therefore always a failure (`'rejected'` or `'error'`) — same convention
  * every auth Server Action already establishes: a normal return means
- * failure, success means navigation. `/app` itself (not this action) is what
- * now decides whether to render the onboarding form or the hub, based on
- * whether the signed-in User already has a Representative
- * (`RepresentativeAccountRepository`).
+ * failure, success means navigation. `/app/paginas` then renders the newly
+ * available catalog for the signed-in Representative.
  */
 export async function registerRepresentativeAction(
   values: RepresentativeOnboardingFormValues,
@@ -56,11 +54,11 @@ export async function registerRepresentativeAction(
       slug: parsed.data.slug,
       displayName: parsed.data.displayName,
       authorizationId: parsed.data.authorizationId,
-      phone: parsed.data.phone ? formatPhoneToE164(parsed.data.phone) : null,
+      phone: formatPhoneToE164(parsed.data.phone),
       city: parsed.data.city ? parsed.data.city : null,
     });
     if (result.status === 'rejected' || result.status === 'error') return result;
-    redirect('/app');
+    redirect('/app/paginas');
   });
 }
 
@@ -79,7 +77,7 @@ export async function registerRepresentativeAction(
  * re-checks Catalog membership itself; a forged id fails there, typed, not
  * here).
  *
- * `revalidatePath('/app')` on success — not a `redirect()`: unlike onboarding
+ * `revalidatePath('/app/paginas')` on success — not a `redirect()`: unlike onboarding
  * (a one-time account-creation step that navigates on success), activation is
  * a repeatable in-place action the hub itself stays on. The Server Component
  * re-renders with the updated catalog on the next request.
@@ -99,7 +97,7 @@ export async function activateProductAction(productId: string): Promise<Activate
   });
 
   if (result.status === 'activated') {
-    revalidatePath('/app');
+    revalidatePath('/app/paginas');
     return null;
   }
   return result;
@@ -122,14 +120,14 @@ export async function setActivationStatusAction(
   });
 
   if (result.status === 'updated') {
-    revalidatePath('/app');
+    revalidatePath('/app/paginas');
     return null;
   }
   return result;
 }
 
 /**
- * D5b — saves `phone`/`city`/`authorizationId` for the signed-in Representative.
+ * Saves `displayName`/`phone`/`city`/`authorizationId` for the signed-in Representative.
  * Re-validates with the same Zod schema `RepresentativeProfileForm` already
  * uses client-side, same split every other form action in this file
  * establishes.
@@ -137,15 +135,13 @@ export async function setActivationStatusAction(
  * `phone` is formatted to E.164 before reaching the gateway, same as
  * `registerRepresentativeAction` does for the same field — the form collects
  * the BR mask (`(11) 98888-7777`), `update_representative_profile` expects
- * E.164. An empty string means "clear the field", passed through as `null`
- * (the SQL function's own `nullif(trim(...), '')` would do the same
- * normalization for a raw RPC caller, but a Server Action call always
- * carries a parsed, already-typed value, not a string the function needs to
- * trim).
+ * E.164. The shared schema rejects an empty value before this boundary; the
+ * RPC and database trigger repeat the invariant for direct callers.
  *
  * `null`-means-success, same reasoning as `activateProductAction`/
  * `setActivationStatusAction`: this action never `redirect()`s, it updates
- * the hub in place via `revalidatePath`.
+ * the account form in place and refreshes the pages route via precise
+ * `revalidatePath` calls.
  */
 export async function updateRepresentativeProfileAction(
   values: RepresentativeProfileFormValues,
@@ -156,14 +152,16 @@ export async function updateRepresentativeProfileAction(
   const result = await safeRepresentativeWriteCall(async () => {
     const gateway = await getRepresentativeProfileGateway();
     return gateway.update({
-      phone: parsed.data.phone ? formatPhoneToE164(parsed.data.phone) : null,
+      displayName: parsed.data.displayName,
+      phone: formatPhoneToE164(parsed.data.phone),
       city: parsed.data.city ? parsed.data.city : null,
       authorizationId: parsed.data.authorizationId,
     });
   });
 
   if (result.status === 'updated') {
-    revalidatePath('/app');
+    revalidatePath('/app/conta');
+    revalidatePath('/app/paginas');
     return null;
   }
   return result;

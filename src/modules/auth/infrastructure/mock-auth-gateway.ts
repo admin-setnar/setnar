@@ -42,6 +42,7 @@ export class MockAuthGateway implements AuthGateway {
       name: nameFromEmail(email),
       email,
       tenantId: 'setnar',
+      phone: null,
     });
   }
 
@@ -59,6 +60,7 @@ export class MockAuthGateway implements AuthGateway {
       name: data.name.trim(),
       email,
       tenantId: 'setnar',
+      phone: data.phone,
     });
   }
 

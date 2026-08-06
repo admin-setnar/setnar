@@ -1,3 +1,9 @@
+import {
+  BR_PHONE_PATTERN as SHARED_BR_PHONE_PATTERN,
+  formatPhoneToE164 as sharedFormatPhoneToE164,
+  maskBRPhone as sharedMaskBRPhone,
+} from '@/shared/domain/br-phone';
+
 /**
  * Lead capture business rules.
  *
@@ -21,7 +27,7 @@ export const LEAD_CITY_MAX_LENGTH = 120;
  * (`pattern="\(\d{2}\)\s\d{4,5}-\d{4}"`) — ported, not reinvented, so the
  * form UX matches the original template.
  */
-export const BR_PHONE_PATTERN = /^\(\d{2}\)\s\d{4,5}-\d{4}$/;
+export const BR_PHONE_PATTERN = SHARED_BR_PHONE_PATTERN;
 
 /**
  * Honeypot field name — mirrors the hidden `empresa` input every
@@ -40,8 +46,7 @@ export const LEAD_HONEYPOT_FIELD = 'empresa';
  * tenant ever needs this form.
  */
 export function formatPhoneToE164(rawPhone: string): string {
-  const digits = rawPhone.replace(/\D/g, '');
-  return `+55${digits}`;
+  return sharedFormatPhoneToE164(rawPhone);
 }
 
 /**
@@ -59,13 +64,5 @@ export function formatPhoneToE164(rawPhone: string): string {
  * mid-typing (0 to 11 digits) — a genuinely different job, not a duplicate.
  */
 export function maskBRPhone(rawValue: string): string {
-  const digits = rawValue.replace(/\D/g, '').slice(0, 11);
-
-  if (digits.length === 0) return '';
-  if (digits.length <= 2) return `(${digits}`;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+  return sharedMaskBRPhone(rawValue);
 }

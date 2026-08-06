@@ -10,6 +10,8 @@ export interface SignInCredentials {
 
 export interface SignUpData {
   readonly name: string;
+  /** Canonical E.164 commercial phone; it is not an authentication credential. */
+  readonly phone: string;
   readonly email: string;
   readonly password: string;
   readonly acceptedTerms: boolean;
@@ -20,6 +22,8 @@ export interface AuthenticatedUser {
   readonly name: string;
   readonly email: string;
   readonly tenantId: string;
+  /** Initial account phone, nullable for legacy accounts. */
+  readonly phone: string | null;
 }
 
 /** Identity providers the gateway may support. */
@@ -50,10 +54,10 @@ export interface AuthSuccess {
 }
 
 /**
- * Sign-up created a real account, but it is not authenticated yet — the
- * project has "Confirm email" enabled, so a session only exists once the
- * user clicks the link sent to `email`. Distinct from `AuthFailure`: nothing
- * went wrong.
+ * Sign-up created a real account, but Supabase returned no session. The
+ * documented operational setup keeps Confirm email off; this state remains
+ * a safety path if that external configuration differs or changes. Distinct
+ * from `AuthFailure`: nothing went wrong.
  */
 export interface AuthPendingConfirmation {
   readonly status: 'pending_confirmation';

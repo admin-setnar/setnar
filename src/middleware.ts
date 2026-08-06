@@ -6,7 +6,7 @@ import { updateSession } from '@/shared/lib/supabase/middleware';
  * Refreshes a near-expiry Supabase session before a page renders.
  *
  * SOLELY does that — it does not decide what counts as a protected route
- * (that is `/app/page.tsx`'s own `redirect()`, deliberately kept out of
+ * (that is `/app/layout.tsx`'s own `redirect()`, deliberately kept out of
  * middleware). Splitting the two means a route can be added or removed from
  * "protected" without touching the one thing every request already pays the
  * cost of running.

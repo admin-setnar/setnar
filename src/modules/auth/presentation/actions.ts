@@ -29,6 +29,7 @@ import {
 } from '@/modules/auth/presentation/schemas/reset-password.schema';
 import { signInSchema, type SignInFormValues } from '@/modules/auth/presentation/schemas/sign-in.schema';
 import { signUpSchema, type SignUpFormValues } from '@/modules/auth/presentation/schemas/sign-up.schema';
+import { formatPhoneToE164 } from '@/shared/domain/br-phone';
 
 /**
  * Server Actions — the only entry point Client Components use to reach
@@ -42,8 +43,9 @@ import { signUpSchema, type SignUpFormValues } from '@/modules/auth/presentation
  * callback so its `NEXT_REDIRECT` throw is recognised and re-thrown, not
  * swallowed — see `safe-auth-call.ts` and ADR-020. A normal return from any
  * of the three is therefore always a failure (or, for sign-up,
- * `AuthPendingConfirmation` — the dead-but-kept seam for when Confirm email
- * is re-enabled, see ADR-016 and the README's Confirm-email decision note).
+ * `AuthPendingConfirmation` — the safety seam for a no-session signup if
+ * the external Confirm email setting differs or changes; see ADR-016 and the
+ * README's operational decision note).
  */
 
 export async function signInAction(
@@ -70,12 +72,13 @@ export async function signUpAction(
   return safeAuthCall(async () => {
     const result = await signUp(await getAuthGateway(), {
       name: parsed.data.name,
+      phone: formatPhoneToE164(parsed.data.phone),
       email: parsed.data.email,
       password: parsed.data.password,
       acceptedTerms: parsed.data.acceptedTerms,
     });
     if (result.status === 'error' || result.status === 'pending_confirmation') return result;
-    redirect(safeRedirectTarget(next));
+    redirect(safeRedirectTarget(next ?? '/app/paginas'));
   });
 }
 

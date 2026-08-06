@@ -44,9 +44,8 @@ export const representativeOnboardingSchema = z.object({
   phone: z
     .string()
     .trim()
-    .regex(BR_PHONE_PATTERN, 'Digite um telefone válido, como (11) 98888-7777.')
-    .optional()
-    .or(z.literal('')),
+    .min(1, 'Informe o telefone comercial.')
+    .regex(BR_PHONE_PATTERN, 'Digite um telefone válido, como (11) 98888-7777.'),
   city: z
     .string()
     .trim()

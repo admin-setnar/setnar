@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Check, Copy, Download } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Check, Copy, Download, RefreshCw } from 'lucide-react';
 import { toDataURL } from 'qrcode';
 
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
+import { FormAlert } from '@/shared/ui/form-alert';
+import { Input } from '@/shared/ui/input';
 import { Text } from '@/shared/ui/typography';
 
 /**
@@ -24,31 +26,58 @@ import { Text } from '@/shared/ui/typography';
 export function QrCodeCard({ url, fileName }: { url: string; fileName: string }) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [generationFailed, setGenerationFailed] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const linkInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     setDataUrl(null);
+    setGenerationFailed(false);
     toDataURL(url, { width: 240, margin: 1 })
       .then((result) => {
         if (!cancelled) setDataUrl(result);
       })
       .catch(() => {
-        if (!cancelled) setDataUrl(null);
+        if (!cancelled) {
+          setDataUrl(null);
+          setGenerationFailed(true);
+        }
       });
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, attempt]);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopyFailed(false);
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopyFailed(true);
+      linkInputRef.current?.focus();
+      linkInputRef.current?.select();
+    }
   }
 
   return (
     <Card variant="outlined" padding="md" className="flex flex-col items-center gap-3 text-center">
-      {dataUrl ? (
+      {generationFailed ? (
+        <div className="w-full space-y-3">
+          <FormAlert
+            tone="error"
+            title="Não foi possível gerar o QR Code"
+            description="Tente novamente ou compartilhe o link abaixo."
+          />
+          <Button type="button" size="sm" variant="secondary" onClick={() => setAttempt((value) => value + 1)}>
+            <RefreshCw aria-hidden="true" className="h-4 w-4" />
+            Tentar novamente
+          </Button>
+        </div>
+      ) : dataUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- data: URI, not an optimizable remote asset.
         <img src={dataUrl} alt="QR Code da página pública" width={120} height={120} className="rounded-md" />
       ) : (
@@ -76,7 +105,7 @@ export function QrCodeCard({ url, fileName }: { url: string; fileName: string })
           )}
         </Button>
 
-        <Button size="sm" variant="secondary" fullWidth onClick={() => void handleCopy()}>
+        <Button type="button" size="sm" variant="secondary" fullWidth onClick={() => void handleCopy()}>
           {copied ? (
             <Check aria-hidden="true" className="h-4 w-4" />
           ) : (
@@ -86,9 +115,24 @@ export function QrCodeCard({ url, fileName }: { url: string; fileName: string })
         </Button>
       </div>
 
-      <Text as="p" variant="caption" className="break-all">
-        {url}
-      </Text>
+      <div className="w-full space-y-2 text-left">
+        <label htmlFor={`public-link-${fileName}`} className="text-sm font-medium text-content">
+          Link público
+        </label>
+        <Input
+          ref={linkInputRef}
+          id={`public-link-${fileName}`}
+          readOnly
+          value={url}
+          onFocus={(event) => event.currentTarget.select()}
+          aria-describedby={copyFailed ? `copy-help-${fileName}` : undefined}
+        />
+        <Text id={`copy-help-${fileName}`} as="p" variant="caption" className={copyFailed ? '' : 'sr-only'}>
+          {copyFailed ? 'A cópia automática não está disponível. O link foi selecionado para você copiar manualmente.' : 'Selecione o campo para copiar o link manualmente.'}
+        </Text>
+      </div>
+
+      <span className="sr-only" aria-live="polite">{copied ? 'Link copiado.' : ''}</span>
     </Card>
   );
 }

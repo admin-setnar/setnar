@@ -25,7 +25,7 @@ import { Text } from '@/shared/ui/typography';
  * reading `RepresentativeCatalogRepository.listOwnCatalog()`) — this
  * component holds no state of its own about WHAT the activation is, only
  * whether a request is currently `pending` and what the last one failed
- * with. After a successful action, `revalidatePath('/app')`
+ * with. After a successful action, `revalidatePath('/app/paginas')`
  * (`presentation/actions.ts`) invalidates the route; Next.js re-renders the
  * Server Component tree and this component receives a new `state` prop with
  * the same identity (keyed by `product.id`) — the same "server owns the
@@ -43,10 +43,12 @@ export function ProductActivationCard({
   product,
   state,
   subscriptionActive,
+  profileComplete,
 }: {
   product: RepresentativeProduct;
   state: CatalogActivationState;
   subscriptionActive: boolean;
+  profileComplete: boolean;
 }) {
   const [pending, setPending] = useState(false);
   // Tagged by which action produced it, not inferred from the failure's own
@@ -80,7 +82,12 @@ export function ProductActivationCard({
     }
   }
 
-  const viewState = getActivationViewState(state, subscriptionActive);
+  const viewState = getActivationViewState(state, subscriptionActive, profileComplete);
+  const publicationBlockerId = viewState.profileBlocked
+    ? 'professional-profile-blocker'
+    : viewState.subscriptionBlocked
+      ? `subscription-blocker-${product.id}`
+      : undefined;
   const errorCopy = failure
     ? failure.kind === 'activate'
       ? activateErrorCopy(failure.value)
@@ -99,6 +106,7 @@ export function ProductActivationCard({
       {errorCopy ? <FormAlert tone="error" {...errorCopy} /> : null}
       {viewState.subscriptionBlocked ? (
         <FormAlert
+          id={`subscription-blocker-${product.id}`}
           tone="error"
           title="Regularize sua assinatura SETNAR"
           description="Ative ou regularize sua assinatura para disponibilizar esta página ao público."
@@ -118,9 +126,10 @@ export function ProductActivationCard({
             variant="primary"
             loading={pending}
             disabled={!viewState.canPublish || pending}
+            aria-describedby={!viewState.canPublish ? publicationBlockerId : undefined}
             onClick={() => void handleSetStatus('published')}
           >
-            {viewState.canPublish ? 'Publicar' : 'Ative sua assinatura para publicar'}
+            Publicar
           </Button>
         ) : null}
 

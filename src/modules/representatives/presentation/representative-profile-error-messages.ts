@@ -31,6 +31,10 @@ const GENERIC_ERROR_COPY: ProfileErrorCopy = {
  */
 const REJECTION_MESSAGES: Record<UpdateRepresentativeProfileRejectionReason, ProfileErrorCopy> = {
   representative_not_found: GENERIC_ERROR_COPY,
+  display_name_invalid: {
+    title: 'Nome público inválido',
+    description: 'Informe nome e sobrenome, como você deseja aparecer nas suas páginas.',
+  },
   authorization_id_invalid: {
     title: 'Número de identificação inválido',
     description: 'Confira o número informado.',
@@ -38,6 +42,10 @@ const REJECTION_MESSAGES: Record<UpdateRepresentativeProfileRejectionReason, Pro
   phone_invalid: {
     title: 'Telefone inválido',
     description: 'Digite um telefone válido, como (11) 98888-7777.',
+  },
+  phone_required: {
+    title: 'Informe o telefone comercial',
+    description: 'Esse número é usado no botão de WhatsApp das suas páginas.',
   },
   city_invalid: {
     title: 'Cidade inválida',

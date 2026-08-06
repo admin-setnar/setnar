@@ -42,7 +42,11 @@ export class SupabaseRepresentativeAccountRepository implements RepresentativeAc
       .eq('profile_id', profileId)
       .maybeSingle<RepresentativeRow>();
 
-    if (error || !data) return null;
+    if (error) {
+      console.error('Representative account read failed.', { code: error.code, message: error.message });
+      throw new Error('Representative account unavailable.');
+    }
+    if (!data) return null;
 
     return {
       id: data.id,

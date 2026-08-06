@@ -1,18 +1,21 @@
+import Link from 'next/link';
+
 import { SITE_URL } from '@/config/site';
 import type { Representative } from '@/modules/representatives/domain/representative';
 import type { RepresentativeCatalogEntry } from '@/modules/representatives/domain/representative-catalog-repository';
+import { isRepresentativeProfileComplete } from '@/modules/representatives/domain/representative-rules';
 import { getActivationViewState } from '@/modules/representatives/presentation/activation-view-state';
 import { ProductActivationCard } from '@/modules/representatives/presentation/product-activation-card';
 import { QrCodeCard } from '@/modules/representatives/presentation/qr-code-card';
-import { RepresentativeProfileForm } from '@/modules/representatives/presentation/representative-profile-form';
 import { Card } from '@/shared/ui/card';
+import { FormAlert } from '@/shared/ui/form-alert';
 import { Text } from '@/shared/ui/typography';
 
 /**
  * RepresentativeHub — D5, replaces `RepresentativeHubPlaceholder`.
  *
  * Server Component: `catalog` is already resolved by the caller
- * (`/app`'s page, via `RepresentativeCatalogRepository.listOwnCatalog()`,
+ * (`/app/paginas`, via `RepresentativeCatalogRepository.listOwnCatalog()`,
  * D5.1) — this component only renders it and the per-product interactive
  * controls (`ProductActivationCard`, D5.2/D5.3), same split the rest of this
  * module already uses between a Server Component owning data and a small
@@ -21,7 +24,7 @@ import { Text } from '@/shared/ui/typography';
  * D5.3 — the public link. Composed from `SITE_URL`
  * (`config/site.ts`, `https://setnar.com` unless overridden by
  * `NEXT_PUBLIC_SITE_URL`), not from the current request's `Host` header:
- * `/app` is always visited on the root domain, never on a Representative's
+ * `/app/paginas` is always visited on the root domain, never on a Representative's
  * own subdomain, so there is no request-scoped hostname to read here. This
  * is the gap `RepresentativeHubPlaceholder`'s own doc comment flagged
  * ("nothing in TenantClientView/useTenant() exposes the root hostname
@@ -32,11 +35,9 @@ import { Text } from '@/shared/ui/typography';
  * prefix) and only ever shown for a `published` entry — an unpublished or
  * draft activation has no reachable public page yet.
  *
- * D5b — `RepresentativeProfileForm` renders between the identification card
- * and the product list: editing contact info is a precondition for
- * publishing (`phone_required` in `set_activation_status`'s gate,
- * `20260807000000`), so it reads naturally before the controls that need it
- * satisfied, not after.
+ * Profile editing lives in `/app/conta`; this pages-only surface displays an
+ * actionable link there whenever the central publication prerequisites are
+ * incomplete.
  */
 export function RepresentativeHub({
   representative,
@@ -48,9 +49,10 @@ export function RepresentativeHub({
   subscriptionActive: boolean;
 }) {
   const rootHost = new URL(SITE_URL).hostname;
+  const profileComplete = isRepresentativeProfileComplete(representative);
 
   return (
-    <div className="mt-8 space-y-6">
+    <div className="space-y-6">
       <Card variant="raised" padding="lg" className="space-y-1">
         <Text as="h2" variant="title">
           {representative.name}
@@ -60,16 +62,31 @@ export function RepresentativeHub({
         </Text>
       </Card>
 
-      <Card variant="outlined" padding="lg" className="space-y-4">
-        <Text as="h2" variant="title">
-          Editar perfil
-        </Text>
-        <RepresentativeProfileForm representative={representative} />
-      </Card>
+      {!profileComplete ? (
+        <div id="professional-profile-blocker" className="space-y-3">
+          <FormAlert
+            tone="error"
+            title="Complete seu perfil para publicar"
+            description="Informe seu nome público e telefone comercial para disponibilizar suas páginas."
+          />
+          <Link
+            href="/app/conta#perfil-profissional"
+            className="inline-flex min-h-11 items-center font-medium text-brand underline underline-offset-4"
+          >
+            Completar perfil profissional
+          </Link>
+        </div>
+      ) : null}
 
       <div className="space-y-3">
+        {catalog.length === 0 ? (
+          <Card variant="outlined" padding="lg" className="space-y-2">
+            <Text as="h2" variant="title">Nenhum produto disponível</Text>
+            <Text as="p" variant="body">O catálogo da sua organização ainda não possui produtos.</Text>
+          </Card>
+        ) : null}
         {catalog.map((entry) => {
-          const viewState = getActivationViewState(entry.state, subscriptionActive);
+          const viewState = getActivationViewState(entry.state, subscriptionActive, profileComplete);
 
           return (
           <div key={entry.product.id} className="space-y-2">
@@ -77,6 +94,7 @@ export function RepresentativeHub({
               product={entry.product}
               state={entry.state}
               subscriptionActive={subscriptionActive}
+              profileComplete={profileComplete}
             />
             {viewState.isPubliclyAvailable ? (
               <>

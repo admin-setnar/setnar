@@ -8,6 +8,7 @@ export interface ActivationViewState {
   readonly canPublish: boolean;
   readonly isPubliclyAvailable: boolean;
   readonly subscriptionBlocked: boolean;
+  readonly profileBlocked: boolean;
 }
 
 const STATE_BADGE: Record<CatalogActivationState, ActivationViewState['badge']> = {
@@ -25,8 +26,21 @@ const STATE_BADGE: Record<CatalogActivationState, ActivationViewState['badge']> 
 export function getActivationViewState(
   state: CatalogActivationState,
   subscriptionActive: boolean,
+  profileComplete = true,
 ): ActivationViewState {
-  const subscriptionBlocked = !subscriptionActive && state !== 'not_activated';
+  // Profile completion is the primary blocker. Subscription feedback is
+  // intentionally deferred until the professional profile is complete.
+  const subscriptionBlocked = profileComplete && !subscriptionActive && state !== 'not_activated';
+
+  if (state === 'published' && !profileComplete) {
+    return {
+      badge: { label: 'Indisponível — perfil incompleto', variant: 'warning' },
+      canPublish: false,
+      isPubliclyAvailable: false,
+      subscriptionBlocked,
+      profileBlocked: true,
+    };
+  }
 
   if (state === 'published' && !subscriptionActive) {
     return {
@@ -34,13 +48,15 @@ export function getActivationViewState(
       canPublish: false,
       isPubliclyAvailable: false,
       subscriptionBlocked: true,
+      profileBlocked: !profileComplete,
     };
   }
 
   return {
     badge: STATE_BADGE[state],
-    canPublish: subscriptionActive && (state === 'draft' || state === 'unpublished'),
-    isPubliclyAvailable: subscriptionActive && state === 'published',
+    canPublish: profileComplete && subscriptionActive && (state === 'draft' || state === 'unpublished'),
+    isPubliclyAvailable: profileComplete && subscriptionActive && state === 'published',
     subscriptionBlocked,
+    profileBlocked: !profileComplete && state !== 'not_activated',
   };
 }

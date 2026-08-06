@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { maskBRPhone } from '@/modules/representatives/domain/representative-rules';
+import { formatE164ToBRPhone, maskBRPhone } from '@/shared/domain/br-phone';
 import { registerRepresentativeAction } from '@/modules/representatives/presentation/actions';
 import {
   onboardingErrorCopy,
@@ -39,7 +39,13 @@ import { Input } from '@/shared/ui/input';
  * for its own success path. A normal return from the action is therefore
  * always a `RegisterRepresentativeFailure` (`'rejected'` or `'error'`).
  */
-export function OnboardingForm() {
+export function OnboardingForm({
+  initialDisplayName,
+  initialPhone,
+}: {
+  initialDisplayName: string;
+  initialPhone: string | null;
+}) {
   const [failure, setFailure] = useState<RegisterRepresentativeFailure | null>(null);
 
   const {
@@ -50,12 +56,13 @@ export function OnboardingForm() {
     resolver: zodResolver(representativeOnboardingSchema),
     defaultValues: {
       slug: '',
-      displayName: '',
+      displayName: initialDisplayName,
       authorizationId: '',
-      phone: '',
+      phone: initialPhone ? formatE164ToBRPhone(initialPhone) : '',
       city: '',
     },
     mode: 'onBlur',
+    shouldFocusError: true,
   });
 
   // Progressive mask on `phone` — same `onChange` interception as
@@ -92,7 +99,11 @@ export function OnboardingForm() {
         )}
       </FormField>
 
-      <FormField label="Nome e sobrenome" error={errors.displayName?.message}>
+      <FormField
+        label="Nome público"
+        hint="Como você deseja aparecer para seus clientes."
+        error={errors.displayName?.message}
+      >
         {({ id, describedBy, invalid }) => (
           <Input
             id={id}
@@ -120,7 +131,11 @@ export function OnboardingForm() {
         )}
       </FormField>
 
-      <FormField label="Telefone (opcional)" error={errors.phone?.message}>
+      <FormField
+        label="Telefone comercial"
+        hint="Usaremos este número no botão de WhatsApp das suas páginas."
+        error={errors.phone?.message}
+      >
         {({ id, describedBy, invalid }) => (
           <Input
             id={id}
@@ -131,6 +146,7 @@ export function OnboardingForm() {
             aria-describedby={describedBy}
             invalid={invalid}
             disabled={isSubmitting}
+            required
             {...phoneField}
             onChange={(event) => {
               event.target.value = maskBRPhone(event.target.value);

@@ -45,21 +45,16 @@ export interface RepresentativeCatalogRepository {
    * `profileId` is the caller's own `auth.uid()` (from `getCurrentUser()`),
    * same convention as `RepresentativeAccountRepository.findByProfileId`.
    *
-   * Returns an empty array — never throws, never returns `null` — if the
-   * signed-in User has no Representative row, or if either underlying query
-   * fails. Callers only invoke this once `/app` has already confirmed a
-   * Representative exists (D3.B.5's branch); an empty result here is
-   * therefore either "the Catalog is genuinely empty" (cannot happen once D1
-   * is seeded) or an infrastructure hiccup, and a hub rendering zero rows in
-   * either case is the safe default — never a thrown exception from a
-   * Server Component.
+   * Returns an empty array only when the signed-in User has no Representative
+   * row or the Company's Catalog is genuinely empty. Infrastructure failures
+   * throw so the route error boundary does not misrepresent an outage as an
+   * empty business state.
    */
   listOwnCatalog(profileId: string): Promise<readonly RepresentativeCatalogEntry[]>;
 
   /**
-   * Reads the canonical E1 decision for the signed-in Representative. Errors
-   * fail closed (`false`) so the hub never presents a page as public when its
-   * availability could not be confirmed.
+   * Reads the canonical E1 decision for the signed-in Representative.
+   * Infrastructure errors throw and are handled by the route error boundary.
    */
   isSubscriptionActive(representativeId: string): Promise<boolean>;
 }

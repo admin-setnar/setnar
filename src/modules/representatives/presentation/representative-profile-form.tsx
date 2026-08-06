@@ -50,11 +50,13 @@ export function RepresentativeProfileForm({ representative }: { representative: 
   } = useForm<RepresentativeProfileFormValues>({
     resolver: zodResolver(representativeProfileSchema),
     defaultValues: {
+      displayName: representative.name,
       phone: representative.phone ? formatE164ToBRPhone(representative.phone) : '',
       city: representative.city ?? '',
       authorizationId: representative.authorizationId,
     },
     mode: 'onBlur',
+    shouldFocusError: true,
   });
 
   // Progressive mask on `phone` — same `onChange` interception as
@@ -79,6 +81,23 @@ export function RepresentativeProfileForm({ representative }: { representative: 
       {failure ? <FormAlert tone="error" {...representativeProfileErrorCopy(failure)} /> : null}
       {saved ? <FormAlert tone="success" title="Perfil atualizado." /> : null}
 
+      <FormField
+        label="Nome público"
+        hint="Como você aparece nas suas páginas."
+        error={errors.displayName?.message}
+      >
+        {({ id, describedBy, invalid }) => (
+          <Input
+            id={id}
+            autoComplete="name"
+            aria-describedby={describedBy}
+            invalid={invalid}
+            disabled={isSubmitting}
+            {...register('displayName')}
+          />
+        )}
+      </FormField>
+
       <FormField label="Número de identificação" error={errors.authorizationId?.message}>
         {({ id, describedBy, invalid }) => (
           <Input
@@ -93,7 +112,11 @@ export function RepresentativeProfileForm({ representative }: { representative: 
         )}
       </FormField>
 
-      <FormField label="Telefone (opcional)" error={errors.phone?.message}>
+      <FormField
+        label="Telefone comercial"
+        hint="Usaremos este número no botão de WhatsApp das suas páginas."
+        error={errors.phone?.message}
+      >
         {({ id, describedBy, invalid }) => (
           <Input
             id={id}
@@ -104,6 +127,7 @@ export function RepresentativeProfileForm({ representative }: { representative: 
             aria-describedby={describedBy}
             invalid={invalid}
             disabled={isSubmitting}
+            required
             {...phoneField}
             onChange={(event) => {
               event.target.value = maskBRPhone(event.target.value);

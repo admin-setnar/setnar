@@ -32,8 +32,7 @@ interface CatalogProductRow {
  *   1. `representatives` — resolves the caller's own `id`/`company_id`, via
  *      `representatives_select_own` (`20260804000000`). If this finds
  *      nothing, the signed-in User has no Representative row and this
- *      returns `[]` — see the doc comment on the port for why that is not an
- *      error here.
+ *      returns `[]`; query failures remain distinguishable and throw.
  *   2. `products` — every Product in that Company, via `products_select_public`
  *      (`using (true)`, `20260731000000`).
  *   3. `product_activations` — the caller's own rows for every status, via
@@ -52,7 +51,11 @@ export class SupabaseRepresentativeCatalogRepository implements RepresentativeCa
       p_representative_id: representativeId,
     });
 
-    return error ? false : data === true;
+    if (error) {
+      console.error('Representative subscription read failed.', { code: error.code, message: error.message });
+      throw new Error('Representative subscription unavailable.');
+    }
+    return data === true;
   }
 
   async listOwnCatalog(profileId: string): Promise<readonly RepresentativeCatalogEntry[]> {
@@ -62,7 +65,14 @@ export class SupabaseRepresentativeCatalogRepository implements RepresentativeCa
       .eq('profile_id', profileId)
       .maybeSingle<RepresentativeCompanyRow>();
 
-    if (representativeError || !representative) return [];
+    if (representativeError) {
+      console.error('Representative catalog owner read failed.', {
+        code: representativeError.code,
+        message: representativeError.message,
+      });
+      throw new Error('Representative catalog unavailable.');
+    }
+    if (!representative) return [];
 
     const [productsResult, activationsResult] = await Promise.all([
       this.supabase
@@ -76,14 +86,16 @@ export class SupabaseRepresentativeCatalogRepository implements RepresentativeCa
         .eq('representative_id', representative.id),
     ]);
 
-    if (productsResult.error || !productsResult.data) return [];
+    if (productsResult.error || activationsResult.error || !productsResult.data) {
+      const error = productsResult.error ?? activationsResult.error;
+      console.error('Representative catalog detail read failed.', {
+        code: error?.code,
+        message: error?.message,
+      });
+      throw new Error('Representative catalog unavailable.');
+    }
 
-    // A failed activations query is treated as "no activations known" rather
-    // than aborting the whole read: the Catalog itself (query 2) is the part
-    // a hub cannot render without, and degrading to "everything shows as not
-    // activated" is safer than showing nothing at all for a transient hiccup
-    // on the second query.
-    const activations = activationsResult.error ? [] : (activationsResult.data as OwnActivationRow[]);
+    const activations = activationsResult.data as OwnActivationRow[];
 
     const products: RepresentativeProduct[] = (productsResult.data as unknown as CatalogProductRow[])
       .filter((row) => row.company !== null)

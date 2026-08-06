@@ -39,13 +39,15 @@ export class SupabaseAuthGateway implements AuthGateway {
   ) { }
 
   async signUp(data: SignUpData): Promise<AuthResult> {
-    // tenant_id, terms_accepted_at and terms_version are never sent here —
-    // the database decides them itself (see handle_new_user() in the
-    // migration). Only full_name, a non-sensitive display value, crosses.
+    // The database derives tenant and terms. full_name and the normalized
+    // commercial phone cross as metadata only so handle_new_user() can create
+    // the private profiles snapshot atomically. Metadata is not canonical:
+    // phone is personal data, not an auth credential or phone-login factor;
+    // representatives.phone becomes canonical after onboarding.
     const { data: result, error } = await this.supabase.auth.signUp({
       email: data.email,
       password: data.password,
-      options: { data: { full_name: data.name.trim() } },
+      options: { data: { full_name: data.name.trim(), phone: data.phone } },
     });
     if (error) return failure(mapSupabaseAuthError(error));
     if (!result.user) return failure('unknown');
@@ -65,9 +67,9 @@ export class SupabaseAuthGateway implements AuthGateway {
     const email = data.email.trim().toLowerCase();
 
     if (!result.session) {
-      // "Confirm email" is enabled on this project: the account was created
-      // for real, but it is not authenticated yet — that only happens once
-      // the user clicks the link in the confirmation e-mail.
+      // The operational setup documented in supabase/README keeps Confirm
+      // email off, so a session is expected. Keep this no-session result safe
+      // because the remote Auth setting is external and may differ or change.
       return pendingConfirmation(name, email);
     }
 
@@ -76,6 +78,7 @@ export class SupabaseAuthGateway implements AuthGateway {
       name,
       email,
       tenantId: TENANT_ID,
+      phone: data.phone,
     });
   }
 
@@ -102,6 +105,7 @@ export class SupabaseAuthGateway implements AuthGateway {
       name: readFullName(result.user.user_metadata),
       email: (result.user.email ?? credentials.email).trim().toLowerCase(),
       tenantId: TENANT_ID,
+      phone: readPhone(result.user.user_metadata),
     });
   }
 
@@ -149,4 +153,9 @@ export class SupabaseAuthGateway implements AuthGateway {
 function readFullName(metadata: Record<string, unknown> | undefined): string {
   const value = metadata?.['full_name'];
   return typeof value === 'string' && value.length > 0 ? value : 'Representante';
+}
+
+function readPhone(metadata: Record<string, unknown> | undefined): string | null {
+  const value = metadata?.['phone'];
+  return typeof value === 'string' ? value : null;
 }

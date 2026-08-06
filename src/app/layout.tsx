@@ -54,7 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           href="#conteudo"
           className="sr-only rounded-md bg-brand px-4 py-2 text-brand-contrast focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50"
         >
-          Ir para o conteúdo
+          Ir para o conteúdo principal
         </a>
 
         <TenantProvider tenant={toClientView(tenant)}>

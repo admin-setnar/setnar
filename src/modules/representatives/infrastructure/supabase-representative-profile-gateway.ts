@@ -27,6 +27,7 @@ export class SupabaseRepresentativeProfileGateway implements RepresentativeProfi
 
   async update(input: UpdateRepresentativeProfileInput): Promise<UpdateRepresentativeProfileResult> {
     const { data, error } = await this.supabase.rpc('update_representative_profile', {
+      p_display_name: input.displayName,
       p_phone: input.phone,
       p_city: input.city,
       p_authorization_id: input.authorizationId,

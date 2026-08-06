@@ -109,7 +109,7 @@ export async function getCurrentTermsVersion(): Promise<string | null> {
  * route did dynamic work. See `isNextControlFlowError`.
  *
  * Wrapped in React's `cache()`: `app/layout.tsx` (every route, to drive
- * `AuthProvider`/the Navbar) and `/app/page.tsx` both call this, and so do
+ * `AuthProvider`/the Navbar) and `/app/layout.tsx` both call this, and so do
  * `/entrar`/`/criar-conta` (to redirect an already-signed-in visitor away
  * from the form — see the README). Without `cache()`, a single request to
  * `/app` would pay for the `getUser()` network round trip and the
@@ -131,7 +131,7 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('full_name, tenant_id')
+      .select('full_name, tenant_id, phone')
       .eq('id', user.id)
       .single();
 
@@ -148,6 +148,7 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
       name: profile.full_name,
       email: user.email ?? '',
       tenantId: profile.tenant_id,
+      phone: typeof profile.phone === 'string' ? profile.phone : null,
     };
   } catch (err) {
     if (isNextControlFlowError(err)) {

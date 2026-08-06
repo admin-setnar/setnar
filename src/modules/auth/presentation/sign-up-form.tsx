@@ -20,6 +20,7 @@ import { Checkbox } from '@/shared/ui/checkbox';
 import { FormAlert } from '@/shared/ui/form-alert';
 import { FormField } from '@/shared/ui/form-field';
 import { Input } from '@/shared/ui/input';
+import { maskBRPhone } from '@/shared/domain/br-phone';
 
 /**
  * SignUpForm
@@ -27,18 +28,18 @@ import { Input } from '@/shared/ui/input';
  * Purpose: self-service account creation — the primary conversion event of
  * the gateway page. Shared, unmodified, between the sign-up modal and the
  * standalone `/criar-conta` route.
- * Conversion note: the form asks for the minimum needed to create an
- * account. Anything else (WhatsApp, representative id, products) belongs to
- * onboarding, after the user has committed, not before.
+ * Conversion note: the form asks only for the account identity, commercial
+ * phone and consent. Representative id and products belong to onboarding,
+ * after the user has committed, not before.
  * Compliance note: accepting the terms is required and is enforced in the
  * sign-up use case as well as here.
  *
  * `next` (Sprint B): same as `SignInForm` — where to land after a successful
  * sign-up; success now navigates via the Server Action's own `redirect()`,
  * so there is no "authenticated" render branch here anymore.
- * `awaitingConfirmation` stays exactly as it was — it is a deliberately dead
- * seam (Confirm email is off; see README) kept for when self-hosted SMTP
- * makes it real again, not something Sprint B touches.
+ * The operational setup keeps Confirm email off (see the Supabase README),
+ * while `awaitingConfirmation` safely handles a no-session signup if the
+ * external project configuration differs or changes.
  */
 export function SignUpForm({ next }: { next?: string } = {}) {
   const { open: openView } = useAuthModal();
@@ -59,6 +60,7 @@ export function SignUpForm({ next }: { next?: string } = {}) {
     resolver: zodResolver(signUpSchema),
     defaultValues: {
       name: '',
+      phone: '',
       email: '',
       password: '',
       confirmPassword: '',
@@ -70,11 +72,12 @@ export function SignUpForm({ next }: { next?: string } = {}) {
   });
 
   const acceptedTerms = watch('acceptedTerms');
+  const phoneField = register('phone');
 
   async function onSubmit(values: SignUpFormValues) {
     setFailureCode(null);
-    // Reached on failure or on the dead pending_confirmation seam — success
-    // redirects server-side.
+    // Reached on failure or on the no-session safety seam; success redirects
+    // server-side.
     const result = await signUpAction(values, next);
 
     if (result.status === 'pending_confirmation') {
@@ -108,6 +111,31 @@ export function SignUpForm({ next }: { next?: string } = {}) {
             invalid={invalid}
             disabled={isSubmitting}
             {...register('name')}
+          />
+        )}
+      </FormField>
+
+      <FormField
+        label="Telefone comercial"
+        hint="Este número será usado no botão de WhatsApp das suas páginas."
+        error={errors.phone?.message}
+      >
+        {({ id, describedBy, invalid }) => (
+          <Input
+            id={id}
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="(11) 98888-7777"
+            aria-describedby={describedBy}
+            invalid={invalid}
+            disabled={isSubmitting}
+            required
+            {...phoneField}
+            onChange={(event) => {
+              event.target.value = maskBRPhone(event.target.value);
+              return phoneField.onChange(event);
+            }}
           />
         )}
       </FormField>
