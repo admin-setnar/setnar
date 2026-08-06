@@ -8,6 +8,17 @@
 
 ---
 
+## Cadastro e telefone comercial implementados na Stage 1
+
+O cadastro solicita nome completo, telefone comercial, e-mail, senha,
+confirmação e aceite dos termos. O telefone é obrigatório, serve ao perfil
+profissional e ao CTA de WhatsApp, e nunca é credencial nem alternativa de
+login. Nome e telefone preenchem inicialmente o onboarding, onde permanecem
+editáveis e só viram dados profissionais após confirmação explícita.
+
+Contas legadas sem telefone continuam válidas, mas precisam preenchê-lo para
+concluir o onboarding. O dado não participa de URLs, logs ou Analytics.
+
 # Vision
 
 SETNAR exists to be the infrastructure layer for authorized independent representation — giving every independent professional authorized by an organization a digital presence that is credible, compliant, and generated for them, not built by them.
@@ -346,8 +357,8 @@ The single authoritative answer to "what does the product do?" Three categories 
 
 | | |
 |---|---|
-| Baseline | working tree based on commit `23290c4`, branch `develop`, including Sprint E/E2 |
-| Date | 2026-08-05 |
+| Baseline | Parte 2 working tree based on commit `df8db50`, branch `develop` |
+| Date | 2026-08-06 |
 | Performed by | Documentation governance audit, approved by the Product Owner |
 | Method | Direct reading of `src/`, `supabase/migrations/` and `package.json`. A capability is listed only where a code path was found that a user can actually reach |
 | Not covered | Runtime behaviour in production, and whether any real representative has used any of it |
@@ -356,19 +367,20 @@ The single authoritative answer to "what does the product do?" Three categories 
 **If the date above is older than the last closed sprint, this section is unverified.** Treat it as a starting point for checking the code, not as an answer. Every other document in this set defers to this one on the question of what exists, so a stale date here makes the whole set stale.
 
 - Account creation, sign-in, sign-out, and password recovery (request link and set a new password).
-- Representative onboarding: creating the representative's own record, with authorization identifier and public address (slug).
+- Representative onboarding: creating the representative's own record, with public name prefilled from the account, mandatory commercial phone, authorization identifier and public address (slug).
 - Editing own profile: display name, authorization identifier, phone, city. **These four fields are the whole of it.**
+- Authenticated App Shell with `/app/paginas` for page management, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance or Materials destination exists.
 - Reading the products of the authorizing organization's catalog. The catalog is seeded by migration; there is no interface to manage it.
 - Product activation and deactivation by the representative.
 - Publication of a commercial page per activated product, subject to four ordered preconditions: active representative, active SETNAR Subscription, name filled in, phone filled in. Only the first failure is reported.
 - Public commercial page containing: authorized-representative identification (name, authorization identifier, city, phone), per-product compliance notice, WhatsApp CTA, and a lead capture form. **No representative photo, and no free-text description** — neither exists in the product.
 - Per-product explanatory content on **one** of the seven products (Conexão Club). The other six render without it.
-- QR Code rendered in the browser from the page's public address, with **download** and **copy link**. There is **no regenerate**, because no QR Code is stored — it is derived from the address every time.
+- QR Code rendered in the browser from the page's public address, with **download**, **copy link**, manual-copy fallback and retry after a generation error. There is **no persisted QR Code** and no content-level regeneration.
 - Public address by subdomain, one page per (representative × product). There is no public hub page listing a representative's products.
 - Lead capture, with an IP rate limit and attribution to the originating page.
 - Recording of page visits and WhatsApp clicks, with referrer and a hashed IP. **Recorded only — see the next category.**
 - Subscription checked through the same `is_subscription_active` rule both when a Commercial Page is published and when it is served.
-- The representative hub reads that same Subscription decision: it blocks publication without an active Subscription, suppresses public links/QR Codes for inaccessible pages, and never labels an inaccessible stored `published` row as “Publicado.”
+- `/app/paginas` reads that same Subscription and profile-completeness decision: it blocks publication, offers an actionable path to `/app/conta`, suppresses public links/QR Codes for inaccessible pages, and never labels an inaccessible stored `published` row as “Publicado.”
 
 **Known limits of the "organization-agnostic" claim.** Tenant resolution, the schema, and the core flows carry no assumption of any particular organization. Two presentation-level pieces currently do: the identification block renders the fixed string "Licenciado Autorizado iGreen Energy," and the compliance notices are iGreen-specific copy keyed to the seven seeded products. Both are documented as such in the code and are known scope, not accidental coupling — but a second authorizing organization would require changing them. This is stated here so that nobody reads "multi-tenant architecture" as "a second organization could be onboarded today."
 

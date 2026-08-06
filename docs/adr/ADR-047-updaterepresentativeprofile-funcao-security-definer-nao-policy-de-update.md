@@ -42,3 +42,7 @@ RPC). `tests/representative-profile-schema.test.ts` cobre o Zod.
 lacuna aceita nas outras três, verificação manual em `supabase/README.md`.
 **Custo de reversão.** Baixo — `drop function`; nenhuma coluna, tabela ou
 linha existente é tocada.
+
+**Evolução em 2026-08-06.** ADR-066 estende a RPC com `display_name`, torna
+telefone obrigatório e tipa `display_name_invalid`/`phone_required`. Cidade
+continua opcional; slug e `profiles.full_name` continuam fora desta escrita.

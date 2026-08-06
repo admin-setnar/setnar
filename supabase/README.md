@@ -4,9 +4,9 @@ Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
 alcance do código e das migrations versionadas neste repositório. Nenhum
 deles usa a service role key — ela não entra no projeto nesta sprint.
 
-## 1. Aplicar as migrations, nesta ordem, todas as dezoito
+## 1. Aplicar as migrations, nesta ordem, todas as vinte e três
 
-São cumulativas — aplique as dezoito, em ordem, nunca só a primeira. Cole
+São cumulativas — aplique as vinte e três, em ordem, nunca só a primeira. Cole
 cada arquivo no SQL Editor do projeto e execute, ou rode `supabase db push`
 se preferir a CLI.
 
@@ -363,6 +363,20 @@ se preferir a CLI.
     O runtime server-side requer `SUPABASE_SERVICE_ROLE_KEY` e
     `ANALYTICS_IP_SALT`. Preview deve permanecer sem esses secrets enquanto
     Analytics real em preview não for uma decisão explícita.
+20. `supabase/migrations/20260818000000_require_professional_profile_phone.sql`
+    — torna o telefone comercial obrigatório em novos cadastros e em toda
+    edição de perfil, inclui `display_name` na RPC de edição e impede apagar
+    um telefone existente. A migration apenas diagnostica legados; não faz
+    backfill nem `SET NOT NULL`. A constraint E.164 entra `NOT VALID`, e a
+    validação final fica para quando a consulta diagnóstica retornar zero.
+    `/app/conta#perfil-profissional` é o caminho de correção dos legados.
+21. `supabase/migrations/20260819000000_add_signup_phone_to_profiles.sql`
+    — adiciona `profiles.phone` anulável como snapshot inicial do cadastro,
+    preserva contas legadas e atualiza `handle_new_user()` para copiar apenas
+    telefone brasileiro válido em E.164. A metadata de Auth é somente o
+    transportador atômico do signup; o onboarding lê `profiles.phone` sob a
+    RLS do proprietário. Depois da confirmação, `representatives.phone` é a
+    fonte canônica e exclusiva das páginas e configurações profissionais.
 
 ## 2. Confirm email — decidido: DESLIGADO
 

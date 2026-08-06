@@ -14,6 +14,14 @@
 
 # 1. Purpose
 
+### Account phone versus professional phone
+
+`profiles.phone` is a nullable, owner-readable snapshot captured at signup
+only to prefill onboarding. It may be absent for legacy accounts and is not
+an authentication factor. After the user confirms onboarding,
+`representatives.phone` is the canonical commercial phone for settings,
+publication and WhatsApp; no bidirectional synchronization is implied.
+
 This document is the definitive business specification of SETNAR. It exists so that every future implementation decision — regardless of who makes it, human or AI — can be traced back to an explicit business concept, rule, or rationale defined here, rather than to an assumption made in code.
 
 SETNAR is being built incrementally, one validated stage at a time, per ROADMAP.md. A Domain Model is what keeps that incremental delivery coherent: it lets the team add Stage 2 (Optimize), Stage 3 (Sell), Stage 4 (Automate) and beyond without rewriting Stage 1, because the business concepts were modeled correctly from the start, even though only a subset of their behavior is implemented today.
@@ -55,6 +63,8 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 **Business meaning:** The primary user and beneficiary of SETNAR. A Representative is not an employee — they operate independently but derive credibility and tooling from their affiliation with the Company.
 **Example:** A licensed iGreen representative who sells Conexão Green and Conexão Solar.
 **Relationships:** Belongs to exactly one Company; owns one Commercial Page per activated Product (or a unified Commercial Page presenting several); is the subject of Analytics; receives Leads.
+
+**Stage 1 profile invariant:** a Representative has a public professional name, an authorization identifier and a commercial phone. The phone is a contact attribute of the Representative, not an authentication factor, and is stored canonically for the WhatsApp CTA. Legacy rows that predate this invariant may remain incomplete temporarily, but cannot publish and must be given a correction path; no fictitious value may be inferred. The User Profile's `full_name` may prefill onboarding, but it remains a distinct identity value from the Representative's editable public name.
 
 ### User
 **Definition:** The authenticated identity that logs into SETNAR. Distinguished from Representative because, in future stages (Enterprise), a User may hold administrative or supervisory roles without being a sales Representative themselves.

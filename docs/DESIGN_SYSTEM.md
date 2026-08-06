@@ -584,8 +584,12 @@ A QR Code component **must** support:
 - **Preview** — implemented (the code is rendered on screen; "preview" is the rendering itself, not a separate mode)
 - **Responsive sizing** — implemented
 - A resolved loading state, since generation is asynchronous — implemented
+- An explicit generation-error state with retry — implemented
+- Clipboard success/failure feedback and a selectable manual-copy fallback — implemented
 
 **"Regenerate" is not a requirement, and was removed.** It presupposes a stored QR Code that could drift from its target. No QR Code is persisted: it is derived from the page's public address every time it is rendered (ADR-049), so it cannot go stale and there is nothing to regenerate. Listing it as mandatory would have sent someone to build a button for a problem the architecture already prevents.
+
+Retrying after a client-side generation error is not regeneration: it repeats the same deterministic rendering attempt for the same public address and persists nothing.
 
 Should QR Codes ever become persisted artifacts — for example, campaign-scoped codes with their own analytics — regeneration becomes a real requirement at that point, and this section is revised then. `DOMAIN_MODEL.md` § 8.7 models that possibility; it is Conceptual (§ 3.1).
 
@@ -603,6 +607,7 @@ The authenticated surface, where a representative works.
 - Motion is restricted to microinteractions and component transitions.
 - Nothing is sold here. The representative has already decided; this surface helps them execute.
 - Empty states explain what happened, why, and what to do next — this surface is where a new representative is most likely to be lost.
+- The Stage 1 App Shell exposes only **Pages** and **Account**. Desktop uses a compact sidebar; mobile uses an always-visible labeled header navigation. Both carry visible focus and `aria-current`; links to unimplemented capabilities are prohibited.
 
 ---
 

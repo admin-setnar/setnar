@@ -10,6 +10,16 @@
 
 # Purpose
 
+## Signup phone boundary
+
+The auth Server Action validates the masked Brazilian value and normalizes it
+through `shared/domain/br-phone` before calling the auth gateway. Supabase Auth
+metadata is only the atomic carrier into `handle_new_user`; the trigger copies
+a valid E.164 value to nullable `profiles.phone`. Authenticated application
+reads are owner-scoped by `profiles_select_own`. Public pages and professional
+settings never read this snapshot: after onboarding they use only
+`representatives.phone`.
+
 This document defines the **structure** of SETNAR: its modules, layers, boundaries, dependencies, integration rules, tenant isolation and architectural security posture.
 
 This document is subordinate to PRODUCT_CONSTITUTION.md. Where a technical decision here appears to conflict with a principle stated there, the Constitution prevails and this document must be revised.
@@ -409,6 +419,18 @@ Authentication must remain isolated.
 Business modules should never know how authentication works.
 
 They only receive the authenticated user.
+
+---
+
+# Authenticated Application Shell
+
+Every `/app/*` route is protected server-side by `src/app/app/layout.tsx`; middleware refreshes sessions but is not the authorization boundary. The shared layout owns only session resolution, responsive navigation and the page frame. Route-specific data stays with its consumer:
+
+- `/app/paginas` loads onboarding, catalog, activations, publication links and QR Codes;
+- `/app/conta` loads the Representative profile and current access e-mail;
+- `/app` redirects to `/app/paginas` and owns no duplicated overview.
+
+Infrastructure failures throw into the authenticated error boundary. A missing Representative and a legitimate empty catalog remain explicit domain states, never fallback values for failed queries. See ADR-066.
 
 ---
 

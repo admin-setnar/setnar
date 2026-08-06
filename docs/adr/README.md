@@ -109,6 +109,7 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 063 | `is_subscription_active(uuid)` + `product_activations_select_published` redefinida: enforcement de leitura da regra 21 (Passo E1) | DOMAIN_MODEL.md | — | [`ADR-063-issubscriptionactiveuuid-productactivationsselectpublished-redefinida-enforcement-de-leitura-da-regra.md`](ADR-063-issubscriptionactiveuuid-productactivationsselectpublished-redefinida-enforcement-de-leitura-da-regra.md) |
 | 064 | `set_activation_status` reutiliza `is_subscription_active` no gate de publicação (Passo E2) | DOMAIN_MODEL.md | Complements ADR-063; resolves the Subscription deviation in ADR-043 | [`ADR-064-setactivationstatus-reutiliza-issubscriptionactive-no-gate-de-publicacao.md`](ADR-064-setactivationstatus-reutiliza-issubscriptionactive-no-gate-de-publicacao.md) |
 | 065 | Fronteira confiável de Analytics e regra única de acesso público | ARCHITECTURE.md / DOMAIN_MODEL.md | Corrects ADR-051/053; consolidates ADR-063/064 | [`ADR-065-fronteira-confiavel-de-analytics-e-regra-unica-de-acesso-publico.md`](ADR-065-fronteira-confiavel-de-analytics-e-regra-unica-de-acesso-publico.md) |
+| 066 | App Shell autenticado, invariante e prefill do perfil profissional | ARCHITECTURE.md / DOMAIN_MODEL.md / DESIGN_SYSTEM.md | Extends ADR-040/047; supersedes route composition in ADR-042/046 | [`ADR-066-app-shell-autenticado-e-invariante-do-perfil-profissional.md`](ADR-066-app-shell-autenticado-e-invariante-do-perfil-profissional.md) |
 
 ## Existing code and migration comments still say `README.md`
 

@@ -147,7 +147,7 @@ CRM; campaigns; material library; artificial intelligence; advanced analytics; m
 
 ## Capabilities
 
-Status verified against the working tree based on commit `23290c4`, including Sprint E/E2, on 2026-08-05. `PRODUCT.md` § *What Exists Today* is the authority; this list is the sequencing view of the same facts.
+Status verified against the Parte 2 working tree based on commit `df8db50` on 2026-08-06. `PRODUCT.md` § *What Exists Today* is the authority; this list is the sequencing view of the same facts.
 
 ### Authentication — **done**
 
@@ -157,8 +157,8 @@ Status verified against the working tree based on commit `23290c4`, including Sp
 
 ### Representative Profile — **partly done**
 
-- Name — done
-- Phone — done
+- Public name — done; prefilled from account name during onboarding and independently editable afterward
+- Commercial phone — done; mandatory for new writes and profile edits, with an explicit correction path for legacy rows
 - City — done
 - Authorization identifier — done
 - E-mail — done (identity, from the account)
@@ -200,9 +200,10 @@ Status verified against the working tree based on commit `23290c4`, including Sp
 
 ---
 
-### Dashboard — **partly done**
+### Authenticated application — **partly done**
 
-- Products, links, QR Codes — done
+- App Shell, responsive navigation, account and pages routes — done
+- Products, links, QR Codes — done in `/app/paginas`
 - **Basic statistics — not implemented**
 
 ---

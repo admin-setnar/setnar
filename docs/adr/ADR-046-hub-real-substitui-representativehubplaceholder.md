@@ -23,3 +23,7 @@ especificamente — o único uso é este link, e ele já tem `SITE_URL`
 disponível sem passar por `resolveTenant()`.
 **Custo de reversão.** Baixo — a composição do link é uma linha dentro de
 `RepresentativeHub`; removê-la não afeta o resto do hub.
+
+**Evolução em 2026-08-06.** ADR-066 move o hub para `/app/paginas` e o
+restringe à gestão de páginas; perfil e logout passam a `/app/conta`. A
+decisão de compor links a partir de `SITE_URL` permanece vigente.

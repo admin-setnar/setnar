@@ -32,3 +32,8 @@ passo, antes de D5b reutilizá-lo, exatamente para não repetir esse corpo uma
 terceira vez.
 **Custo de reversão.** Baixo — três Server Actions e um wrapper
 compartilhado; nenhuma migration.
+
+**Evolução (Parte 2 da consolidação da Stage 1).** ADR-066 preserva o contrato
+`Failure | null`, mas substitui a revalidação ampla de `/app`: ativação,
+publicação e despublicação revalidam `/app/paginas`; a edição do perfil
+revalida `/app/conta` e `/app/paginas`.

@@ -45,3 +45,7 @@ o shape que o `catch` de fato devolve. Pego pelo `npm run typecheck`, não em
 revisão.
 **Custo de reversão.** Baixo — uma porta/adapter/factory a mais e um branch
 em `/app`; nada existente foi reescrito.
+
+**Evolução em 2026-08-06.** ADR-066 substitui a composição de rota: `/app`
+agora redireciona, e a ramificação onboarding/páginas vive em
+`/app/paginas` dentro do App Shell autenticado.

@@ -1,4 +1,9 @@
 ### ADR-040 — `register_representative()`, primeira escrita self-service em `representatives`; grant só a `authenticated`, nunca a `anon`
+
+**Emenda Stage 1 (2026-08-06).** O cadastro agora coleta telefone comercial,
+mas continua sem criar `Representative`. `profiles.phone` apenas preenche o
+onboarding; `register_representative()` permanece a escrita explícita que
+transforma o valor revisado em `representatives.phone`, fonte canônica.
 **Decisão.** `supabase/migrations/20260806000000_add_register_representative.sql`
 cria `register_representative(p_slug, p_display_name, p_license_id, p_phone,
 p_city)`, `security definer`, `set search_path = public`, `language
@@ -136,3 +141,7 @@ concorrência de verdade fica fora do escopo do D3.B.1.
 depois que houver linhas reais em `representatives` criadas por este
 caminho (mesma classe de custo que ADR-037 já registra para os UUIDs
 literais do catálogo).
+
+**Evolução em 2026-08-06.** ADR-066 substitui apenas a decisão de telefone
+opcional: a assinatura permanece, mas `p_phone` agora retorna
+`phone_required` para nulo/vazio e todo novo Representative exige E.164.
