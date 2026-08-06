@@ -32,3 +32,5 @@ coverage/
 # Editor settings are shared on purpose: they keep the CSS linter and the
 # TypeScript version consistent for everyone on the project.
 !.vscode
+
+supabase/.temp/
