@@ -24,17 +24,19 @@ function hash(value: string): string {
   return createHash('sha256').update(`${salt}:${value}`).digest('hex');
 }
 
+let missingIpWarningLogged = false;
+const loggedRpcFailures = new Set<string>();
+
 /**
  * Supabase adapter for `AnalyticsGateway`. A fresh instance is created per
- * request by `getAnalyticsGateway()` — it holds a request-scoped Supabase
- * client, so it must never be cached as a singleton across requests.
+ * request by `getAnalyticsGateway()` around the Analytics-only privileged
+ * client; the browser never receives that credential or this RPC payload.
  *
  * Calls `record_page_visit`/`record_whatsapp_click`
  * (`supabase/migrations/20260811000000_add_analytics_write_functions.sql`),
- * which do their own resolution, bot filtering and rate limiting entirely
- * inside Postgres — this adapter only computes the one thing that must never
- * be done in application code that isn't already a request-scoped concern:
- * hashing the caller's IP before it leaves the process.
+ * which do their own resolution, public-access validation, bot filtering and
+ * rate limiting inside Postgres. The adapter computes the IP hash before the
+ * raw address leaves the server process.
  */
 export class SupabaseAnalyticsGateway implements AnalyticsGateway {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -51,16 +53,27 @@ export class SupabaseAnalyticsGateway implements AnalyticsGateway {
     fn: 'record_page_visit' | 'record_whatsapp_click',
     input: RecordAnalyticsEventInput,
   ): Promise<boolean> {
+    if (!input.ip) {
+      if (!missingIpWarningLogged) {
+        console.warn('Analytics event skipped because no trusted client IP was available.');
+        missingIpWarningLogged = true;
+      }
+      return false;
+    }
+
     const { data, error } = await this.supabase.rpc(fn, {
       p_representative_slug: input.representativeSlug,
       p_product_slug: input.productSlug,
       p_referrer: input.referrer,
-      p_ip_hash: hash(input.ip ?? 'unknown'),
+      p_ip_hash: hash(input.ip),
       p_user_agent: input.userAgent,
     });
 
     if (error) {
-      console.error(`${fn} RPC failed`, error);
+      if (!loggedRpcFailures.has(fn)) {
+        loggedRpcFailures.add(fn);
+        console.error(`${fn} RPC failed`, { code: error.code, message: error.message });
+      }
       return false;
     }
     return data === true;

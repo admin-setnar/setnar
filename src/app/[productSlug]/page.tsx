@@ -2,7 +2,10 @@ import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { after } from 'next/server';
 
-import { getAnalyticsGateway } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
+import {
+  getAnalyticsGateway,
+  reportAnalyticsFailure,
+} from '@/modules/analytics/infrastructure/analytics-gateway-factory';
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
 import { resolveCompanyVertical } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
@@ -91,7 +94,7 @@ export default async function ProductPage({
         userAgent: requestHeaders.get('user-agent'),
       });
     } catch (error) {
-      console.error('record_page_visit failed', error);
+      reportAnalyticsFailure('record_page_visit setup failed', error);
     }
   });
 

@@ -21,8 +21,8 @@
 > |---|---|---|
 > | QR1 — QR Code client-side | **Implementado** | ADR-049, `qr-code-card.tsx`, dep `qrcode` |
 > | AN1 — tabela `analytics_events` | **Implementado** | ADR-050, `20260810000000` |
-> | AN2/AN4 — funções de escrita | **Implementado** | ADR-051/052, `20260811000000` |
-> | AN3/AN5 — chamadas do app | **Implementado** | ADR-053/054 |
+> | AN2/AN4 — funções de escrita | **Implementado e consolidado** | ADR-051/052/065, `20260811000000` + `20260817000000` |
+> | AN3/AN5 — chamadas do app | **Implementado com fronteira backend confiável** | ADR-053/054/065 |
 > | AN6 — exibir estatísticas no hub | **Não implementado** | não há caminho de leitura: `AnalyticsGateway` só expõe escrita |
 > | AN7 — retenção/purga dos eventos | **Não implementado** | levantado, não bloqueante |
 >

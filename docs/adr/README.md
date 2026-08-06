@@ -108,6 +108,7 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 062 | Completa o rename `license_id` → `authorization_id`: contrato RPC, domínio, componente (Passo 7b) | DOMAIN_MODEL.md | Step 7b of ADR-060; completes ADR-061 | [`ADR-062-completa-o-rename-licenseid-authorizationid-contrato-rpc-dominio.md`](ADR-062-completa-o-rename-licenseid-authorizationid-contrato-rpc-dominio.md) |
 | 063 | `is_subscription_active(uuid)` + `product_activations_select_published` redefinida: enforcement de leitura da regra 21 (Passo E1) | DOMAIN_MODEL.md | — | [`ADR-063-issubscriptionactiveuuid-productactivationsselectpublished-redefinida-enforcement-de-leitura-da-regra.md`](ADR-063-issubscriptionactiveuuid-productactivationsselectpublished-redefinida-enforcement-de-leitura-da-regra.md) |
 | 064 | `set_activation_status` reutiliza `is_subscription_active` no gate de publicação (Passo E2) | DOMAIN_MODEL.md | Complements ADR-063; resolves the Subscription deviation in ADR-043 | [`ADR-064-setactivationstatus-reutiliza-issubscriptionactive-no-gate-de-publicacao.md`](ADR-064-setactivationstatus-reutiliza-issubscriptionactive-no-gate-de-publicacao.md) |
+| 065 | Fronteira confiável de Analytics e regra única de acesso público | ARCHITECTURE.md / DOMAIN_MODEL.md | Corrects ADR-051/053; consolidates ADR-063/064 | [`ADR-065-fronteira-confiavel-de-analytics-e-regra-unica-de-acesso-publico.md`](ADR-065-fronteira-confiavel-de-analytics-e-regra-unica-de-acesso-publico.md) |
 
 ## Existing code and migration comments still say `README.md`
 
@@ -131,8 +132,8 @@ Debt*.
 Recorded here rather than hidden, per the same principle that governs
 `docs/README.md` § *Outstanding Documentation Debt*:
 
-- **No ADR here carries a structured `Status` or `Date` field.** Retrofitting
-  one onto 63 existing entries would mean inventing dates that were never
+- **Older ADRs do not carry a structured `Status` or `Date` field.** Retrofitting
+  one onto entries that never recorded those facts would mean inventing dates
   recorded — worse than leaving the gap explicit. A structured header
   (`Status: Accepted`, `Date: YYYY-MM-DD`, `Related: ADR-NNN`) is recommended
   for every ADR written **from now on**; existing ones are not touched to

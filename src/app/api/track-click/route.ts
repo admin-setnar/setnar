@@ -1,7 +1,10 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
-import { getAnalyticsGateway } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
+import {
+  getAnalyticsGateway,
+  reportAnalyticsFailure,
+} from '@/modules/analytics/infrastructure/analytics-gateway-factory';
 import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
 import { getClientIp } from '@/shared/lib/get-client-ip';
@@ -51,7 +54,7 @@ export async function POST(request: Request) {
       }
     }
   } catch (error) {
-    console.error('record_whatsapp_click failed', error);
+    reportAnalyticsFailure('record_whatsapp_click setup failed', error);
   }
 
   return NextResponse.json({ ok: true });

@@ -346,6 +346,23 @@ se preferir a CLI.
     `tests/subscription-publication-gate.test.ts`, mapeador em
     `tests/map-product-activation-result.test.ts` e matriz manual do
     **passo 18** mais abaixo.
+19. `supabase/migrations/20260817000000_secure_analytics_and_public_access.sql`
+    — consolida a integridade pública e de Analytics. Cria a regra única de
+    acessibilidade usada nas policies, publicação e eventos; remove as RPCs
+    persistentes de `anon`/`authenticated`, concede apenas a `service_role` e
+    retira `ip_hash` do modelo de leitura. Adiciona FK composta evento ->
+    ativação e índice temporal. Antes da FK, conta pares legados inválidos e
+    aborta se houver algum: não corrige, apaga ou fabrica dados. Ativações
+    incompletas mantêm `published`, mas não resolvem publicamente. Ver ADR-065
+    e os testes `analytics-integrity-consolidation`,
+    `analytics-write-functions.integration` e
+    `public-accessibility.integration`.
+    Os helpers de policy ficam no schema `private`, fora do PostgREST. O fluxo
+    oficial é `supabase migration list --linked` seguido de
+    `supabase db push --linked`; não aplicar SQL parcialmente pelo Dashboard.
+    O runtime server-side requer `SUPABASE_SERVICE_ROLE_KEY` e
+    `ANALYTICS_IP_SALT`. Preview deve permanecer sem esses secrets enquanto
+    Analytics real em preview não for uma decisão explícita.
 
 ## 2. Confirm email — decidido: DESLIGADO
 

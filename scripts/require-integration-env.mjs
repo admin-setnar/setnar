@@ -17,20 +17,23 @@
  */
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_KEY) {
+if (!SUPABASE_URL || !SUPABASE_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error(
-    '\n❌ INTEGRATION TESTS NOT RUN — the login rate limiter (ADR-012/ADR-018\n' +
-      '   credential-stuffing defense) was NOT exercised this run.\n\n' +
-      '   tests/login-rate-limiter.integration.test.ts self-skips its 6 tests\n' +
-      '   when NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are\n' +
+    '\n❌ PRIVILEGED INTEGRATION TESTS NOT RUN — Analytics grants, backend\n' +
+      '   persistence, public accessibility and tenant-scoped RLS were not\n' +
+      '   fully exercised this run.\n\n' +
+      '   Privileged integration suites self-skip\n' +
+      '   when NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/\n' +
+      '   SUPABASE_SERVICE_ROLE_KEY are\n' +
       '   missing — `npm run test` alone stays green when that happens (ADR-017\n' +
       '   requires it to, for local dev without a Supabase project). This script\n' +
       '   exists so `npm run verify`/CI does not stay green under the same\n' +
-      '   condition: set both env vars, with the migration already applied, and\n' +
+      '   condition: set all three env vars, apply every migration, and\n' +
       '   re-run.\n',
   );
   process.exit(1);
 }
 
-console.log('✔ Integration env present — login rate limiter suite was exercised by `npm run test`.');
+console.log('✔ Integration env present — public and privileged security suites were exercised by `npm run test`.');
