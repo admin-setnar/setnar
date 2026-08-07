@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
+import { hasPublishedAtLeastOnce, isFirstPublicationFeedbackEligible } from '@/modules/feedback/domain/first-publication-eligibility';
+import { getFeedbackGateway } from '@/modules/feedback/infrastructure/feedback-gateway-factory';
 import { getRepresentativeAccountRepository } from '@/modules/representatives/infrastructure/representative-account-repository-factory';
 import { getRepresentativeCatalogRepository } from '@/modules/representatives/infrastructure/representative-catalog-repository-factory';
 import { OnboardingForm } from '@/modules/representatives/presentation/onboarding-form';
@@ -36,6 +38,15 @@ export default async function PagesPage() {
     catalogRepository.isSubscriptionActive(representative.id),
   ]);
 
+  // SET-61: `isFirstPublicationFeedbackEligible` is the tested rule
+  // (`modules/feedback/domain/first-publication-eligibility.ts`). The
+  // resolved-state read only runs when publishing has happened at least
+  // once — no reason to query `feedback_responses` for a representative who
+  // could not be eligible regardless of its answer.
+  const firstPublicationFeedbackResolved = hasPublishedAtLeastOnce(catalog)
+    ? await (await getFeedbackGateway()).isResolved('first_publication')
+    : true;
+
   return (
     <div className="space-y-7">
       <div className="space-y-2">
@@ -46,6 +57,7 @@ export default async function PagesPage() {
         representative={representative}
         catalog={catalog}
         subscriptionActive={subscriptionActive}
+        showFirstPublicationFeedback={isFirstPublicationFeedbackEligible(catalog, firstPublicationFeedbackResolved)}
       />
     </div>
   );
