@@ -133,14 +133,14 @@ export function Navbar({
                         view="sign-in"
                         variant="secondary"
                         fullWidth
-                        onClickCapture={() => setMenuOpen(false)}
+                        onOpen={() => setMenuOpen(false)}
                       >
                         Entrar
                       </AuthTriggerButton>
                       <AuthTriggerButton
                         view="sign-up"
                         fullWidth
-                        onClickCapture={() => setMenuOpen(false)}
+                        onOpen={() => setMenuOpen(false)}
                       >
                         Criar conta
                       </AuthTriggerButton>

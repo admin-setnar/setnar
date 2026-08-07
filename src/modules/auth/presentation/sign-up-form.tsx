@@ -10,6 +10,7 @@ import { signUpAction } from '@/modules/auth/presentation/actions';
 import { authErrorCopy } from '@/modules/auth/presentation/auth-error-messages';
 import { useAuthModal } from '@/modules/auth/presentation/hooks/use-auth-modal';
 import { PasswordInput } from '@/modules/auth/presentation/password-input';
+import { safeClientAuthCall } from '@/modules/auth/presentation/safe-client-auth-call';
 import {
   signUpSchema,
   type SignUpFormValues,
@@ -78,7 +79,7 @@ export function SignUpForm({ next }: { next?: string } = {}) {
     setFailureCode(null);
     // Reached on failure or on the no-session safety seam; success redirects
     // server-side.
-    const result = await signUpAction(values, next);
+    const result = await safeClientAuthCall(() => signUpAction(values, next));
 
     if (result.status === 'pending_confirmation') {
       setAwaitingConfirmation({ name: result.name, email: result.email });
@@ -100,6 +101,11 @@ export function SignUpForm({ next }: { next?: string } = {}) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
       {failureCode ? <FormAlert tone="error" {...authErrorCopy(failureCode)} /> : null}
+      {isSubmitting ? (
+        <p role="status" className="rounded-md border border-line bg-surface-sunken p-3 text-sm text-content-muted">
+          Criando sua conta. Em seguida, você vai configurar suas páginas.
+        </p>
+      ) : null}
 
       <FormField label="Nome completo" error={errors.name?.message}>
         {({ id, describedBy, invalid }) => (
@@ -220,7 +226,7 @@ export function SignUpForm({ next }: { next?: string } = {}) {
       </div>
 
       <Button type="submit" size="lg" fullWidth loading={isSubmitting}>
-        Criar conta
+        {isSubmitting ? 'Criando conta...' : 'Criar conta'}
       </Button>
 
       <p className="pt-1 text-center text-sm text-content-muted">
