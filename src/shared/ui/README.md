@@ -56,6 +56,7 @@ accessibility notes and known limitations. Summary:
 | `Section` | Vertical rhythm and tone | Renders a landmark; pass `labelledBy` |
 | `Navbar` | Persistent gateway chrome | Transparent, then glass on scroll; Radix Dialog mobile menu |
 | `Footer` | Identity, links, legal notice | The legal notice is a compliance requirement — see README |
+| `FeedbackPrompt` | One-click qualitative microfeedback card | Not a modal; `optionsWithDetail` lists which answers reveal an optional text field; self-dismisses once resolved (ADR-069) |
 
 ## Adding a component
 

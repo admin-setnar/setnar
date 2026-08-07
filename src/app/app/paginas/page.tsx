@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { hasPublishedAtLeastOnce, isFirstPublicationFeedbackEligible } from '@/modules/feedback/domain/first-publication-eligibility';
 import { getFeedbackGateway } from '@/modules/feedback/infrastructure/feedback-gateway-factory';
+import { resolveValuePerceptionFeedbackEligibility } from '@/modules/feedback/presentation/resolve-value-perception-eligibility';
 import { getRepresentativeAccountRepository } from '@/modules/representatives/infrastructure/representative-account-repository-factory';
 import { getRepresentativeCatalogRepository } from '@/modules/representatives/infrastructure/representative-catalog-repository-factory';
 import { OnboardingForm } from '@/modules/representatives/presentation/onboarding-form';
@@ -46,6 +47,12 @@ export default async function PagesPage() {
   const firstPublicationFeedbackResolved = hasPublishedAtLeastOnce(catalog)
     ? await (await getFeedbackGateway()).isResolved('first_publication')
     : true;
+  const showFirstPublicationFeedback = isFirstPublicationFeedbackEligible(catalog, firstPublicationFeedbackResolved);
+
+  // SET-62: never shown alongside SET-61's own prompt — short-circuits
+  // before running the value-perception signals read at all when SET-61 is
+  // already occupying the slot.
+  const showValuePerceptionFeedback = !showFirstPublicationFeedback && (await resolveValuePerceptionFeedbackEligibility());
 
   return (
     <div className="space-y-7">
@@ -57,7 +64,8 @@ export default async function PagesPage() {
         representative={representative}
         catalog={catalog}
         subscriptionActive={subscriptionActive}
-        showFirstPublicationFeedback={isFirstPublicationFeedbackEligible(catalog, firstPublicationFeedbackResolved)}
+        showFirstPublicationFeedback={showFirstPublicationFeedback}
+        showValuePerceptionFeedback={showValuePerceptionFeedback}
       />
     </div>
   );

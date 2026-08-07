@@ -16,12 +16,12 @@ export interface FeedbackPromptOption {
 }
 
 /**
- * FeedbackPrompt — SET-60's one reusable microfeedback card, first
- * consumed by SET-61 (`context: 'first_publication'`). Not promoted to
- * `shared/ui` yet: DESIGN_SYSTEM.md § *Component Philosophy* promotes a
- * component once it has more than one real consumer, and today there is
- * exactly one — SET-62 becomes the second when it is built, at which point
- * this file moves without changing its API.
+ * FeedbackPrompt — SET-60's one reusable microfeedback card. Promoted here
+ * from `modules/feedback/presentation/` on SET-62, its second real consumer
+ * (`modules/feedback/presentation/feedback-prompt.tsx`'s own former doc
+ * comment flagged this move in advance) — `README.md`'s promotion posture
+ * ("check it does not already exist") only bites once a second caller needs
+ * the same thing, and SET-61 was the only one until now.
  *
  * Deliberately NOT a modal (DESIGN_SYSTEM.md § *Notifications*: "avoid modal
  * dialogs unless absolutely necessary") and NOT wired to `revalidatePath` —
@@ -31,22 +31,24 @@ export interface FeedbackPromptOption {
  * exactly like `LogoutButton`'s own "server owns the data, client owns only
  * pending/error" split already used elsewhere in the product app.
  *
- * `optionWithDetail`, when set, is the one option value that reveals the
+ * `optionsWithDetail`, when set, lists every option value that reveals the
  * optional complementary field instead of resolving immediately — every
  * other option resolves in the single click DESIGN_SYSTEM.md's *Product
- * Application Experience* asks for.
+ * Application Experience* asks for. A list, not a single value: SET-61 only
+ * ever needed one ("difficult"), but SET-62 needs two ("partly" and "no"),
+ * and there is no reason the vocabulary stays capped at one going forward.
  */
 export function FeedbackPrompt({
   context,
   question,
   options,
-  optionWithDetail,
+  optionsWithDetail,
   detailLabel,
 }: {
   context: FeedbackContext;
   question: string;
   options: readonly FeedbackPromptOption[];
-  optionWithDetail?: string;
+  optionsWithDetail?: readonly string[];
   detailLabel?: string;
 }) {
   const [hidden, setHidden] = useState(false);
@@ -85,7 +87,7 @@ export function FeedbackPrompt({
   }
 
   function handleOptionClick(option: FeedbackPromptOption) {
-    if (option.value === optionWithDetail) {
+    if (optionsWithDetail?.includes(option.value)) {
       setExpandedOption(option.value);
       return;
     }
