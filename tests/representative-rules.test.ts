@@ -66,6 +66,11 @@ describe('professional phone/profile rules', () => {
     assert.equal(isRepresentativeProfileComplete({ name: 'João', phone: '+5511988887777' }), false);
     assert.equal(isRepresentativeProfileComplete({ name: 'João Silva', phone: null }), false);
   });
+
+  it('treats a non-null but malformed legacy phone the same as a missing one (SET-12: this is the actual shape of the one legacy row found by the SET-10 diagnostic — pre-migration data, never a null)', () => {
+    assert.equal(isRepresentativeProfileComplete({ name: 'João Silva', phone: '11988887777' }), false);
+    assert.equal(isRepresentativeProfileComplete({ name: 'João Silva', phone: '' }), false);
+  });
 });
 
 describe('formatE164ToBRPhone', () => {
