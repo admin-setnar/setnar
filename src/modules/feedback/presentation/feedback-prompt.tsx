@@ -1,0 +1,165 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
+
+import type { FeedbackContext } from '@/modules/feedback/domain/feedback';
+import { FEEDBACK_DETAIL_MAX_LENGTH } from '@/modules/feedback/domain/feedback';
+import { recordFeedbackShownAction, resolveFeedbackAction } from '@/modules/feedback/presentation/actions';
+import { Button } from '@/shared/ui/button';
+import { Card } from '@/shared/ui/card';
+import { Text } from '@/shared/ui/typography';
+
+export interface FeedbackPromptOption {
+  readonly value: string;
+  readonly label: string;
+}
+
+/**
+ * FeedbackPrompt — SET-60's one reusable microfeedback card, first
+ * consumed by SET-61 (`context: 'first_publication'`). Not promoted to
+ * `shared/ui` yet: DESIGN_SYSTEM.md § *Component Philosophy* promotes a
+ * component once it has more than one real consumer, and today there is
+ * exactly one — SET-62 becomes the second when it is built, at which point
+ * this file moves without changing its API.
+ *
+ * Deliberately NOT a modal (DESIGN_SYSTEM.md § *Notifications*: "avoid modal
+ * dialogs unless absolutely necessary") and NOT wired to `revalidatePath` —
+ * everything here is client-local: the parent Server Component already
+ * decided to render this prompt because the context was unresolved at
+ * request time, and once resolved this component simply removes itself,
+ * exactly like `LogoutButton`'s own "server owns the data, client owns only
+ * pending/error" split already used elsewhere in the product app.
+ *
+ * `optionWithDetail`, when set, is the one option value that reveals the
+ * optional complementary field instead of resolving immediately — every
+ * other option resolves in the single click DESIGN_SYSTEM.md's *Product
+ * Application Experience* asks for.
+ */
+export function FeedbackPrompt({
+  context,
+  question,
+  options,
+  optionWithDetail,
+  detailLabel,
+}: {
+  context: FeedbackContext;
+  question: string;
+  options: readonly FeedbackPromptOption[];
+  optionWithDetail?: string;
+  detailLabel?: string;
+}) {
+  const [hidden, setHidden] = useState(false);
+  const [thankYou, setThankYou] = useState(false);
+  const [expandedOption, setExpandedOption] = useState<string | null>(null);
+  const [detail, setDetail] = useState('');
+  const [pending, setPending] = useState(false);
+
+  // Marks the prompt as delivered exactly once per mount — the component
+  // only ever mounts when the server already determined the context is
+  // unresolved, so there is nothing to branch on here besides "fire it".
+  useEffect(() => {
+    void recordFeedbackShownAction(context);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (hidden) return null;
+
+  async function resolve(outcome: 'answered' | 'dismissed', response: string | null, responseDetail: string | null) {
+    setPending(true);
+    try {
+      const result = await resolveFeedbackAction(context, outcome, response, responseDetail);
+      if (result.status === 'updated') {
+        setThankYou(true);
+        window.setTimeout(() => setHidden(true), 1600);
+      } else {
+        // A rejection here (already resolved / not shown) means another tab
+        // or a stale render already settled this prompt — hide quietly
+        // rather than show a confusing error for something the user did
+        // not do wrong.
+        setHidden(true);
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
+  function handleOptionClick(option: FeedbackPromptOption) {
+    if (option.value === optionWithDetail) {
+      setExpandedOption(option.value);
+      return;
+    }
+    void resolve('answered', option.value, null);
+  }
+
+  if (thankYou) {
+    return (
+      <Card variant="outlined" padding="sm" role="status" className="text-content-muted">
+        <Text as="p" variant="caption">
+          Obrigado!
+        </Text>
+      </Card>
+    );
+  }
+
+  return (
+    <Card variant="outlined" padding="sm" className="relative space-y-3 pr-10">
+      <button
+        type="button"
+        aria-label="Dispensar"
+        disabled={pending}
+        onClick={() => void resolve('dismissed', null, null)}
+        className="absolute right-3 top-3 rounded-sm p-1 text-content-subtle transition-colors duration-fast hover:bg-surface-sunken hover:text-content"
+      >
+        <X size={16} aria-hidden="true" />
+      </button>
+
+      <Text as="p" variant="caption" className="font-medium text-content">
+        {question}
+      </Text>
+
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => (
+          <Button
+            key={option.value}
+            type="button"
+            variant="secondary"
+            size="sm"
+            disabled={pending}
+            aria-pressed={expandedOption === option.value}
+            onClick={() => handleOptionClick(option)}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
+
+      {expandedOption ? (
+        <div className="space-y-2">
+          <label htmlFor={`feedback-detail-${context}`} className="text-sm text-content-muted">
+            {detailLabel ?? 'Quer contar mais? (opcional)'}
+          </label>
+          <div className="flex gap-2">
+            <input
+              id={`feedback-detail-${context}`}
+              value={detail}
+              maxLength={FEEDBACK_DETAIL_MAX_LENGTH}
+              disabled={pending}
+              onChange={(event) => setDetail(event.target.value)}
+              className="h-10 w-full rounded-md border border-line bg-surface px-3 text-sm text-content outline-none focus:ring-2"
+            />
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              loading={pending}
+              onClick={() => void resolve('answered', expandedOption, detail)}
+            >
+              Enviar
+            </Button>
+          </div>
+        </div>
+      ) : null}
+    </Card>
+  );
+}

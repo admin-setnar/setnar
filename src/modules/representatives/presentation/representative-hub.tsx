@@ -1,6 +1,8 @@
 import Link from 'next/link';
 
 import { SITE_URL } from '@/config/site';
+import type { FirstPublicationResponse } from '@/modules/feedback/domain/feedback';
+import { FeedbackPrompt } from '@/modules/feedback/presentation/feedback-prompt';
 import type { Representative } from '@/modules/representatives/domain/representative';
 import type { RepresentativeCatalogEntry } from '@/modules/representatives/domain/representative-catalog-repository';
 import { isRepresentativeProfileComplete } from '@/modules/representatives/domain/representative-rules';
@@ -39,14 +41,33 @@ import { Text } from '@/shared/ui/typography';
  * actionable link there whenever the central publication prerequisites are
  * incomplete.
  */
+
+/**
+ * Typed at this SET-61 call site, not inside `FeedbackPrompt` itself — the
+ * shared component's `options`/`optionWithDetail` stay plain `string` (it
+ * has no business asserting every context's vocabulary is
+ * `FirstPublicationResponse`), while this specific consumer keeps compile-time
+ * protection against a typo drifting from `resolve_feedback`'s
+ * `first_publication` allow-list.
+ */
+const FIRST_PUBLICATION_FEEDBACK_OPTIONS: ReadonlyArray<{ value: FirstPublicationResponse; label: string }> = [
+  { value: 'easy', label: 'Fácil' },
+  { value: 'reasonable', label: 'Razoável' },
+  { value: 'difficult', label: 'Difícil' },
+];
+const FIRST_PUBLICATION_DIFFICULT_RESPONSE: FirstPublicationResponse = 'difficult';
+
 export function RepresentativeHub({
   representative,
   catalog,
   subscriptionActive,
+  showFirstPublicationFeedback = false,
 }: {
   representative: Representative;
   catalog: readonly RepresentativeCatalogEntry[];
   subscriptionActive: boolean;
+  /** SET-61 — set by `/app/paginas` once eligibility (published before, context unresolved) is known server-side. */
+  showFirstPublicationFeedback?: boolean;
 }) {
   const rootHost = new URL(SITE_URL).hostname;
   const profileComplete = isRepresentativeProfileComplete(representative);
@@ -61,6 +82,16 @@ export function RepresentativeHub({
           Sua página: <strong className="text-content">{representative.slug}</strong>
         </Text>
       </Card>
+
+      {showFirstPublicationFeedback ? (
+        <FeedbackPrompt
+          context="first_publication"
+          question="Como foi criar sua página?"
+          options={FIRST_PUBLICATION_FEEDBACK_OPTIONS}
+          optionWithDetail={FIRST_PUBLICATION_DIFFICULT_RESPONSE}
+          detailLabel="O que mais dificultou? (opcional)"
+        />
+      ) : null}
 
       {!profileComplete ? (
         <div id="professional-profile-blocker" className="space-y-3">

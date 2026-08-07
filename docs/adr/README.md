@@ -112,6 +112,7 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 066 | App Shell autenticado, invariante e prefill do perfil profissional | ARCHITECTURE.md / DOMAIN_MODEL.md / DESIGN_SYSTEM.md | Extends ADR-040/047; supersedes route composition in ADR-042/046 | [`ADR-066-app-shell-autenticado-e-invariante-do-perfil-profissional.md`](ADR-066-app-shell-autenticado-e-invariante-do-perfil-profissional.md) |
 | 067 | Fronteira confiável e atomicidade da submissão de leads | ARCHITECTURE.md | Corrects ADR-034/036; follows ADR-065 | [`ADR-067-fronteira-confiavel-e-atomicidade-da-submissao-de-leads.md`](ADR-067-fronteira-confiavel-e-atomicidade-da-submissao-de-leads.md) |
 | 068 | `submit_lead` passa a consumir a regra canônica de acesso público | DOMAIN_MODEL.md | Consolidates with ADR-065; follows ADR-067 | [`ADR-068-submit-lead-passa-a-consumir-a-regra-canonica-de-acesso-publico.md`](ADR-068-submit-lead-passa-a-consumir-a-regra-canonica-de-acesso-publico.md) |
+| 069 | Infraestrutura mínima compartilhada de microfeedback qualitativo | ARCHITECTURE.md | Extends ADR-047; first consumer SET-61 | [`ADR-069-infraestrutura-minima-compartilhada-de-microfeedback-qualitativo.md`](ADR-069-infraestrutura-minima-compartilhada-de-microfeedback-qualitativo.md) |
 
 ## Existing code and migration comments still say `README.md`
 
