@@ -13,25 +13,48 @@ interface EarliestPublishedAtRow {
  * Supabase adapter for `ValuePerceptionSignalsGateway`. Both queries run
  * through the caller's own request-scoped session — same posture
  * `SupabaseFeedbackGateway`/`SupabaseRepresentativeCatalogRepository` already
- * take — and rely entirely on RLS (`product_activations_select_own`,
- * `analytics_events_select_own`) to scope the rows to the signed-in
- * representative; neither query names a `representative_id`.
+ * take — and RLS (`product_activations_select_own`,
+ * `analytics_events_select_own`) remains the real ownership boundary.
+ *
+ * Both queries ALSO filter explicitly by `representative_id`, unlike
+ * `SupabaseFeedbackGateway.isResolved` (which relies on RLS alone). This is
+ * a performance choice, not a security one: `analytics_events`'s RLS policy
+ * resolves through `is_own_representative()`
+ * (`supabase/migrations/20260805000000_fix_rls_policy_cycle.sql`), a
+ * `security definer` **`plpgsql`** function — Postgres cannot inline a
+ * `plpgsql` function into the query plan the way it can a `sql` one (see
+ * that same migration's own comment on `is_own_representative`), so a
+ * `select ... where event_type = 'visit'` with no other predicate has
+ * nothing to seek on and degrades to scanning every row of a table that
+ * grows with every visit/click platform-wide, not just this
+ * representative's. Filtering by `representative_id` explicitly lets the
+ * planner use `analytics_events_rep_product_type_idx`
+ * (`(representative_id, product_id, event_type)`,
+ * `20260810000000_add_analytics_events.sql`) — RLS still applies underneath
+ * as defense in depth, so a wrong id here could only ever yield zero rows,
+ * never another representative's.
  *
  * The two reads are independent of each other, so they run in parallel.
  */
 export class SupabaseValuePerceptionSignalsGateway implements ValuePerceptionSignalsGateway {
   constructor(private readonly supabase: SupabaseClient) {}
 
-  async getSignals(): Promise<ValuePerceptionSignals> {
+  async getSignals(representativeId: string): Promise<ValuePerceptionSignals> {
     const [publishedResult, visitResult] = await Promise.all([
       this.supabase
         .from('product_activations')
         .select('published_at')
+        .eq('representative_id', representativeId)
         .not('published_at', 'is', null)
         .order('published_at', { ascending: true })
         .limit(1)
         .maybeSingle<EarliestPublishedAtRow>(),
-      this.supabase.from('analytics_events').select('id').eq('event_type', 'visit').limit(1),
+      this.supabase
+        .from('analytics_events')
+        .select('id')
+        .eq('representative_id', representativeId)
+        .eq('event_type', 'visit')
+        .limit(1),
     ]);
 
     if (publishedResult.error) {

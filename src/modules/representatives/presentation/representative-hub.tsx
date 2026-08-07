@@ -15,7 +15,7 @@ import { getActivationViewState } from '@/modules/representatives/presentation/a
 import { ProductActivationCard } from '@/modules/representatives/presentation/product-activation-card';
 import { QrCodeCard } from '@/modules/representatives/presentation/qr-code-card';
 import { Card } from '@/shared/ui/card';
-import { FeedbackPrompt } from '@/shared/ui/feedback-prompt';
+import { FeedbackPrompt, type FeedbackPromptOption } from '@/shared/ui/feedback-prompt';
 import { FormAlert } from '@/shared/ui/form-alert';
 import { Text } from '@/shared/ui/typography';
 
@@ -59,7 +59,9 @@ import { Text } from '@/shared/ui/typography';
  * instead of here, since `/app/conta` needs the exact same constants and
  * this file is not imported there.
  */
-const FIRST_PUBLICATION_FEEDBACK_OPTIONS: ReadonlyArray<{ value: FirstPublicationResponse; label: string }> = [
+const FIRST_PUBLICATION_FEEDBACK_OPTIONS: ReadonlyArray<
+  FeedbackPromptOption & { readonly value: FirstPublicationResponse }
+> = [
   { value: 'easy', label: 'Fácil' },
   { value: 'reasonable', label: 'Razoável' },
   { value: 'difficult', label: 'Difícil' },

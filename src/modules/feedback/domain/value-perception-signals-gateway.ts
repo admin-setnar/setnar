@@ -15,12 +15,17 @@ import type { ValuePerceptionSignals } from '@/modules/feedback/domain/value-per
  * stays generic across every context (ADR-069) — it would stop being that if
  * a context-specific read were added to it here.
  *
- * `representativeId` is never a parameter, same convention `FeedbackGateway`
- * already documents: both underlying queries are scoped by RLS
- * (`product_activations_select_own`, `analytics_events_select_own`) against
- * the caller's own session, so there is nothing for a caller-supplied id to
- * add except a spoofing surface.
+ * `representativeId` IS a parameter here — unlike `FeedbackGateway`, which
+ * omits it because that port backs writes where a caller-supplied id would
+ * be a spoofing surface. This port is read-only and RLS
+ * (`product_activations_select_own`, `analytics_events_select_own`) is
+ * still the actual ownership boundary regardless of what id is passed — a
+ * wrong id simply yields zero rows, never another representative's data.
+ * The id exists purely so the adapter can filter explicitly instead of
+ * relying only on a `SECURITY DEFINER` `plpgsql` RLS predicate
+ * (`is_own_representative()`) to scope an unbounded, platform-wide table
+ * (`analytics_events`) on every read — see the adapter's own doc comment.
  */
 export interface ValuePerceptionSignalsGateway {
-  getSignals(): Promise<ValuePerceptionSignals>;
+  getSignals(representativeId: string): Promise<ValuePerceptionSignals>;
 }
