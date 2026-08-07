@@ -14,9 +14,17 @@ import { Button } from '@/shared/ui/button';
  */
 export interface AuthTriggerButtonProps extends Omit<ComponentProps<typeof Button>, 'onClick'> {
   view: AuthView;
+  /** Runs in the same click as the modal transition (for example, to close a mobile menu). */
+  onOpen?: () => void;
 }
 
-export function AuthTriggerButton({ view, ...props }: AuthTriggerButtonProps) {
+export function AuthTriggerButton({ view, onOpen, ...props }: AuthTriggerButtonProps) {
   const { open } = useAuthModal();
-  return <Button type="button" onClick={() => open(view)} {...props} />;
+
+  function handleClick() {
+    open(view);
+    onOpen?.();
+  }
+
+  return <Button type="button" onClick={handleClick} {...props} />;
 }

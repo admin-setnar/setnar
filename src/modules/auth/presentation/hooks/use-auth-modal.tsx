@@ -1,6 +1,16 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 
 export type AuthView = 'sign-in' | 'sign-up';
 
@@ -30,6 +40,21 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const close = useCallback(() => setView(null), []);
+
+  // A successful sign-in/sign-up redirects via the Server Action's own
+  // `redirect()`, so the form never regains control to close the modal
+  // itself. Since this provider sits in the root layout and survives the
+  // navigation, an open modal would otherwise stay mounted on top of the
+  // destination page.
+  const pathname = usePathname();
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    close();
+  }, [pathname, close]);
 
   const value = useMemo<AuthModalContextValue>(
     () => ({ view, mountedViews, open, close }),
