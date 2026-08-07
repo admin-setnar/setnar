@@ -110,6 +110,7 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 064 | `set_activation_status` reutiliza `is_subscription_active` no gate de publicação (Passo E2) | DOMAIN_MODEL.md | Complements ADR-063; resolves the Subscription deviation in ADR-043 | [`ADR-064-setactivationstatus-reutiliza-issubscriptionactive-no-gate-de-publicacao.md`](ADR-064-setactivationstatus-reutiliza-issubscriptionactive-no-gate-de-publicacao.md) |
 | 065 | Fronteira confiável de Analytics e regra única de acesso público | ARCHITECTURE.md / DOMAIN_MODEL.md | Corrects ADR-051/053; consolidates ADR-063/064 | [`ADR-065-fronteira-confiavel-de-analytics-e-regra-unica-de-acesso-publico.md`](ADR-065-fronteira-confiavel-de-analytics-e-regra-unica-de-acesso-publico.md) |
 | 066 | App Shell autenticado, invariante e prefill do perfil profissional | ARCHITECTURE.md / DOMAIN_MODEL.md / DESIGN_SYSTEM.md | Extends ADR-040/047; supersedes route composition in ADR-042/046 | [`ADR-066-app-shell-autenticado-e-invariante-do-perfil-profissional.md`](ADR-066-app-shell-autenticado-e-invariante-do-perfil-profissional.md) |
+| 067 | Fronteira confiável e atomicidade da submissão de leads | ARCHITECTURE.md | Corrects ADR-034/036; follows ADR-065 | [`ADR-067-fronteira-confiavel-e-atomicidade-da-submissao-de-leads.md`](ADR-067-fronteira-confiavel-e-atomicidade-da-submissao-de-leads.md) |
 
 ## Existing code and migration comments still say `README.md`
 

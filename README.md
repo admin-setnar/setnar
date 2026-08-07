@@ -54,7 +54,7 @@ change is considered done. It runs `typecheck → lint → test →
 test:integration → build`. `npm run test` intentionally stays green with no
 Supabase project configured; `npm run test:integration`
 (`scripts/require-integration-env.mjs`) fails loudly instead, naming exactly
-what wasn't exercised, when the two Supabase env vars are missing — see
+what wasn't exercised, when the three Supabase env vars are missing — see
 [`docs/adr/ADR-017-the-test-script-now-loads-envlocal-with-nodes.md`](docs/adr/ADR-017-the-test-script-now-loads-envlocal-with-nodes.md).
 
 > **Measure performance against a production build, in an incognito window.**

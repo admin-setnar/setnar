@@ -1,16 +1,14 @@
 import 'server-only';
 
 import type { LeadGateway } from '@/modules/leads/domain/lead-gateway';
+import { createLeadWriteClient } from '@/modules/leads/infrastructure/lead-write-client';
 import { SupabaseLeadGateway } from '@/modules/leads/infrastructure/supabase-lead-gateway';
-import { createClient } from '@/shared/lib/supabase/server';
 
 /**
- * Composition root for lead capture — same shape as `getAuthGateway()`
- * (`modules/auth/infrastructure/auth-gateway-factory.ts`). A new gateway is
- * built on every call, never cached, since it wraps a request-scoped
- * Supabase client.
+ * Composition root for trusted lead writes. The privileged credential stays
+ * inside server-only lead infrastructure and is never used by ordinary
+ * repositories or sent to the browser.
  */
 export async function getLeadGateway(): Promise<LeadGateway> {
-  const supabase = await createClient();
-  return new SupabaseLeadGateway(supabase);
+  return new SupabaseLeadGateway(createLeadWriteClient());
 }

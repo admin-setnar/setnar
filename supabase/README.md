@@ -1,12 +1,13 @@
 # Supabase — setup manual
 
 Passos que só podem ser feitos no painel do Supabase ou na Vercel, fora do
-alcance do código e das migrations versionadas neste repositório. Nenhum
-deles usa a service role key — ela não entra no projeto nesta sprint.
+alcance do código e das migrations versionadas neste repositório. A service
+role key é usada somente pelos adaptadores server-only de Analytics e Leads;
+nunca entra no navegador nem em repositórios ordinários.
 
-## 1. Aplicar as migrations, nesta ordem, todas as vinte e três
+## 1. Aplicar as migrations, nesta ordem, todas as vinte e quatro
 
-São cumulativas — aplique as vinte e três, em ordem, nunca só a primeira. Cole
+São cumulativas — aplique as vinte e quatro, em ordem, nunca só a primeira. Cole
 cada arquivo no SQL Editor do projeto e execute, ou rode `supabase db push`
 se preferir a CLI.
 
@@ -101,7 +102,10 @@ se preferir a CLI.
    vulnerabilidade aberta**, mesmo que todo o resto deste README seja seguido
    corretamente. `supabase-lead-gateway.ts` foi atualizado no mesmo commit
    para a assinatura nova (9 parâmetros, sem os dois removidos) — nenhum
-   outro chamador de `submit_lead` existe.
+   outro chamador de `submit_lead` existe. **Estado atual:** a migration
+   `20260820000000` (último item desta lista) remove o RPC de
+   `anon`/`authenticated`; este passo continua histórico e obrigatório, mas
+   seu grant público é posteriormente revogado.
 7. `supabase/migrations/20260803000000_seed_igreen_catalog.sql` — **a única
    migration deste diretório que insere dado, não schema.** Semeia a Company
    iGreen Energy (slug `igreen`) e os 7 Products do Stage 1 (`conexao-green`,
@@ -377,6 +381,15 @@ se preferir a CLI.
     transportador atômico do signup; o onboarding lê `profiles.phone` sob a
     RLS do proprietário. Depois da confirmação, `representatives.phone` é a
     fonte canônica e exclusiva das páginas e configurações profissionais.
+24. `supabase/migrations/20260820000000_secure_lead_submission_boundary.sql`
+    — SET-20. Redefine `submit_lead` sem alterar sua assinatura nem limiar,
+    revoga `EXECUTE` de `public`/`anon`/`authenticated` e concede somente a
+    `service_role`. O adaptador de Leads passa a usar um cliente privilegiado
+    dedicado e calcula `p_ip_hash` exclusivamente a partir do IP resolvido na
+    borda Vercel; sem IP confiável, falha fechado e não persiste. Um advisory
+    lock transacional por hash serializa contagem e gravação, preservando o
+    máximo de cinco aceites mesmo sob concorrência. Ver ADR-067 e os testes
+    `lead-submission-security`/`lead-submission.integration`.
 
 ## 2. Confirm email — decidido: DESLIGADO
 
@@ -493,11 +506,16 @@ por IP, e também eleva o custo do lockout-por-e-mail descrito na ADR-018.
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
 LOGIN_ATTEMPT_SALT=
 ANALYTICS_IP_SALT=
 ```
 
 As duas primeiras são as chaves públicas do projeto (Settings → API).
+`SUPABASE_SERVICE_ROLE_KEY` é server-only e alimenta exclusivamente os
+clientes mínimos de persistência de Analytics e Leads. Nunca use prefixo
+`NEXT_PUBLIC_`, nunca envie ao navegador e mantenha Preview sem a chave quando
+esses writes reais não forem intencionais.
 `LOGIN_ATTEMPT_SALT` é server-only (sem prefixo `NEXT_PUBLIC_`) — qualquer
 string aleatória longa serve, ela só existe para que `login_attempts` nunca
 grave e-mail/IP em texto puro. Gere uma vez e não troque depois sem motivo:
@@ -840,13 +858,12 @@ tipado. Se qualquer uma responder 200 com um resultado tipado (ex.
 `representative_not_found`, `slug_invalid`), a concessão ainda está errada —
 pare aqui e não considere a migration aplicada corretamente.
 
-**Contraprova, no mesmo teste:** repita a chamada 5 (`submit_lead`, com um
+**Contraprova histórica, válida ao parar no passo 13:** repita a chamada 5 (`submit_lead`, com um
 `p_representative_id`/`p_product_id` válidos do catálogo e os demais campos
 preenchidos) sem `Authorization`. **Observar:** esta, sim, deve responder 200
 com um resultado — `anon` continua com EXECUTE nela de propósito (ADR-034).
-Se `submit_lead` também passar a falhar, a migration foi longe demais (o
-`alter default privileges` não deveria ter afetado um grant explícito já
-existente) — investigue antes de considerar o passo 13 concluído.
+Depois de aplicar o passo 24/`20260820000000`, o esperado se inverte:
+`submit_lead` também deve retornar `42501`, conforme ADR-067.
 
 **Executado e confirmado em 2026-08-03**, contra o projeto real do Pedro. As
 quatro funções (`activate_product`, `set_activation_status`,
@@ -856,8 +873,30 @@ function ...` — nenhuma respondeu com um `status` tipado. Antes da migration
 `20260809000000`, `activate_product`/`set_activation_status` haviam
 respondido HTTP 200 com `{status: 'representative_not_found', ...}`,
 confirmando o furo original. A contraprova de `submit_lead` (mesma chamada,
-sem `Authorization`) retornou `true` — `anon` continua com EXECUTE nela, de
-propósito, sem regressão.
+sem `Authorization`) retornou `true` — `anon` continuava com EXECUTE nela, de
+propósito naquele estado histórico. A migration da SET-20 posteriormente
+revoga esse acesso.
+
+## Verificação manual obrigatória — fronteira de Leads (passo 24)
+
+Execute apenas em banco descartável com todas as migrations aplicadas.
+
+1. Chame `submit_lead` por RPC HTTP cru com a chave publicável, sem sessão,
+   três vezes e varie `p_ip_hash`. Todas devem falhar com `42501 permission
+   denied`; nenhuma pode retornar `boolean`.
+2. Repita com uma sessão `authenticated`. O resultado também deve ser `42501`.
+3. Use a service role apenas no processo server-side e um par público válido.
+   Cinco chamadas sequenciais com o mesmo hash devem retornar `true`; a sexta,
+   `false`. Um hash novo deve continuar independente.
+4. Em paralelo, dispare dez chamadas service-role com outro hash único. Exija
+   exatamente cinco `true` e cinco `false`; qualquer sexto aceite indica perda
+   de atomicidade.
+5. Pelo formulário real em ambiente Vercel, confirme o mesmo corpo genérico de
+   sucesso e rejeição já existente. Fora da Vercel, confirme que a ausência de
+   IP confiável não cria Lead.
+
+Não use o banco de produção. Remova os Leads/tentativas criados no banco
+descartável ao encerrar a validação.
 
 ## Verificação manual obrigatória — `analytics_events` (passo 14)
 

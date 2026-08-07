@@ -1,30 +1,22 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { describe, it, type TestContext } from 'node:test';
+import { after, before, describe, it, type TestContext } from 'node:test';
 
 import { createClient, type PostgrestError, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
- * Integration tests for `submit_lead`
- * (`supabase/migrations/20260801000000_add_lead_submission.sql`, fixed by
- * `20260802000000_fix_submit_lead_rate_limit.sql`) — the RPC, not the
- * `/api/leads` route. Same shape as
- * `tests/login-rate-limiter.integration.test.ts`: a real integration suite
- * against the configured Supabase project, self-skipping when it isn't
- * configured, because the logic under test lives in Postgres, not in an
- * importable Node module.
- *
- * Before this file, `modules/leads` had zero automated tests — this is the
- * first coverage for the module, focused on the adversarial scenario that
- * `20260802000000` fixes: a caller reaching `submit_lead` directly (as any
- * holder of the publishable key can, bypassing `/api/leads`'s Zod schema and
- * honeypot entirely) supplying its own rate-limit threshold.
+ * Integration tests for the final `submit_lead` contract. Browser roles are
+ * denied before the function body runs; trusted backend calls retain the
+ * fixed rate limit, validation and anti-enumeration return; concurrent calls
+ * against one bucket are serialized in Postgres.
  */
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-const canRun = Boolean(SUPABASE_URL && SUPABASE_KEY);
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const canRunPublic = Boolean(SUPABASE_URL && SUPABASE_KEY);
+const canRunPrivileged = Boolean(SUPABASE_URL && SUPABASE_KEY && SERVICE_ROLE_KEY);
 const skipReason =
-  'Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, with the migration already applied, to run this suite.';
+  'Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY and SUPABASE_SERVICE_ROLE_KEY, with all migrations applied, to run this suite.';
 
 function freshIpHash(label: string): string {
   return `lead-submission-test-${label}-${randomUUID()}`;
@@ -35,39 +27,37 @@ type ValidPair = { representativeId: string; productId: string };
 /**
  * `submit_lead` only ever inserts into `leads` for a (representative_id,
  * product_id) pair with a published activation on an active representative
- * — and the anon key cannot create that fixture data itself (`representatives`
- * / `product_activations` have no public INSERT policy, by design; see
- * `supabase/README.md`). So instead of hardcoding IDs from whichever project
+ * — and tests must not invent fixture IDs. Instead of hardcoding IDs from whichever project
  * happens to be configured — fragile across environments, and silently wrong
  * the moment that specific row is ever deleted — this discovers a real pair
- * at run time through the same public SELECT policies
- * (`representatives_select_public` / `product_activations_select_published`,
- * ADR-030) a real Commercial Page relies on. Tests that need real inserts
+ * at run time through the privileged disposable-test client. Tests that need real inserts
  * skip themselves (not fail) when no such pair exists in the configured
  * project, the same "don't fail CI on missing environment" posture `canRun`
  * already uses one level up.
  */
 async function findPublishedActivation(supabase: SupabaseClient): Promise<ValidPair | null> {
-  const { data: representatives } = await supabase.from('representatives').select('id').limit(1);
-  const representativeId = representatives?.[0]?.id as string | undefined;
-  if (!representativeId) return null;
-
   const { data: activations } = await supabase
     .from('product_activations')
-    .select('product_id')
-    .eq('representative_id', representativeId)
+    .select('representative_id, product_id, representative:representatives!inner(status)')
     .eq('status', 'published')
+    .eq('representative.status', 'active')
     .limit(1);
+  const representativeId = activations?.[0]?.representative_id as string | undefined;
   const productId = activations?.[0]?.product_id as string | undefined;
-  if (!productId) return null;
+  if (!representativeId || !productId) return null;
 
   return { representativeId, productId };
 }
 
-const supabase = canRun ? createClient(SUPABASE_URL!, SUPABASE_KEY!) : null;
+const anon = canRunPublic ? createClient(SUPABASE_URL!, SUPABASE_KEY!) : null;
+const service = canRunPrivileged
+  ? createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    })
+  : null;
 const pairSkipReason =
   'No published (representative, product) pair found in the configured Supabase project — ' +
-  'these tests cannot provision one with the anon key. Create one manually (see supabase/README.md) to run them.';
+  'create one in the disposable test database (see supabase/README.md) to run the positive-path cases.';
 
 /**
  * Looked up lazily (not at module load) and cached — `node:test`'s file
@@ -79,8 +69,8 @@ const pairSkipReason =
  */
 let pairLookup: Promise<ValidPair | null> | null = null;
 async function requirePair(t: TestContext): Promise<ValidPair | null> {
-  if (!supabase) return null;
-  pairLookup ??= findPublishedActivation(supabase);
+  if (!service) return null;
+  pairLookup ??= findPublishedActivation(service);
   const pair = await pairLookup;
   if (!pair) {
     t.skip(pairSkipReason);
@@ -100,21 +90,76 @@ async function requirePair(t: TestContext): Promise<ValidPair | null> {
  * also de-duplicates the RPC call across every test below.
  */
 async function submitLead(
+  client: SupabaseClient,
   args: Record<string, unknown>,
 ): Promise<{ data: boolean | null; error: PostgrestError | null }> {
-  const { data, error } = await supabase!.rpc('submit_lead', args);
+  const { data, error } = await client.rpc('submit_lead', args);
   return { data: data as boolean | null, error };
 }
 
-describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReason }, () => {
+function validArgs(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    p_representative_id: randomUUID(),
+    p_product_id: randomUUID(),
+    p_telefone_e164: '+5511988887777',
+    p_nome: 'Lead Teste',
+    p_cidade: null,
+    p_email: null,
+    p_origem: 'lead-submission-integration-test',
+    p_referrer: null,
+    p_ip_hash: freshIpHash('default'),
+    ...overrides,
+  };
+}
+
+describe('submit_lead browser-role denial (Postgres, integration)', { skip: !canRunPublic }, () => {
+  it('denies anon before a caller-chosen hash can select a bucket', async () => {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { error } = await submitLead(anon!, validArgs({ p_ip_hash: freshIpHash(`anon-${attempt}`) }));
+      assert.ok(error, 'anon unexpectedly invoked submit_lead');
+      assert.match(error.message, /permission denied/i);
+    }
+  });
+});
+
+let userId: string | null = null;
+let authenticated: SupabaseClient | null = null;
+const authenticatedPassword = `T3st-${randomUUID()}-Aa`;
+
+describe('submit_lead authenticated denial (Postgres, integration)', { skip: !canRunPrivileged }, () => {
+  before(async () => {
+    const email = `lead-grants-${randomUUID()}@example.invalid`;
+    const { data, error } = await service!.auth.admin.createUser({
+      email,
+      password: authenticatedPassword,
+      email_confirm: true,
+    });
+    assert.equal(error, null);
+    userId = data.user?.id ?? null;
+    assert.ok(userId);
+
+    authenticated = createClient(SUPABASE_URL!, SUPABASE_KEY!, { auth: { persistSession: false } });
+    const { error: signInError } = await authenticated.auth.signInWithPassword({
+      email,
+      password: authenticatedPassword,
+    });
+    assert.equal(signInError, null);
+  });
+
+  after(async () => {
+    if (userId) await service!.auth.admin.deleteUser(userId);
+  });
+
+  it('denies authenticated before a caller-chosen hash can select a bucket', async () => {
+    const { error } = await submitLead(authenticated!, validArgs({ p_ip_hash: freshIpHash('authenticated') }));
+    assert.ok(error, 'authenticated unexpectedly invoked submit_lead');
+    assert.match(error.message, /permission denied/i);
+  });
+});
+
+describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !canRunPrivileged && skipReason }, () => {
   it('rejects the pre-fix call shape outright: p_max_attempts_ip / p_window_seconds no longer exist', async () => {
-    // Before 20260802000000, this exact call — a fresh ip_hash on every
-    // attempt is irrelevant here, since the point is that the caller could
-    // supply p_window_seconds=1 / p_max_attempts_ip=999999 and defeat the
-    // limit outright. After the fix, submit_lead has no 11-parameter
-    // overload at all, so PostgREST must fail to resolve the call — a
-    // silent success here would mean the vulnerable signature is back.
-    const { error } = await submitLead({
+    const { error } = await submitLead(service!, {
       p_representative_id: randomUUID(),
       p_product_id: randomUUID(),
       p_telefone_e164: '+5511988887777',
@@ -134,7 +179,7 @@ describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReaso
   });
 
   it('rejects an unknown (representative, product) pair without needing real fixture data', async () => {
-    const { data, error } = await submitLead({
+    const { data, error } = await submitLead(service!, {
       p_representative_id: randomUUID(),
       p_product_id: randomUUID(),
       p_telefone_e164: '+5511988887777',
@@ -157,7 +202,7 @@ describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReaso
     const results: boolean[] = [];
 
     for (let i = 0; i < 6; i++) {
-      const { data, error } = await submitLead({
+      const { data, error } = await submitLead(service!, {
         p_representative_id: pair.representativeId,
         p_product_id: pair.productId,
         p_telefone_e164: '+5511988887777',
@@ -180,13 +225,37 @@ describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReaso
     );
   });
 
+  it('serializes concurrent calls so at most 5 submissions enter one bucket', async (t) => {
+    const pair = await requirePair(t);
+    if (!pair) return;
+
+    const ipHash = freshIpHash('concurrent-rate-limit');
+    const results = await Promise.all(
+      Array.from({ length: 10 }, (_, index) => submitLead(service!, {
+        p_representative_id: pair.representativeId,
+        p_product_id: pair.productId,
+        p_telefone_e164: '+5511988887777',
+        p_nome: `Lead Concorrente ${index}`,
+        p_cidade: null,
+        p_email: null,
+        p_origem: 'lead-submission-concurrency-test',
+        p_referrer: null,
+        p_ip_hash: ipHash,
+      })),
+    );
+
+    for (const result of results) assert.equal(result.error, null);
+    assert.equal(results.filter((result) => result.data === true).length, 5);
+    assert.equal(results.filter((result) => result.data === false).length, 5);
+  });
+
   it('a fresh origin is unaffected by another origin already at its limit', async (t) => {
     const pair = await requirePair(t);
     if (!pair) return;
 
     const exhaustedIp = freshIpHash('exhausted-origin');
     for (let i = 0; i < 5; i++) {
-      await submitLead({
+      await submitLead(service!, {
         p_representative_id: pair.representativeId,
         p_product_id: pair.productId,
         p_telefone_e164: '+5511988887777',
@@ -199,7 +268,7 @@ describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReaso
       });
     }
 
-    const { data, error } = await submitLead({
+    const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,
       p_product_id: pair.productId,
       p_telefone_e164: '+5511988887777',
@@ -218,7 +287,7 @@ describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReaso
     const pair = await requirePair(t);
     if (!pair) return;
 
-    const { data, error } = await submitLead({
+    const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,
       p_product_id: pair.productId,
       p_telefone_e164: '+5511988887777',
@@ -237,7 +306,7 @@ describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReaso
     const pair = await requirePair(t);
     if (!pair) return;
 
-    const { data, error } = await submitLead({
+    const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,
       p_product_id: pair.productId,
       p_telefone_e164: 'not-a-phone-number',
@@ -256,7 +325,7 @@ describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReaso
     const pair = await requirePair(t);
     if (!pair) return;
 
-    const { data, error } = await submitLead({
+    const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,
       p_product_id: pair.productId,
       p_telefone_e164: '+5511988887777',
@@ -275,7 +344,7 @@ describe('submit_lead RPC (Postgres, integration)', { skip: !canRun && skipReaso
     const pair = await requirePair(t);
     if (!pair) return;
 
-    const { data, error } = await submitLead({
+    const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,
       p_product_id: pair.productId,
       p_telefone_e164: '+5511988887777',

@@ -21,8 +21,8 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
   console.error(
-    '\n❌ PRIVILEGED INTEGRATION TESTS NOT RUN — Analytics grants, backend\n' +
-      '   persistence, public accessibility and tenant-scoped RLS were not\n' +
+    '\n❌ PRIVILEGED INTEGRATION TESTS NOT RUN — Analytics/Leads grants, backend\n' +
+      '   persistence, public accessibility, concurrency and tenant-scoped RLS were not\n' +
       '   fully exercised this run.\n\n' +
       '   Privileged integration suites self-skip\n' +
       '   when NEXT_PUBLIC_SUPABASE_URL/NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/\n' +

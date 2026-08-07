@@ -22,9 +22,9 @@ function hash(value: string): string {
 }
 
 /**
- * Supabase adapter for `LeadGateway`. A fresh instance is created per
- * request by `getLeadGateway()` — it holds a request-scoped Supabase
- * client, so it must never be cached as a singleton across requests.
+ * Supabase adapter for `LeadGateway`. A fresh instance is created per request
+ * by `getLeadGateway()` around a lead-only privileged client. The browser
+ * never receives that credential or the RPC payload containing `p_ip_hash`.
  *
  * Calls `submit_lead` (`supabase/migrations`), which checks the IP rate
  * limit, validates the (representative, product) pair still has a
@@ -32,13 +32,21 @@ function hash(value: string): string {
  * function, atomically. The rate-limit threshold (5 attempts / 3600s) is a
  * fixed literal inside `submit_lead` itself as of
  * `20260802000000_fix_submit_lead_rate_limit.sql` — not passed from here —
- * so a direct RPC caller cannot supply their own threshold to bypass it
- * (see that migration's header for the vulnerability this closed).
+ * `20260820000000_secure_lead_submission_boundary.sql` restricts that RPC to
+ * service_role and serializes each bucket, so browser callers cannot choose a
+ * hash and concurrent calls cannot overrun the threshold.
  */
 export class SupabaseLeadGateway implements LeadGateway {
   constructor(private readonly supabase: SupabaseClient) {}
 
   async submitLead(input: SubmitLeadInput): Promise<SubmitLeadResult> {
+    // Without an IP from the trusted edge there is no trustworthy rate-limit
+    // identity. Do not collapse such traffic into an `unknown` bucket or write
+    // a lead without enforceable throttling.
+    if (!input.ip) {
+      return 'rejected';
+    }
+
     const { data, error } = await this.supabase.rpc('submit_lead', {
       p_representative_id: input.representativeId,
       p_product_id: input.productId,
@@ -48,15 +56,7 @@ export class SupabaseLeadGateway implements LeadGateway {
       p_email: input.email,
       p_origem: input.origem,
       p_referrer: input.referrer,
-      // lead_submission_attempts.ip_hash is NOT NULL, unlike login_attempts'
-      // (which tolerates a null IP by skipping the IP-keyed check entirely)
-      // — there is no second identity axis here to fall back on (see the
-      // migration's own comment on why leads are IP-only), so a missing IP
-      // (only possible in local dev without `x-forwarded-for`, per
-      // `get-client-ip.ts`; Vercel always sets it in production) hashes a
-      // fixed literal instead. Every such request shares one rate-limit
-      // bucket, acceptable for a case that should not occur in production.
-      p_ip_hash: hash(input.ip ?? 'unknown'),
+      p_ip_hash: hash(input.ip),
     });
 
     if (error) {

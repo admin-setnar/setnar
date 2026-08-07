@@ -41,7 +41,7 @@ export type RegisterRepresentativeRejectionReason =
  * NOT collapse the 8 reasons above: an onboarding form needs to tell "this
  * slug can never work" (`slug_invalid`) apart from "someone already has it"
  * (`slug_taken`), and the caller here is always authenticated (a higher bar
- * than `submit_lead`'s anonymous RPC caller) — see the D3.B.1 investigation
+ * than the public visitor submitting through `/api/leads`) — see the D3.B.1 investigation
  * and ADR-040 for why that anti-enumeration concern does not transfer.
  * `'error'` is a real infrastructure failure (network, database down, or an
  * RPC response this gateway doesn't recognise) and must never be presented

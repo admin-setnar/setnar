@@ -10,12 +10,12 @@ import {
  * The IP rate-limit threshold (5 attempts / 3600s) is NOT here — unlike
  * `auth-rules.ts` (ADR-012), it does not live in application code at all as
  * of `20260802000000_fix_submit_lead_rate_limit.sql`. It is a fixed literal
- * inside `submit_lead` itself, because `submit_lead` is `grant execute` to
- * `anon` and both decides and writes: a caller-supplied threshold (as it
- * briefly was — see that migration's header) lets any direct RPC caller opt
- * itself out of the limit entirely, not just misread it. There is no shared
- * constant to keep in sync — the SQL literal is the only place this number
- * lives now.
+ * inside `submit_lead` itself, because the function both decides and writes:
+ * a caller-supplied threshold (as it briefly was — see that migration's
+ * header) lets its caller opt out of the limit entirely, not just misread it.
+ * As of `20260820000000_secure_lead_submission_boundary.sql`, only the trusted
+ * service-role adapter may execute the RPC, but the SQL literal remains the
+ * single source of truth for the database-enforced threshold.
  */
 export const LEAD_NAME_MIN_LENGTH = 2;
 export const LEAD_NAME_MAX_LENGTH = 80;
