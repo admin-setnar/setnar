@@ -607,8 +607,17 @@ exatamente o cenário acima: os passos 1 e 5 retornaram linhas extras
 pertencentes a `joao-silva`, e as cinco asserções de presença/ausência de A e
 B passaram sem exceção. Ver também o item 9 abaixo: foi rodando o passo 1
 deste roteiro que o ciclo de RLS entre `representatives` e
-`product_activations` foi descoberto, antes de qualquer uma destas policies
+`product_activations` foi descoberto, antes de qualquer uma delas policies
 chegar a produção.
+
+**Automatizado em 2026-08-07 (SET-10)**: este roteiro exigia contas criadas
+à mão porque, na época, o projeto não tinha `SUPABASE_SERVICE_ROLE_KEY`
+(ver o cabeçalho de `register-representative.integration.test.ts`). A chave
+introduzida pelo ADR-065/ADR-067 remove essa limitação —
+`tests/rls-own-row-isolation.integration.test.ts` cria e descarta um par A/B
+descartável a cada rodada e prova as mesmas duas asserções que importam (A
+vê A, A nunca vê B — estendido também a `product_activations`), agora parte
+permanente de `npm run test`, não só um checklist manual.
 
 ## Verificação manual obrigatória — registro de representante (passo 10)
 
@@ -627,7 +636,7 @@ ponto é exercitar a função pela sessão real de cada conta.
 
 1. Autenticado como **A**, chame `register_representative` com um `p_slug`
    livre, `p_display_name` com duas palavras (ex. `"Ana Teste"`),
-   `p_license_id` qualquer não-vazio, `p_phone`/`p_city` nulos.
+   `p_authorization_id` qualquer não-vazio, `p_phone`/`p_city` nulos.
    **Observar:** `status = 'created'`, `representative_id` preenchido.
    Confirme com um SELECT em `representatives` (sessão de A, cobre também o
    passo 8) que a linha existe com os valores enviados.
@@ -784,23 +793,24 @@ aplicação (chave publicável), nunca pelo SQL Editor.
    funções.
 2. Autenticado como **R**, chame `update_representative_profile` com
    `p_phone := '+5511977776666'`, `p_city := 'Curitiba'`,
-   `p_license_id := 'ID-NOVO-123'`.
+   `p_authorization_id := 'ID-NOVO-123'`.
    **Observar:** `status = 'updated'`. Confirme com um SELECT em
    `representatives` (sessão de R, coberto pelo passo 8) que as três colunas
    mudaram para os valores enviados, e que `updated_at` avançou (o trigger
    `representatives_set_updated_at` do passo 4 é automático).
-3. Ainda como **R**, chame de novo com `p_license_id := ''`.
-   **Observar:** `status = 'license_id_invalid'`, e um SELECT confirma que
-   `phone`/`city`/`authorization_id` **não mudaram** — a validação roda antes do
-   UPDATE, tudo ou nada, nenhuma escrita parcial.
+3. Ainda como **R**, chame de novo com `p_authorization_id := ''`.
+   **Observar:** `status = 'authorization_id_invalid'` (nome do status desde
+   `20260814000000`/ADR-062 — o roteiro original dizia `license_id_invalid`),
+   e um SELECT confirma que `phone`/`city`/`authorization_id` **não mudaram**
+   — a validação roda antes do UPDATE, tudo ou nada, nenhuma escrita parcial.
 4. Ainda como **R**, chame com `p_phone := 'não-é-telefone'` (e
-   `p_license_id` válido).
+   `p_authorization_id` válido).
    **Observar:** `status = 'phone_invalid'`.
 5. Ainda como **R**, chame com `p_city` de mais de 500 caracteres (e os
    outros dois válidos).
    **Observar:** `status = 'city_invalid'`.
 6. Ainda como **R**, chame com `p_phone := null` e `p_city := null` (e
-   `p_license_id` válido).
+   `p_authorization_id` válido).
    **Observar:** `status = 'updated'`, e o SELECT confirma `phone`/`city`
    **nulos** — limpar os campos opcionais é um resultado válido, não um erro,
    mesma normalização de string vazia para NULL que `register_representative`
@@ -845,12 +855,15 @@ quaisquer sintaticamente válidos (o valor não importa; o que importa é a
 função nunca começar a executar):
 
 1. `register_representative` — `{"p_slug": "teste-anon", "p_display_name":
-   "Teste Anon", "p_license_id": "x", "p_phone": null, "p_city": null}`.
+   "Teste Anon", "p_authorization_id": "x", "p_phone": null, "p_city": null}`.
 2. `activate_product` — `{"p_product_id": "00000000-0000-0000-0000-000000000000"}`.
 3. `set_activation_status` — `{"p_product_id":
    "00000000-0000-0000-0000-000000000000", "p_status": "published"}`.
 4. `update_representative_profile` — `{"p_phone": null, "p_city": null,
-   "p_license_id": "x"}`.
+   "p_authorization_id": "x", "p_display_name": "x"}` (o parâmetro
+   `p_display_name` foi adicionado depois de `20260814000000`; sem ele o
+   PostgREST responde `PGRST202`, não `42501` — não confunda os dois: só o
+   segundo prova a concessão).
 
 **Observar, nas quatro:** a resposta é um erro de permissão (`42501` /
 "permission denied for function ..."), nunca HTTP 200 e nunca um `status`
@@ -897,6 +910,23 @@ Execute apenas em banco descartável com todas as migrations aplicadas.
 
 Não use o banco de produção. Remova os Leads/tentativas criados no banco
 descartável ao encerrar a validação.
+
+**Executado e confirmado em 2026-08-07 (SET-10)**, contra `setnar-db-test`.
+Item 1: RPC HTTP cru, chave publicável, sem `Authorization`, `p_ip_hash`
+variando — respondeu `42501 permission denied for function submit_lead` (não
+`boolean`), consistente com a fronteira `service_role`-only do ADR-067.
+Item 2 (sessão `authenticated`) coberto por
+`tests/lead-submission.integration.test.ts` → *"denies authenticated before a
+caller-chosen hash can select a bucket"*, verde em `npm run test`. Itens 3/4
+(cinco aceites por hash, serialização sob concorrência) cobertos pelo mesmo
+arquivo → *"enforces the fixed 5-per-hour limit..."* e *"serializes
+concurrent calls so at most 5 submissions enter one bucket"*, também verdes.
+Cobertura adicional específica da SET-21 (regra canônica —
+Subscription/representante/perfil/ativação) em
+`tests/lead-canonical-access.integration.test.ts`, fixture própria,
+removida ao final de cada rodada. **Item 5 não coberto por esta rodada** —
+exige o ambiente Vercel real (fora do escopo de validação só de banco da
+SET-10); permanece como roteiro manual quando houver deploy para testar.
 
 ## Verificação manual obrigatória — `analytics_events` (passo 14)
 
@@ -946,9 +976,14 @@ tentar confirmaria só que a policy continua ausente, não a constraint).
 `npm run verify` passou a reportar `tests/analytics-events-select-policy.integration.test.ts`
 verde (208/208 no total), inclusive o controle de catálogo — prova que a
 migration foi aplicada e que a leitura anônima se comporta como esperado
-(zero linhas, sem `42P17`/`PGRST205`). **Item 2 (constraint de `event_type`
-via SQL Editor) ainda não tem confirmação registrada aqui** — pendente de
-execução manual.
+(zero linhas, sem `42P17`/`PGRST205`).
+
+**Item 2 confirmado em 2026-08-07 (SET-10)**, contra `setnar-db-test`, sem
+precisar de um INSERT de teste: `pg_get_constraintdef` sobre
+`analytics_events_event_type_check` retorna
+`CHECK ((event_type = ANY (ARRAY['visit'::text, 'whatsapp_click'::text])))`
+— a definição da constraint já prova que qualquer outro valor é rejeitado,
+sem precisar inserir e depois reverter uma linha de teste pelo SQL Editor.
 
 ## Verificação manual obrigatória — `record_page_visit`/`record_whatsapp_click` (passo 15)
 
@@ -1163,8 +1198,23 @@ outro caminho quando a única ativação publicada fica sem subscription —
 seria o mesmo tipo de vazamento que os passos 8/9 já cobriram para o caso
 geral, não específico desta migration.
 
-**Pendente de execução** — este roteiro ainda não foi rodado contra o
-projeto real do Pedro.
+**Executado e confirmado em 2026-08-07 (SET-10)**, contra `setnar-db-test`
+(projeto de teste descartável). Em vez do roteiro manual item a item, a
+mesma matriz de estados (Subscription ausente/ativa/suspensa, com uma
+ativação `published` já satisfazendo o gate de escrita) é exercitada por
+`public-accessibility.integration.test.ts` (`hides persisted published when
+Subscription is inactive, without rewriting status` e a leitura pública
+correspondente) e por `lead-canonical-access.integration.test.ts` (a mesma
+transição reproduzida via `submit_lead`, ver SET-21/ADR-068) — as duas
+suítes passam em `npm run test`. Confirmado adicionalmente por RPC HTTP cru
+sem `Authorization`: `is_subscription_active` responde `200` com um
+`boolean` (grant a `anon` intencional, item 6 do roteiro), e as oito RPCs
+sensíveis do restante deste documento respondem `42501` para o mesmo tipo de
+chamada (ver "Auditoria de grants — SET-10" no fim deste arquivo). O único
+item não coberto por este re-teste é o item 4 do roteiro original
+(`published_at` não reescrito quando a visibilidade cai) — não re-executado
+nesta rodada; comportamento inalterado desde a migration e coberto pelo
+contrato de `set_activation_status` (`tests/subscription-publication-gate.test.ts`).
 
 ## Verificação manual obrigatória — gate de escrita da Subscription (passo 18)
 
@@ -1220,9 +1270,21 @@ o próprio RPC para despublicar). Anote os valores originais de `status`,
 Ao final, restaure R como `active`, com `display_name`/`phone` originais,
 Subscription `active` e P1 no estado desejado para o ambiente de teste.
 
-**Pendente de execução contra o projeto Supabase real.** Os testes locais
-cobrem o contrato da migration; este roteiro é a confirmação do comportamento
-PL/pgSQL e dos grants no ambiente aplicado.
+**Executado e confirmado em 2026-08-07 (SET-10)**, contra `setnar-db-test`.
+Item 8 (grants) confirmado por RPC HTTP cru sem `Authorization`:
+`set_activation_status` responde `42501`, mesma checagem sistemática das
+outras sete RPCs sensíveis (ver "Auditoria de grants — SET-10" no fim deste
+arquivo). Os itens 1-7 (matriz de precondições do gate de publicação —
+`subscription_not_active` antes de `display_name_required`, que vem antes de
+`phone_required`, com `representative_not_active` vencendo todos) já têm
+cobertura automatizada equivalente e passando em `npm run test`:
+`tests/subscription-publication-gate.test.ts` (contrato da função,
+incluindo a ordem normativa de falha) e
+`public-accessibility.integration.test.ts` (o mesmo efeito observado do lado
+da leitura pública, contra dados reais). Não re-executado à mão neste ciclo
+— considerado coberto pela combinação acima; se um bug específico de
+PL/pgSQL não capturado por essas suítes aparecer, volte a rodar este roteiro
+manualmente.
 
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 
@@ -1288,3 +1350,161 @@ falho.
    `unknown` genérico. Isso prova que `updatePassword()` está checando a
    sessão antes de chamar `updateUser()` (ADR-022), não apenas confiando
    num token já consumido.
+
+## SET-10 — Validação de migrations, RLS e grants em banco descartável
+
+Validação completa executada em **2026-08-07**, contra `setnar-db-test`
+(`smspbjmqhpjcjilzoexr`), o projeto de teste descartável deste repositório
+(confirmado pelo nome em `supabase/.temp/linked-project.json` — não é o
+"projeto real do Pedro" citado em roteiros anteriores a esta data).
+
+### Tentativa de banco 100% local, e por que foi abandonada
+
+O plano original era replicar as 25 migrations do zero num Postgres local
+via `supabase start` (Docker), para provar "banco limpo recebe todas as
+migrations" sem depender de nenhum projeto na nuvem. Duas barreiras de
+ambiente impediram isso nesta máquina, registradas aqui para quem tentar de
+novo:
+
+- A CLI atual (`2.112.0`) é distribuída com um runtime Bun que **crasha
+  deterministicamente** (`Illegal instruction`, mesmo endereço em duas
+  tentativas) ao rodar `supabase start` nesta CPU/Windows. A versão
+  `1.226.4` (binário Go, sem Bun) não crasha, mas é antiga demais para o
+  `config.toml` do projeto (`db.major_version = 17` não é reconhecido).
+- A máquina tem só 7.74 GB de RAM total e ficou com **< 0.4 GB livres**
+  durante as tentativas — o próprio `npx` de uma versão intermediária da
+  CLI morreu por falta de memória só para *baixar* o pacote.
+- `create_branch` (branch de desenvolvimento na nuvem, a alternativa sem
+  Docker) exige `confirm_cost_id`, obtido via `confirm_cost` — uma
+  ferramenta de conta, desabilitada neste modo de conexão por projeto
+  (`project_ref` fixo). `reset_branch` na branch `develop` existente também
+  foi recusado pela API do Supabase: `"Cannot reset a default branch"`.
+
+Decisão registrada (aprovada pelo Pedro): validar diretamente contra
+`setnar-db-test`, já que é explicitamente descartável, em vez de insistir
+numa réplica local. A evidência de "migrations completas e em ordem" abaixo
+é, portanto, cumulativa (25 migrations aplicadas ao longo do histórico do
+projeto, nunca puladas) em vez de uma prova de replay-do-zero-numa-sentada —
+uma garantia mais fraca que vale registrar como tal, não maquiar.
+
+### 1. Migrations completas e em ordem
+
+`supabase migrations list` (via MCP) devolve exatamente as 25 versões
+presentes em `supabase/migrations/`, na mesma ordem, sem lacunas e sem
+nenhuma entrada extra — a última é `20260821000000_apply_canonical_access_to_leads`
+(SET-21). Nenhuma migration foi pulada ou aplicada fora de ordem.
+
+### 2. Auditoria de grants — todas as funções `SECURITY DEFINER`/`public`/`private`
+
+Query exaustiva (`has_function_privilege` para `anon`/`authenticated`/`service_role`/`public`
+contra toda função dos schemas `public` e `private`) em vez de checar
+função por função como os roteiros anteriores faziam. Resultado: **nenhuma
+das oito funções sensíveis** (`submit_lead`, `record_page_visit`,
+`record_whatsapp_click`, `register_representative`, `activate_product`,
+`set_activation_status`, `update_representative_profile`,
+`page_publication_blocker`) concede `EXECUTE` a `anon`; as quatro primeiras
+também excluem `authenticated` (só `service_role`), como documentado desde
+ADR-048/065/067. `service_role` aparecendo em funções do schema `public`
+(mesmo nas que nenhuma migration concedeu explicitamente) é o default de
+plataforma do Supabase para esse schema, não um vazamento — confirmado pelo
+contraste com o schema `private` (criado por migration, sem esse default),
+onde `page_publication_blocker` mostra `{}` e
+`is_page_publicly_accessible`/`has_publicly_accessible_page` mostram só
+`{anon,authenticated}`, exatamente o que cada `revoke`/`grant` pediu.
+
+**Confirmado por RPC HTTP cru, sem header `Authorization`** (chave
+publicável só), reproduzindo a classe de bug do ADR-048 para cada função:
+
+| Função | Resultado |
+|---|---|
+| `submit_lead` | `42501 permission denied` |
+| `register_representative` | `42501 permission denied` |
+| `activate_product` | `42501 permission denied` |
+| `set_activation_status` | `42501 permission denied` |
+| `update_representative_profile` | `42501 permission denied` |
+| `record_page_visit` | `42501 permission denied` |
+| `record_whatsapp_click` | `42501 permission denied` |
+| `is_subscription_active` | `200`, `boolean` (grant a `anon` intencional) |
+
+### 3. RLS habilitado em todas as tabelas de negócio
+
+`relrowsecurity = true` confirmado para as dez tabelas de `public`
+(`analytics_events`, `companies`, `lead_submission_attempts`, `leads`,
+`login_attempts`, `product_activations`, `products`, `profiles`,
+`representatives`, `subscriptions`) — nenhuma exceção, consistente com o
+passo 4.
+
+### 4. Isolamento entre representantes — automatizado
+
+`tests/rls-own-row-isolation.integration.test.ts` (novo, SET-10) cria um par
+A/B descartável e prova: A lê a própria linha, nunca a de B (e vice-versa),
+o mesmo vale para `product_activations` em `draft`, e um visitante anônimo
+não vê nenhuma das duas. Substitui o roteiro manual do passo 8, que exigia
+contas criadas à mão porque, na época, o projeto não tinha
+`SUPABASE_SERVICE_ROLE_KEY`.
+
+**Isolamento entre Companies não re-testado**: o catálogo de
+`setnar-db-test` tem uma única Company (`igreen`) — mesma limitação que
+`lead-submission.integration.test.ts` já documenta ao pular sozinho o teste
+de par cruzado. "Tenant" neste domínio (ADR-001) é o isolamento **entre
+representantes**, coberto acima; isolamento entre Companies do catálogo
+nunca foi exercitado contra dado real neste projeto, antes ou depois da
+SET-10 — gap pré-existente, não introduzido nem fechado aqui.
+
+### 5. Diagnóstico de dados legados (só contagens agregadas)
+
+| Métrica | Valor |
+|---|---|
+| Representantes | 6 |
+| ...com telefone inválido/ausente | 1 (legado conhecido, ver `20260817000000`/`20260818000000` — correção é `/app/conta#perfil-profissional`, não backfill) |
+| ...com nome público inválido | 0 |
+| Ativações `published` | 5 |
+| ...publicadas mas não publicamente acessíveis | 2 (ambas por `subscription_not_active` — mesmo achado documentado durante a validação da SET-21) |
+| Subscriptions (`active`/total) | 3 / 3 |
+| Leads acumulados | 238 (resíduo de rodadas repetidas de `lead-submission.integration.test.ts`, que não limpa suas próprias inserções felizes — comportamento aceito de um banco descartável, não uma migration a corrigir) |
+| Analytics events | 0 |
+
+Nenhuma correção de dado foi feita — só diagnóstico, como as migrations
+anteriores já fazem (`20260817000000`).
+
+### 6. Plano de rollback (conceitual — projeto é forward-only)
+
+Nenhuma migration deste repositório tem `down`. Uma reversão real é sempre
+outra migration forward, nunca um `DROP`/checkout de versão anterior do
+schema. Por classe de mudança:
+
+- **Puramente aditiva** (nova tabela/coluna/função sem alterar
+  comportamento existente — ex. `20260810000000`, `20260731000000`): reverter
+  significaria `DROP`/remover grants — só seguro se nenhuma linha de negócio
+  depender do objeto novo; verificar dependências antes.
+- **Correção de segurança** (ex. `20260729000000`, `20260809000000`,
+  `20260812000000`, `20260820000000`, `20260821000000`): **não têm
+  rollback aceitável.** Cada uma tem uma seção "Rollback conceitual" no
+  próprio ADR (ADR-065, ADR-067) ou no cabeçalho da migration dizendo
+  explicitamente que reabrir o grant/comportamento anterior restaura uma
+  vulnerabilidade real — só é aceitável como contenção temporária explícita,
+  nunca como reversão de rotina.
+- **Redefinição de função** (`create or replace function`, a maioria das
+  migrations deste projeto): reverter é reaplicar a definição anterior via
+  nova migration — só seguro quando a versão anterior não tinha o bug/gap
+  que a atual corrige (raramente o caso; ver ponto acima).
+- **Rename** (`20260813000000`/`20260814000000`, `license_id` →
+  `authorization_id`): reverter exigiria renomear de volta coluna, parâmetros
+  de RPC **e** todo o código de aplicação que já foi atualizado para o nome
+  novo (ADR-060/061/062) — trata-se como não reversível na prática sem
+  outra sprint dedicada, não só uma migration.
+- **Seed** (`20260803000000`): idempotente (`on conflict do nothing`);
+  reverter é um `DELETE` explícito por slug, nunca automático — nenhum
+  processo deste repositório apaga catálogo.
+
+**Recomendação operacional**: qualquer incidente real em produção deve ser
+resolvido por uma migration forward corretiva (mesmo padrão de
+`20260805000000` corrigindo `20260804000000`), documentada com o mesmo rigor
+de causa raiz/reprodução das migrations de segurança já existentes — nunca
+por edição da migration já aplicada nem por rollback de schema.
+
+### Resultado consolidado
+
+`npm run verify` (typecheck, lint, testes, build) passou de ponta a ponta
+neste ciclo com as duas suítes novas (`tests/rls-own-row-isolation.integration.test.ts`)
+incluídas: **381/381 testes, 0 warnings de lint, build ok.**
