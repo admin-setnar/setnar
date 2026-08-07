@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
-This is the index of every ADR in the project: 63 decisions, numbered `ADR-001`
-through `ADR-063`, one file per decision. This folder is the authority on
+This is the index of every ADR in the project: 70 decisions, numbered `ADR-001`
+through `ADR-070`, one file per decision. This folder is the authority on
 **why the code is the way it is** — see `docs/README.md` § *Which document
 wins* on how an ADR relates to the normative documents.
 
@@ -113,6 +113,7 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 067 | Fronteira confiável e atomicidade da submissão de leads | ARCHITECTURE.md | Corrects ADR-034/036; follows ADR-065 | [`ADR-067-fronteira-confiavel-e-atomicidade-da-submissao-de-leads.md`](ADR-067-fronteira-confiavel-e-atomicidade-da-submissao-de-leads.md) |
 | 068 | `submit_lead` passa a consumir a regra canônica de acesso público | DOMAIN_MODEL.md | Consolidates with ADR-065; follows ADR-067 | [`ADR-068-submit-lead-passa-a-consumir-a-regra-canonica-de-acesso-publico.md`](ADR-068-submit-lead-passa-a-consumir-a-regra-canonica-de-acesso-publico.md) |
 | 069 | Infraestrutura mínima compartilhada de microfeedback qualitativo | ARCHITECTURE.md | Extends ADR-047; first consumer SET-61 | [`ADR-069-infraestrutura-minima-compartilhada-de-microfeedback-qualitativo.md`](ADR-069-infraestrutura-minima-compartilhada-de-microfeedback-qualitativo.md) |
+| 070 | Microfeedback de percepção de valor (SET-62) reusa a infraestrutura do ADR-069 sem nova migration | ARCHITECTURE.md | Extends ADR-069; second consumer of `FeedbackPrompt`, now promoted to `shared/ui/` | [`ADR-070-microfeedback-de-percepcao-de-valor-set-62-reusa-a-infra.md`](ADR-070-microfeedback-de-percepcao-de-valor-set-62-reusa-a-infra.md) |
 
 ## Existing code and migration comments still say `README.md`
 

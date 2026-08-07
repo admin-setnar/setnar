@@ -2,7 +2,12 @@ import Link from 'next/link';
 
 import { SITE_URL } from '@/config/site';
 import type { FirstPublicationResponse } from '@/modules/feedback/domain/feedback';
-import { FeedbackPrompt } from '@/modules/feedback/presentation/feedback-prompt';
+import {
+  VALUE_PERCEPTION_DETAIL_LABEL,
+  VALUE_PERCEPTION_FEEDBACK_OPTIONS,
+  VALUE_PERCEPTION_FEEDBACK_QUESTION,
+  VALUE_PERCEPTION_OPTIONS_WITH_DETAIL,
+} from '@/modules/feedback/presentation/value-perception-feedback-options';
 import type { Representative } from '@/modules/representatives/domain/representative';
 import type { RepresentativeCatalogEntry } from '@/modules/representatives/domain/representative-catalog-repository';
 import { isRepresentativeProfileComplete } from '@/modules/representatives/domain/representative-rules';
@@ -10,6 +15,7 @@ import { getActivationViewState } from '@/modules/representatives/presentation/a
 import { ProductActivationCard } from '@/modules/representatives/presentation/product-activation-card';
 import { QrCodeCard } from '@/modules/representatives/presentation/qr-code-card';
 import { Card } from '@/shared/ui/card';
+import { FeedbackPrompt, type FeedbackPromptOption } from '@/shared/ui/feedback-prompt';
 import { FormAlert } from '@/shared/ui/form-alert';
 import { Text } from '@/shared/ui/typography';
 
@@ -44,30 +50,44 @@ import { Text } from '@/shared/ui/typography';
 
 /**
  * Typed at this SET-61 call site, not inside `FeedbackPrompt` itself — the
- * shared component's `options`/`optionWithDetail` stay plain `string` (it
+ * shared component's `options`/`optionsWithDetail` stay plain `string` (it
  * has no business asserting every context's vocabulary is
  * `FirstPublicationResponse`), while this specific consumer keeps compile-time
  * protection against a typo drifting from `resolve_feedback`'s
- * `first_publication` allow-list.
+ * `first_publication` allow-list. SET-62's own `value_perception` options
+ * live in `modules/feedback/presentation/value-perception-feedback-options.ts`
+ * instead of here, since `/app/conta` needs the exact same constants and
+ * this file is not imported there.
  */
-const FIRST_PUBLICATION_FEEDBACK_OPTIONS: ReadonlyArray<{ value: FirstPublicationResponse; label: string }> = [
+const FIRST_PUBLICATION_FEEDBACK_OPTIONS: ReadonlyArray<
+  FeedbackPromptOption & { readonly value: FirstPublicationResponse }
+> = [
   { value: 'easy', label: 'Fácil' },
   { value: 'reasonable', label: 'Razoável' },
   { value: 'difficult', label: 'Difícil' },
 ];
-const FIRST_PUBLICATION_DIFFICULT_RESPONSE: FirstPublicationResponse = 'difficult';
+const FIRST_PUBLICATION_OPTIONS_WITH_DETAIL: readonly FirstPublicationResponse[] = ['difficult'];
 
 export function RepresentativeHub({
   representative,
   catalog,
   subscriptionActive,
   showFirstPublicationFeedback = false,
+  showValuePerceptionFeedback = false,
 }: {
   representative: Representative;
   catalog: readonly RepresentativeCatalogEntry[];
   subscriptionActive: boolean;
   /** SET-61 — set by `/app/paginas` once eligibility (published before, context unresolved) is known server-side. */
   showFirstPublicationFeedback?: boolean;
+  /**
+   * SET-62 — set by `/app/paginas` once eligibility (14+ days since first
+   * publication, at least one real visit, context unresolved) is known
+   * server-side. The caller is responsible for never passing this `true` at
+   * the same time as `showFirstPublicationFeedback` — the two contexts must
+   * never overlap on screen.
+   */
+  showValuePerceptionFeedback?: boolean;
 }) {
   const rootHost = new URL(SITE_URL).hostname;
   const profileComplete = isRepresentativeProfileComplete(representative);
@@ -88,8 +108,16 @@ export function RepresentativeHub({
           context="first_publication"
           question="Como foi criar sua página?"
           options={FIRST_PUBLICATION_FEEDBACK_OPTIONS}
-          optionWithDetail={FIRST_PUBLICATION_DIFFICULT_RESPONSE}
+          optionsWithDetail={FIRST_PUBLICATION_OPTIONS_WITH_DETAIL}
           detailLabel="O que mais dificultou? (opcional)"
+        />
+      ) : showValuePerceptionFeedback ? (
+        <FeedbackPrompt
+          context="value_perception"
+          question={VALUE_PERCEPTION_FEEDBACK_QUESTION}
+          options={VALUE_PERCEPTION_FEEDBACK_OPTIONS}
+          optionsWithDetail={VALUE_PERCEPTION_OPTIONS_WITH_DETAIL}
+          detailLabel={VALUE_PERCEPTION_DETAIL_LABEL}
         />
       ) : null}
 

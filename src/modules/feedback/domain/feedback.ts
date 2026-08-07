@@ -17,6 +17,14 @@ export type FeedbackContext = 'first_publication' | 'value_perception' | 'cancel
  */
 export type FirstPublicationResponse = 'easy' | 'reasonable' | 'difficult';
 
+/**
+ * SET-62's one-click answers to "A SETNAR está ajudando você a divulgar seu
+ * trabalho?" — same role `FirstPublicationResponse` plays for SET-61,
+ * validated server-side by `resolve_feedback` scoped to
+ * `context: 'value_perception'`.
+ */
+export type ValuePerceptionResponse = 'yes' | 'partly' | 'no';
+
 /** Free-text complement to any response — same 140-character ceiling the migration's CHECK enforces. */
 export const FEEDBACK_DETAIL_MAX_LENGTH = 140;
 

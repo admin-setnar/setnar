@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
-import { hasPublishedAtLeastOnce, isFirstPublicationFeedbackEligible } from '@/modules/feedback/domain/first-publication-eligibility';
-import { getFeedbackGateway } from '@/modules/feedback/infrastructure/feedback-gateway-factory';
+import { resolveFirstPublicationFeedbackEligibility } from '@/modules/feedback/presentation/resolve-first-publication-eligibility';
+import { resolveValuePerceptionFeedbackEligibility } from '@/modules/feedback/presentation/resolve-value-perception-eligibility';
 import { getRepresentativeAccountRepository } from '@/modules/representatives/infrastructure/representative-account-repository-factory';
 import { getRepresentativeCatalogRepository } from '@/modules/representatives/infrastructure/representative-catalog-repository-factory';
 import { OnboardingForm } from '@/modules/representatives/presentation/onboarding-form';
@@ -33,19 +33,20 @@ export default async function PagesPage() {
   }
 
   const catalogRepository = await getRepresentativeCatalogRepository();
-  const [catalog, subscriptionActive] = await Promise.all([
+  // The value-perception signals read only needs `representative.id` — it
+  // has no dependency on `catalog`, so it runs in the same batch instead of
+  // waiting on it first (a prior version awaited it only after the
+  // first-publication check, serializing a read that did not need to be).
+  const [catalog, subscriptionActive, valuePerceptionEligible] = await Promise.all([
     catalogRepository.listOwnCatalog(user.id),
     catalogRepository.isSubscriptionActive(representative.id),
+    resolveValuePerceptionFeedbackEligibility(representative.id),
   ]);
 
-  // SET-61: `isFirstPublicationFeedbackEligible` is the tested rule
-  // (`modules/feedback/domain/first-publication-eligibility.ts`). The
-  // resolved-state read only runs when publishing has happened at least
-  // once — no reason to query `feedback_responses` for a representative who
-  // could not be eligible regardless of its answer.
-  const firstPublicationFeedbackResolved = hasPublishedAtLeastOnce(catalog)
-    ? await (await getFeedbackGateway()).isResolved('first_publication')
-    : true;
+  // SET-61's own check needs `catalog`, so it cannot join the batch above.
+  const showFirstPublicationFeedback = await resolveFirstPublicationFeedbackEligibility(catalog);
+  // SET-62: never shown alongside SET-61's own prompt.
+  const showValuePerceptionFeedback = !showFirstPublicationFeedback && valuePerceptionEligible;
 
   return (
     <div className="space-y-7">
@@ -57,7 +58,8 @@ export default async function PagesPage() {
         representative={representative}
         catalog={catalog}
         subscriptionActive={subscriptionActive}
-        showFirstPublicationFeedback={isFirstPublicationFeedbackEligible(catalog, firstPublicationFeedbackResolved)}
+        showFirstPublicationFeedback={showFirstPublicationFeedback}
+        showValuePerceptionFeedback={showValuePerceptionFeedback}
       />
     </div>
   );
