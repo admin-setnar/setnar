@@ -162,6 +162,37 @@ describe('professional profile RPC (Postgres, integration)', { skip: !canRun }, 
     });
   });
 
+  it('never touches profiles.full_name — representatives.display_name is edited independently (SET-12)', async () => {
+    const { data: before, error: beforeError } = await service!
+      .from('profiles')
+      .select('full_name')
+      .eq('id', ownerId)
+      .single();
+    assert.equal(beforeError, null);
+
+    const { data, error } = await owner!.rpc(
+      'update_representative_profile',
+      profileArgs({ p_display_name: 'Nome Público Editado De Novo' }),
+    );
+    assert.equal(error, null);
+    assert.equal(data?.[0]?.status, 'updated');
+
+    const { data: representativeRow } = await service!
+      .from('representatives')
+      .select('display_name')
+      .eq('id', representativeId)
+      .single();
+    assert.equal(representativeRow?.display_name, 'Nome Público Editado De Novo');
+
+    const { data: after, error: afterError } = await service!
+      .from('profiles')
+      .select('full_name')
+      .eq('id', ownerId)
+      .single();
+    assert.equal(afterError, null);
+    assert.equal(after?.full_name, before?.full_name, 'editing the public name must never rewrite the profiles row');
+  });
+
   it('prevents even a privileged direct write from clearing the phone', async () => {
     const { error } = await service!.from('representatives').update({ phone: null }).eq('id', representativeId);
     assert.ok(error);
