@@ -6,9 +6,6 @@
  */
 export const DOCUMENT_ID_PATTERN = /^\d{11}$|^\d{14}$/;
 
-/** CEP brasileiro, só dígitos. */
-export const POSTAL_CODE_PATTERN = /^\d{8}$/;
-
 export function stripNonDigits(value: string): string {
   return value.replace(/\D/g, '');
 }

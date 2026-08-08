@@ -5,7 +5,7 @@ interface CheckoutErrorCopy {
   readonly description?: string;
 }
 
-export type StartCheckoutFailure = Exclude<StartCheckoutResult, { status: 'pending' }>;
+export type StartCheckoutFailure = Exclude<StartCheckoutResult, { status: 'redirect' }>;
 
 const GENERIC_ERROR_COPY: CheckoutErrorCopy = {
   title: 'Não foi possível concluir agora',
@@ -15,9 +15,7 @@ const GENERIC_ERROR_COPY: CheckoutErrorCopy = {
 const REJECTION_MESSAGES: Record<Extract<StartCheckoutResult, { status: 'rejected' }>['reason'], CheckoutErrorCopy> = {
   invalid_document: { title: 'CPF ou CNPJ inválido', description: 'Confira o documento informado e tente novamente.' },
   duplicate_customer: GENERIC_ERROR_COPY,
-  card_declined: { title: 'Cartão recusado', description: 'Confira os dados do cartão ou tente outro cartão.' },
-  invalid_card: { title: 'Dados do cartão inválidos', description: 'Confira o número, validade e código de segurança.' },
-  invalid_holder_data: { title: 'Dados do titular inválidos', description: 'Confira nome, CEP e número do endereço.' },
+  invalid_customer: GENERIC_ERROR_COPY,
 };
 
 export function checkoutErrorCopy(failure: StartCheckoutFailure): CheckoutErrorCopy {

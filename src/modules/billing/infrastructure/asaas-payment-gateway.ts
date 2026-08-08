@@ -2,24 +2,21 @@ import 'server-only';
 
 import type {
   CancelSubscriptionResult,
+  CreateCheckoutInput,
+  CreateCheckoutResult,
   CreateCustomerInput,
   CreateCustomerResult,
-  CreateSubscriptionInput,
-  CreateSubscriptionResult,
   PaymentGateway,
 } from '@/modules/billing/domain/payment-gateway';
 import {
+  mapAsaasCheckoutError,
   mapAsaasCustomerError,
-  mapAsaasSubscriptionError,
   type AsaasErrorResponseLike,
 } from '@/modules/billing/infrastructure/map-asaas-error';
 
 /**
  * Config lida uma única vez pela factory (`asaas-payment-gateway-factory.ts`)
- * e injetada aqui — o adapter nunca lê `process.env` diretamente, mesmo
- * padrão de todo outro adapter deste projeto que precisa de segredo.
- * `apiKey` nunca deve ser logado nem incluído em nenhum erro que cruze o
- * boundary do módulo.
+ * e injetada aqui — o adapter nunca lê `process.env` diretamente.
  */
 export interface AsaasConfig {
   readonly apiKey: string;
@@ -29,16 +26,16 @@ export interface AsaasConfig {
 /**
  * Adapter de infraestrutura para o Asaas (SET-27,
  * `docs/plans/BILLING_DECISIONS_PLAN.md` §2.3). Chama a REST API via
- * `fetch` diretamente — este projeto não depende do SDK do Asaas, então
- * "restringir o SDK à infraestrutura" (critério de aceite do SET-27)
- * significa simplesmente que nenhuma chamada HTTP nem vocabulário do Asaas
- * (`cpfCnpj`, `billingType`, `creditCardHolderInfo`, códigos `PAYMENT_*`)
- * escapa deste arquivo — o domínio só vê `PaymentGateway`.
+ * `fetch` diretamente — nenhuma chamada HTTP nem vocabulário do Asaas
+ * escapa deste arquivo, o domínio só vê `PaymentGateway`.
+ *
+ * **Revisado no mesmo dia da primeira versão** para usar o Checkout Asaas
+ * hospedado em vez de enviar dados de cartão inline — ver o comentário em
+ * `domain/payment-gateway.ts` para o porquê (exposição a SAQ-D, PCI-DSS).
  *
  * Header de autenticação é `access_token` (confirmado contra
- * docs.asaas.com em 2026-08-08) — **diferente** do header
- * `asaas-access-token` que o Asaas usa para autenticar as requisições que
- * ELE envia a nós (webhook, SET-29). Não confundir os dois.
+ * docs.asaas.com) — diferente do header `asaas-access-token` que o Asaas
+ * usa para autenticar as requisições que ELE envia a nós (webhook, SET-29).
  */
 export class AsaasPaymentGateway implements PaymentGateway {
   constructor(private readonly config: AsaasConfig) {}
@@ -62,38 +59,47 @@ export class AsaasPaymentGateway implements PaymentGateway {
     return { status: 'error' };
   }
 
-  async createSubscription(input: CreateSubscriptionInput): Promise<CreateSubscriptionResult> {
-    const response = await this.post('/v3/subscriptions', {
-      customer: input.externalCustomerId,
-      billingType: 'CREDIT_CARD',
-      value: input.amount.amountCents / 100,
-      nextDueDate: input.nextDueDate,
-      cycle: 'MONTHLY',
-      creditCard: {
-        holderName: input.card.holderName,
-        number: input.card.number,
-        expiryMonth: input.card.expiryMonth,
-        expiryYear: input.card.expiryYear,
-        ccv: input.card.ccv,
+  /**
+   * `chargeTypes: ['RECURRENT']` + o objeto `subscription` fazem o Asaas
+   * criar, assim que o cliente pagar na página hospedada, uma assinatura
+   * normal com cobrança mensal automática — a partir daí ela se comporta
+   * como qualquer `subscription` do Asaas, gerando os eventos `PAYMENT_*`
+   * de sempre. `externalReference` é o `id` local (`localSubscriptionId`),
+   * devolvido dentro do payload do webhook `CHECKOUT_PAID` (SET-29/30) —
+   * é assim que a linha local é encontrada, já que nenhum id do Asaas
+   * existe ainda neste momento.
+   */
+  async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
+    const response = await this.post('/v3/checkouts', {
+      billingTypes: ['CREDIT_CARD'],
+      chargeTypes: ['RECURRENT'],
+      externalReference: input.localSubscriptionId,
+      callback: {
+        successUrl: input.callback.successUrl,
+        cancelUrl: input.callback.cancelUrl,
+        expiredUrl: input.callback.expiredUrl,
       },
-      creditCardHolderInfo: {
-        name: input.cardHolder.name,
-        cpfCnpj: input.cardHolder.documentId,
-        email: input.cardHolder.email,
-        phone: input.cardHolder.phone,
-        postalCode: input.cardHolder.postalCode,
-        addressNumber: input.cardHolder.addressNumber,
+      items: [
+        {
+          name: 'Assinatura SETNAR',
+          description: 'Assinatura mensal da plataforma SETNAR',
+          value: input.amount.amountCents / 100,
+        },
+      ],
+      customer: input.externalCustomerId,
+      subscription: {
+        cycle: 'MONTHLY',
       },
     });
 
     if (response.ok) {
-      const body = (await response.json()) as { id?: string };
-      if (!body.id) return { status: 'error' };
-      return { status: 'created', externalSubscriptionId: body.id };
+      const body = (await response.json()) as { id?: string; link?: string };
+      if (!body.id || !body.link) return { status: 'error' };
+      return { status: 'created', checkoutUrl: body.link, externalCheckoutId: body.id };
     }
 
     const errorBody = await this.readErrorBody(response);
-    const reason = mapAsaasSubscriptionError(errorBody);
+    const reason = mapAsaasCheckoutError(errorBody);
     if (reason) return { status: 'rejected', reason };
     return { status: 'error' };
   }

@@ -1,48 +1,37 @@
-import type { CardDetails, CardHolderInfo, PaymentGateway } from '@/modules/billing/domain/payment-gateway';
+import type { CheckoutCallbackUrls, PaymentGateway } from '@/modules/billing/domain/payment-gateway';
 import type { SubscriptionGateway } from '@/modules/billing/domain/subscription-gateway';
 
 export interface StartCheckoutInput {
-  readonly card: CardDetails;
-  readonly cardHolder: CardHolderInfo;
+  readonly holderName: string;
+  readonly holderDocumentId: string;
+  readonly holderEmail: string;
+  readonly callback: CheckoutCallbackUrls;
 }
 
 export type StartCheckoutResult =
-  | { readonly status: 'pending' }
+  | { readonly status: 'redirect'; readonly checkoutUrl: string }
   | { readonly status: 'already_active' }
   | { readonly status: 'sold_out' }
-  | {
-      readonly status: 'rejected';
-      readonly reason: 'invalid_document' | 'duplicate_customer' | 'card_declined' | 'invalid_card' | 'invalid_holder_data';
-    }
+  | { readonly status: 'rejected'; readonly reason: 'invalid_document' | 'duplicate_customer' | 'invalid_customer' }
   | { readonly status: 'error' };
 
 /**
- * Orquestra o checkout do plano único (SET-28):
+ * Orquestra o início do checkout do plano único (SET-28), via Checkout
+ * Asaas hospedado:
  *
- * 1. Reserva a vaga/preço ANTES de tocar o gateway (nunca cobra sem uma
- *    linha local correspondente — ver a migration `20260824000000`).
- * 2. Cria o customer + a assinatura no Asaas com os dados do cartão.
- * 3. Grava os ids externos na linha já reservada.
+ * 1. Reserva a vaga/preço ANTES de tocar o gateway (nunca cria um checkout
+ *    sem uma linha local correspondente — migration `20260824000000`).
+ * 2. Cria o customer no Asaas (nome/documento/e-mail — nenhum dado de
+ *    cartão nunca passa por aqui).
+ * 3. Cria o checkout (`chargeTypes: ['RECURRENT']`), com o `id` local como
+ *    `externalReference`.
  *
- * O sucesso devolve `'pending'`, nunca `'active'` — só o webhook (SET-29/30),
- * reagindo ao pagamento de verdade, concede entitlement
- * (`BILLING_DECISIONS_PLAN.md`, "redirect não concede entitlement").
- *
- * **Simplificação aceita para esta primeira versão:** um `createCustomer`
- * novo é chamado a cada tentativa, mesmo em retry — não reaproveita um
- * `external_customer_id` de uma tentativa anterior. Pode criar customers
- * duplicados no Asaas entre retries; não é um problema de dinheiro ou
- * segurança, só de limpeza operacional, e fica como polimento futuro, não
- * bloqueador.
- *
- * **Risco residual, coberto por SET-33 (reconciliação), não por aqui:** se
- * `recordExternalIds` falhar DEPOIS de `createSubscription` já ter sucesso
- * no Asaas, a linha local fica sem os ids externos enquanto uma assinatura
- * real existe no gateway — o webhook (SET-29/30) não vai conseguir casar o
- * evento a nenhuma linha até uma reconciliação manual religar os dois
- * lados. Uma janela rara (duas chamadas autenticadas ao próprio banco,
- * sequenciais, depois de uma chamada externa já confirmada), não vale a
- * complexidade de uma transação compensatória para o MVP.
+ * O sucesso devolve a URL do checkout hospedado para o chamador
+ * redirecionar — nunca `'active'`. Só o webhook (SET-29/30), reagindo ao
+ * evento `CHECKOUT_PAID` de verdade, concede entitlement
+ * (`BILLING_DECISIONS_PLAN.md`, "redirect não concede entitlement"; aqui
+ * nem existe uma confirmação síncrona de pagamento para conceder — o
+ * cliente ainda nem chegou na página do Asaas neste ponto).
  */
 export async function startCheckout(
   subscriptionGateway: SubscriptionGateway,
@@ -56,31 +45,23 @@ export async function startCheckout(
   if (reservation.status !== 'reserved') return { status: 'error' };
 
   const customer = await paymentGateway.createCustomer({
-    name: input.cardHolder.name,
-    documentId: input.cardHolder.documentId,
-    email: input.cardHolder.email,
+    name: input.holderName,
+    documentId: input.holderDocumentId,
+    email: input.holderEmail,
   });
 
   if (customer.status === 'rejected') return { status: 'rejected', reason: customer.reason };
   if (customer.status !== 'created') return { status: 'error' };
 
-  const subscription = await paymentGateway.createSubscription({
+  const checkout = await paymentGateway.createCheckout({
     externalCustomerId: customer.externalCustomerId,
-    paymentMethod: 'credit_card',
     amount: { amountCents: reservation.amountCents, currency: 'BRL' },
-    nextDueDate: new Date().toISOString().slice(0, 10),
-    card: input.card,
-    cardHolder: input.cardHolder,
+    localSubscriptionId: reservation.localSubscriptionId,
+    callback: input.callback,
   });
 
-  if (subscription.status === 'rejected') return { status: 'rejected', reason: subscription.reason };
-  if (subscription.status !== 'created') return { status: 'error' };
+  if (checkout.status === 'rejected') return { status: 'rejected', reason: checkout.reason };
+  if (checkout.status !== 'created') return { status: 'error' };
 
-  const recorded = await subscriptionGateway.recordExternalIds(
-    customer.externalCustomerId,
-    subscription.externalSubscriptionId,
-  );
-  if (recorded.status !== 'updated') return { status: 'error' };
-
-  return { status: 'pending' };
+  return { status: 'redirect', checkoutUrl: checkout.checkoutUrl };
 }
