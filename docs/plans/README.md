@@ -52,6 +52,7 @@ executed. Never invent a baseline.
 | [`QR_ANALYTICS_PLAN.md`](QR_ANALYTICS_PLAN.md) | Approved — partially implemented | QR1 + AN1–AN5 shipped (ADR-049…054). **AN6 (showing statistics) and AN7 (retention) are not built** — analytics is write-only today. |
 | [`SPRINT_E_PLAN.md`](SPRINT_E_PLAN.md) | Approved — partially implemented | E1, E2 and E4 shipped (ADR-063/064). E3, E5 and E6 open. Subscription is enforced on publication/public read, and the hub reflects public availability; activation remains manual. |
 | [`COMMERCIAL_PAGE_CONTENT_PLAN.md`](COMMERCIAL_PAGE_CONTENT_PLAN.md) | Proposed — partially implemented, **open decisions** | CP3 and CP9 shipped; CP9 is an unapproved prototype. The iGreen brand-usage question (CP1) is unresolved. |
+| [`BILLING_DECISIONS_PLAN.md`](BILLING_DECISIONS_PLAN.md) | Proposed — **open decisions** | Gateway, price/periodicity, payment methods, and billing-failure/cancellation policy for the single plan (Linear SET-6/22/23/24/25). Nothing implemented yet — decisions pending the Product Owner. |
 | [`archive/SPRINT_D_PLAN.md`](archive/SPRINT_D_PLAN.md) | Implemented — archived | D1–D5 shipped (ADR-037…047). Kept for the reasoning, not as pending work. |
 
 `archive/` holds plans that are finished or superseded. Nothing is deleted:
