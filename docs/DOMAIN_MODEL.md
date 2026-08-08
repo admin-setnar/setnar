@@ -794,7 +794,7 @@ Domain Services represent business processes that do not belong naturally to a s
 
 # 14. State Machines
 
-> **Status (§ 3.1).** **14.1 (Commercial Page)** is real, in a narrower form: publication is gated on four ordered preconditions (active Representative, active Subscription, display name, phone), and an inactive Subscription hides an already-published page on read rather than transitioning it to Unpublished — there is still no reactive process that rewrites the stored state. **14.2 (Lead Pipeline)** is Conceptual in full: no Lead has a status, because there is no pipeline. **14.3 (Subscription)** exists as stored values changed by hand; there is no automated lifecycle, no grace period and no billing event to drive one. **14.4 (Product)** reflects seeded data, not a managed lifecycle.
+> **Status (§ 3.1).** **14.1 (Commercial Page)** is real, in a narrower form: publication is gated on four ordered preconditions (active Representative, active Subscription, display name, phone), and an inactive Subscription hides an already-published page on read rather than transitioning it to Unpublished — there is still no reactive process that rewrites the stored state. **14.2 (Lead Pipeline)** is Conceptual in full: no Lead has a status, because there is no pipeline. **14.3 (Subscription)** exists as stored values changed by hand; `is_subscription_active()` already evaluates the grace-until-period-end rule live (SET-26), but no billing event yet drives a transition automatically — that is SET-29/30, not shipped. **14.4 (Product)** reflects seeded data, not a managed lifecycle.
 
 ### 14.1 Commercial Page
 
@@ -830,18 +830,31 @@ Domain Services represent business processes that do not belong naturally to a s
 
 ### 14.3 Subscription (Platform-level)
 
-**States:** Activated → Active → Suspended → Canceled (Suspended can return to Active)
+> **Status update (2026-08-08).** The transitions below are the approved
+> policy (`docs/plans/BILLING_DECISIONS_PLAN.md` §5, confirmed by the
+> Product Owner) that SET-26 onward implements — they replace the earlier
+> `[Inferred]` version of this section, which assumed immediate cancellation
+> and a terminal Canceled state. As of SET-26, the schema
+> (`subscriptions.current_period_end`, `is_subscription_active()`) already
+> supports the grace-until-period-end and reactivation transitions described
+> here; the webhook-driven automation that writes these transitions from
+> real payment events (SET-29/30) has not shipped yet — until it does,
+> `Suspended`/grace-period `Canceled` still only happen by manual write.
+
+**States:** Activated → Active → Suspended → Canceled (Suspended can return to Active; Canceled can return to Active by resubscribing)
 
 ```
 [Activated] --(first successful payment)--> [Active]
-[Active] --(payment fails / lapses)--> [Suspended]
+[Active] --(all of the gateway's own retry attempts fail)--> [Suspended]
 [Suspended] --(payment resolved)--> [Active]
-[Suspended] --(grace period expires / customer cancels)--> [Canceled]
-[Active] --(customer cancels)--> [Canceled]
+[Active] --(customer cancels)--> [Canceled, access retained until current_period_end]
+[Canceled] --(current_period_end passes with no reactivation)--> access revoked, row remains Canceled
+[Canceled] --(customer resubscribes, any time)--> [Active]
 ```
 
-**Permitted transitions:** Activated→Active; Active↔Suspended; Active/Suspended→Canceled.
-**Forbidden transitions:** Canceled is terminal — a Canceled Subscription cannot return to Active; a new Subscription must be created instead. *[Inferred]*
+**Permitted transitions:** Activated→Active; Active↔Suspended; Active/Suspended→Canceled; Canceled→Active.
+**Forbidden transitions:** None absolute. The earlier rule ("Canceled is terminal, a new Subscription must be created") does not hold in this schema: `subscriptions.representative_id` is `unique` — there is exactly one row per Representative, reused by UPSERT for every transition, including reactivation after cancellation (same mechanism already used for reactivation after suspension). A Canceled Subscription regains Active by the same UPSERT a first-time subscriber uses, not by creating a second row.
+**Grace semantics:** Cancellation does not immediately revoke access. `current_period_end` (already present on the row, populated by the gateway's confirmed-payment event) marks the boundary; access is granted while `status = 'active'` OR (`status = 'canceled'` AND `current_period_end` is in the future) — evaluated live on every read, not by a scheduled job (this project has none by design, `docs/plans/SPRINT_E_PLAN.md` §2.4).
 **Business rule:** Active is the only Status under which owned Commercial Pages may be Published (Rule 21).
 
 ### 14.4 Product
