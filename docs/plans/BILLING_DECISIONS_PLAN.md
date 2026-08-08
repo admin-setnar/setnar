@@ -20,7 +20,10 @@ reversão alto, as opções vêm lado a lado, com prós/contras, e a escolha é 
 Pedro. Cobre as quatro sub-issues de decisão do milestone "Decisões
 bloqueadoras de billing" (Linear SET-6): **SET-22** (preço/periodicidade),
 **SET-23** (gateway), **SET-24** (meios de pagamento), **SET-25** (política de
-falha de cobrança e cancelamento).
+falha de cobrança e cancelamento) — e, em §6, os requisitos de
+extensibilidade que essas decisões precisam deixar prontos para SET-26/27/28/29
+(novos meios de pagamento e novos preços, sem refatoração), sem reabrir
+nenhum "fora de escopo" do SET-6.
 
 ---
 
@@ -310,7 +313,86 @@ suficiente que `is_subscription_active()` olhe só para `status`.
 
 ---
 
-# 6. Resumo das recomendações (para revisão rápida do Pedro)
+# 6. Preparando o terreno para expansão (Pix, novos preços) sem refatoração
+
+Pedido explícito do Pedro ao fechar este documento: as decisões acima
+resolvem o lançamento com **um** meio de pagamento e **um** preço, mas a
+implementação (SET-26/27/28/29) não pode assumir "sempre vai ser só isso" de
+um jeito que exija reescrever código quando Pix Automático ou um segundo
+preço entrarem. **Isto não reabre o "fora de escopo" do SET-6** —
+múltiplos tiers, upgrade/downgrade, proration e UI de seleção de plano
+continuam fora do MVP. O pedido é só que o *dado* e o *boundary* não
+fiquem hardcoded para um caso só, para que adicionar o segundo caso seja
+aditivo (nova migration `ALTER`, novo `case`), não uma reescrita.
+
+## 6.1 Meios de pagamento — o que SET-26/27/28/29 devem fazer
+
+- **`subscriptions` grava um `payment_method` explícito desde a primeira
+  migration**, mesmo que hoje só exista um valor legal (`'credit_card'`).
+  Um `CHECK` com um único valor permitido documenta a decisão de negócio
+  atual sem impedir a próxima: ampliar para aceitar `'pix_automatico'`
+  depois é `drop constraint` + `add constraint` (mesmo padrão que
+  `SPRINT_E_PLAN.md` §3.1 já usou para o status de Subscription — nunca
+  editar a migration antiga), não uma coluna nova nem uma migração de
+  dado. Sem esse campo desde já, a implementação inicial não teria onde
+  gravar "este cliente pagou de que jeito", e isso *seria* uma refatoração
+  de schema depois.
+- **A porta do gateway (SET-27) não deve expor um método específico de
+  cartão** (tipo `createCreditCardSubscription(cardToken)`). O contrato
+  deve ser genérico o bastante para caber os dois casos — algo como
+  `createSubscription({ representativeId, amount, paymentMethod, ... })` —
+  mesmo que a única implementação de hoje (`AsaasGateway`, ou nome
+  equivalente) só saiba lidar com `'credit_card'` e rejeite qualquer outro
+  valor explicitamente. O ponto não é implementar Pix agora — é que a
+  *assinatura* do port já não amarre "pagamento" a "cartão" como sinônimos.
+- **Boa notícia levantada na pesquisa:** os webhooks do Asaas já são por
+  cobrança (`PAYMENT_*`), independente do meio que gerou a cobrança — Pix
+  Automático usa os mesmos eventos que cartão, só muda como a cobrança foi
+  criada. Isso quer dizer que **SET-29 (webhook) não precisa de nenhum
+  desenho especial** para Pix entrar depois — o handler que decide
+  `active`/`suspended` a partir de `PAYMENT_*` já serve para os dois meios
+  sem alteração.
+
+## 6.2 Preços/planos — o que SET-26/28 devem fazer
+
+Já decidido em §4.4, reforçado aqui como requisito explícito de arquitetura:
+**o preço nunca deve ser lido de uma constante fixa no código** (nem em
+`SET_PLAN_PRICE = 27.90`, nem embutido na chamada ao gateway). Ele é
+**gravado por linha em `subscriptions`** (`amount` + `currency` — que é
+exatamente o Value Object "Money/Commission Value" que `DOMAIN_MODEL.md`
+§9 já reserva como placeholder para Billing, então nomear o campo assim é
+seguir uma decisão de domínio que já existe, não inventar uma nova) no
+momento em que a Subscription nasce, decidido pela regra de negócio vigente
+naquele instante (hoje: "é uma das 30 primeiras? R$27,90. Senão, bloqueia" —
+SET-28 decide onde essa checagem mora).
+
+Com o preço gravado por linha desde o dia um:
+
+- **Introduzir um preço padrão pós-lançamento** (a decisão em aberto do
+  §4.4) é só mudar a regra que SET-28 usa para decidir `amount` na criação —
+  nenhuma Subscription existente muda, porque cada uma já carrega o próprio
+  valor.
+- **Se um dia existir mais de um plano "de verdade"** (ex.: Stage 5,
+  Enterprise, ou um segundo tier de Digital Office), o caminho aditivo é uma
+  tabela `plans` nova e uma coluna opcional `plan_id` em `subscriptions` —
+  o `amount` continua sendo a fonte da verdade do que foi cobrado
+  (histórico nunca muda retroativamente), `plan_id` só documenta "de qual
+  oferta isso veio". Nenhuma dessas duas colunas competem — não é preciso
+  decidir a tabela `plans` agora, só não fechar a porta gravando o preço em
+  qualquer lugar que não seja a própria linha da Subscription.
+
+## 6.3 O que isto explicitamente não é
+
+Não é luz verde para construir um seletor de planos, uma tela de upgrade, ou
+qualquer UI nova — `PRODUCT.md`/SET-6 continuam dizendo que isso é fora do
+MVP. É unicamente: nomear os campos certos e desenhar o port do jeito certo
+*agora*, porque o custo de fazer isso na primeira migration é quase zero e
+o custo de fazer depois, com Subscriptions reais já ativas em produção, não
+é.
+
+---
+
+# 7. Resumo das recomendações (para revisão rápida do Pedro)
 
 | Decisão | Issue | Recomendação | Reversibilidade se errado |
 |---|---|---|---|
@@ -320,10 +402,11 @@ suficiente que `is_subscription_active()` olhe só para `status`.
 | Periodicidade | SET-22 | **Só mensal — decidido** | Alta — anual pode ser adicionado depois sem quebrar nada |
 | Falha de cobrança | SET-25 | **Decidido** — suspender assim que o Asaas esgotar as 5 tentativas (~2 dias após vencimento), sem tolerância extra; reaproveita E1/E4 já implementados | Alta — é um parâmetro reativo a webhook, não uma migration |
 | Cancelamento | SET-25 | **Decidido** — efetivo no fim do ciclo pago; requer estado `canceled` distinto de `suspended` e data de vigência | Média — muda o enum de `subscriptions.status` e adiciona uma data, mas é aditivo |
+| Extensibilidade (meios de pagamento e preços) | SET-26/27/28/29 | **Requisito registrado** (§6) — `payment_method` e `amount`/`currency` gravados por linha desde a primeira migration; port do gateway não assume cartão | Alta — é nomear campos certos agora; não fazer isso é que gera refatoração depois |
 
 ---
 
-# 7. O que falta para fechar SET-6
+# 8. O que falta para fechar SET-6
 
 Segundo os critérios de aceite do próprio SET-6:
 
