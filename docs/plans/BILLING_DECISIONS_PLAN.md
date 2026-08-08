@@ -8,7 +8,7 @@
 > §2.4 registrou ("não existe infraestrutura de job/webhook neste projeto") e
 > deixou consciente para este momento
 
-**Status:** Proposed — SET-23 (gateway), SET-22 (preço/periodicidade) e SET-25 (falha/cancelamento) decididos; só SET-24 (meios de pagamento) segue aberto
+**Status:** Approved — as quatro decisões (SET-22/23/24/25) estão fechadas; falta apenas mover as issues para `Done` no Linear
 **Authority:** Non-normative (ver `docs/plans/README.md`)
 **Code baseline:** `9859330`, branch `admin/set-11-corrigir-canonical-e-open-graph-das-paginas-publicas` (`main` no mesmo commit na prática — SET-11 já mergeado), em 2026-08-08.
 **Last reviewed:** 2026-08-08
@@ -20,7 +20,10 @@ reversão alto, as opções vêm lado a lado, com prós/contras, e a escolha é 
 Pedro. Cobre as quatro sub-issues de decisão do milestone "Decisões
 bloqueadoras de billing" (Linear SET-6): **SET-22** (preço/periodicidade),
 **SET-23** (gateway), **SET-24** (meios de pagamento), **SET-25** (política de
-falha de cobrança e cancelamento).
+falha de cobrança e cancelamento) — e, em §6, os requisitos de
+extensibilidade que essas decisões precisam deixar prontos para SET-26/27/28/29
+(novos meios de pagamento e novos preços, sem refatoração), sem reabrir
+nenhum "fora de escopo" do SET-6.
 
 ---
 
@@ -115,13 +118,10 @@ ADR-041), para que uma eventual migração de provedor no futuro não vaze para
   (ninguém cobra automaticamente).
 - **Pix Automático.** Modalidade nova do Banco Central, em produção desde
   junho de 2025, com prazo regulatório de adequação em 1º de janeiro de 2026
-  para quem usava débito automático tradicional — ou seja, **está no ar
-  agora**, não é uma aposta de médio prazo. Adesão de 73% entre clientes que
-  receberam o pedido de autorização direto no app do banco, segundo dado do
-  próprio setor. Taxas na casa de centavos/percentuais bem baixos (0,22–0,35%
-  citado por uma fonte). Ainda é a modalidade mais nova das três — vale
-  confirmar cobertura em ambos os gateways candidatos antes de depender dela
-  como único meio.
+  para quem usava débito automático tradicional — ou seja, está no ar agora,
+  não é uma aposta de médio prazo. Adesão de 73% entre clientes que receberam
+  o pedido de autorização direto no app do banco, segundo dado do próprio
+  setor.
 - **Boleto.** Ruim para recorrência automática por natureza: reemissão manual
   a cada ciclo, compensação em D+1/D+2, e é o meio com maior taxa de
   inadimplência do mercado. Só faz sentido se o público-alvo tiver parcela
@@ -129,21 +129,41 @@ ADR-041), para que uma eventual migração de provedor no futuro não vaze para
   representantes comerciais autorizados (perfil profissional, não
   desbancarizado).
 
-## 3.2 Recomendação
+## 3.2 O que mudou depois de SET-23 fechar em Asaas
 
-**Cartão de crédito como meio primário (obrigatório para o MVP funcionar sem
-job próprio), Pix Automático como meio alternativo assim que confirmada a
-cobertura no gateway escolhido, boleto fora do escopo do MVP.**
+Levantei a mecânica real do Pix Automático no Asaas, e ela pesa contra
+incluí-lo já no lançamento:
 
-Justificativa: cartão é o único meio, hoje, com recorrência automática
-comprovada nos dois gateways candidatos e sem dependência de o banco do
-cliente já ter aderido ao Pix Automático. Excluir boleto reduz superfície de
-inadimplência e de suporte (reemissão manual) num momento em que o produto
-não tem operação para lidar com isso. Pix Automático deve ser reavaliado como
-meio adicional — não substituto — assim que SET-23 estiver fechado, checando
-a documentação de API do gateway escolhido especificamente para esse fluxo
-(a integração de Pix Automático via API ainda é mais nova que a de cartão em
-ambos os candidatos).
+- **Elegibilidade gradual, não garantida.** O Asaas libera Pix Automático
+  para contas PJ progressivamente, seguindo critérios do próprio Banco
+  Central — a conta do SETNAR ainda não existe no Asaas, então não há como
+  confirmar hoje que ela nasce elegível.
+- **Fluxo de consentimento em duas etapas ("Jornada 3"), diferente do
+  cartão.** O pagador paga a primeira cobrança via Pix normal e só depois é
+  convidado a autorizar o Pix Automático para as próximas — não é "ativa e
+  já está recorrente" como o cartão tokenizado. Isso é uma segunda jornada
+  de checkout inteira, não uma opção a mais no mesmo formulário.
+
+## 3.3 Decisão — **confirmada por Pedro em 2026-08-08**
+
+**Só cartão de crédito no lançamento. Pix Automático fica para uma iteração
+seguinte, assim que a conta Asaas do SETNAR confirmar elegibilidade. Boleto
+fora do escopo do MVP.**
+
+Justificativa: cartão é o único meio garantido — não depende de elegibilidade
+de conta que ainda não existe, nem de uma segunda jornada de consentimento
+inteira dentro do SET-28 (checkout). Construir os dois fluxos de pagamento
+antes de saber se a conta Asaas é elegível para o segundo é o mesmo tipo de
+risco que o próprio SET-6 nomeia para o gateway: acoplar implementação a algo
+ainda não confirmado. Excluir boleto reduz superfície de inadimplência e de
+suporte (reemissão manual) num momento em que o produto não tem operação
+para lidar com isso.
+
+Isso reduz o escopo de SET-28 a um único fluxo de checkout na v1 (cartão), o
+que é coerente com "small scope, fast delivery" (`ROADMAP.md`, Release
+Strategy). Pix Automático permanece a evolução natural do meio de pagamento
+assim que (a) a conta Asaas confirmar elegibilidade e (b) houver sinal real
+de que o cartão está sendo motivo de recusa na validação.
 
 ---
 
@@ -293,20 +313,100 @@ suficiente que `is_subscription_active()` olhe só para `status`.
 
 ---
 
-# 6. Resumo das recomendações (para revisão rápida do Pedro)
+# 6. Preparando o terreno para expansão (Pix, novos preços) sem refatoração
+
+Pedido explícito do Pedro ao fechar este documento: as decisões acima
+resolvem o lançamento com **um** meio de pagamento e **um** preço, mas a
+implementação (SET-26/27/28/29) não pode assumir "sempre vai ser só isso" de
+um jeito que exija reescrever código quando Pix Automático ou um segundo
+preço entrarem. **Isto não reabre o "fora de escopo" do SET-6** —
+múltiplos tiers, upgrade/downgrade, proration e UI de seleção de plano
+continuam fora do MVP. O pedido é só que o *dado* e o *boundary* não
+fiquem hardcoded para um caso só, para que adicionar o segundo caso seja
+aditivo (nova migration `ALTER`, novo `case`), não uma reescrita.
+
+## 6.1 Meios de pagamento — o que SET-26/27/28/29 devem fazer
+
+- **`subscriptions` grava um `payment_method` explícito desde a primeira
+  migration**, mesmo que hoje só exista um valor legal (`'credit_card'`).
+  Um `CHECK` com um único valor permitido documenta a decisão de negócio
+  atual sem impedir a próxima: ampliar para aceitar `'pix_automatico'`
+  depois é `drop constraint` + `add constraint` (mesmo padrão que
+  `SPRINT_E_PLAN.md` §3.1 já usou para o status de Subscription — nunca
+  editar a migration antiga), não uma coluna nova nem uma migração de
+  dado. Sem esse campo desde já, a implementação inicial não teria onde
+  gravar "este cliente pagou de que jeito", e isso *seria* uma refatoração
+  de schema depois.
+- **A porta do gateway (SET-27) não deve expor um método específico de
+  cartão** (tipo `createCreditCardSubscription(cardToken)`). O contrato
+  deve ser genérico o bastante para caber os dois casos — algo como
+  `createSubscription({ representativeId, amount, paymentMethod, ... })` —
+  mesmo que a única implementação de hoje (`AsaasGateway`, ou nome
+  equivalente) só saiba lidar com `'credit_card'` e rejeite qualquer outro
+  valor explicitamente. O ponto não é implementar Pix agora — é que a
+  *assinatura* do port já não amarre "pagamento" a "cartão" como sinônimos.
+- **Boa notícia levantada na pesquisa:** os webhooks do Asaas já são por
+  cobrança (`PAYMENT_*`), independente do meio que gerou a cobrança — Pix
+  Automático usa os mesmos eventos que cartão, só muda como a cobrança foi
+  criada. Isso quer dizer que **SET-29 (webhook) não precisa de nenhum
+  desenho especial** para Pix entrar depois — o handler que decide
+  `active`/`suspended` a partir de `PAYMENT_*` já serve para os dois meios
+  sem alteração.
+
+## 6.2 Preços/planos — o que SET-26/28 devem fazer
+
+Já decidido em §4.4, reforçado aqui como requisito explícito de arquitetura:
+**o preço nunca deve ser lido de uma constante fixa no código** (nem em
+`SET_PLAN_PRICE = 27.90`, nem embutido na chamada ao gateway). Ele é
+**gravado por linha em `subscriptions`** (`amount` + `currency` — que é
+exatamente o Value Object "Money/Commission Value" que `DOMAIN_MODEL.md`
+§9 já reserva como placeholder para Billing, então nomear o campo assim é
+seguir uma decisão de domínio que já existe, não inventar uma nova) no
+momento em que a Subscription nasce, decidido pela regra de negócio vigente
+naquele instante (hoje: "é uma das 30 primeiras? R$27,90. Senão, bloqueia" —
+SET-28 decide onde essa checagem mora).
+
+Com o preço gravado por linha desde o dia um:
+
+- **Introduzir um preço padrão pós-lançamento** (a decisão em aberto do
+  §4.4) é só mudar a regra que SET-28 usa para decidir `amount` na criação —
+  nenhuma Subscription existente muda, porque cada uma já carrega o próprio
+  valor.
+- **Se um dia existir mais de um plano "de verdade"** (ex.: Stage 5,
+  Enterprise, ou um segundo tier de Digital Office), o caminho aditivo é uma
+  tabela `plans` nova e uma coluna opcional `plan_id` em `subscriptions` —
+  o `amount` continua sendo a fonte da verdade do que foi cobrado
+  (histórico nunca muda retroativamente), `plan_id` só documenta "de qual
+  oferta isso veio". Nenhuma dessas duas colunas competem — não é preciso
+  decidir a tabela `plans` agora, só não fechar a porta gravando o preço em
+  qualquer lugar que não seja a própria linha da Subscription.
+
+## 6.3 O que isto explicitamente não é
+
+Não é luz verde para construir um seletor de planos, uma tela de upgrade, ou
+qualquer UI nova — `PRODUCT.md`/SET-6 continuam dizendo que isso é fora do
+MVP. É unicamente: nomear os campos certos e desenhar o port do jeito certo
+*agora*, porque o custo de fazer isso na primeira migration é quase zero e
+o custo de fazer depois, com Subscriptions reais já ativas em produção, não
+é.
+
+---
+
+# 7. Resumo das recomendações (para revisão rápida do Pedro)
 
 | Decisão | Issue | Recomendação | Reversibilidade se errado |
 |---|---|---|---|
 | Gateway | SET-23 | **Asaas — decidido** (2026-08-08) | Média — mitigada se SET-27 isolar o gateway atrás de um adapter |
-| Meios de pagamento | SET-24 | Cartão obrigatório; Pix Automático assim que confirmada a cobertura no gateway escolhido; boleto fora do MVP | Alta — adicionar um meio depois é aditivo |
+| Meios de pagamento | SET-24 | **Decidido** — só cartão no lançamento; Pix Automático fica para depois da conta Asaas confirmar elegibilidade; boleto fora do MVP | Alta — adicionar um meio depois é aditivo |
 | Preço | SET-22 | **R$27,90/mês — decidido**, fixo para os 30 primeiros clientes; preço padrão pós-lançamento fica em aberto | Alta — preço de SaaS é o parâmetro mais barato de ajustar depois, mas o registro do preço por Subscription (§4.4) precisa existir desde já |
 | Periodicidade | SET-22 | **Só mensal — decidido** | Alta — anual pode ser adicionado depois sem quebrar nada |
 | Falha de cobrança | SET-25 | **Decidido** — suspender assim que o Asaas esgotar as 5 tentativas (~2 dias após vencimento), sem tolerância extra; reaproveita E1/E4 já implementados | Alta — é um parâmetro reativo a webhook, não uma migration |
 | Cancelamento | SET-25 | **Decidido** — efetivo no fim do ciclo pago; requer estado `canceled` distinto de `suspended` e data de vigência | Média — muda o enum de `subscriptions.status` e adiciona uma data, mas é aditivo |
+| Extensibilidade (meios de pagamento e preços) | SET-26/27/28/29 | **Requisito registrado** (§6) — `payment_method` e `amount`/`currency` gravados por linha desde a primeira migration; port do gateway não assume cartão | Alta — é nomear campos certos agora; não fazer isso é que gera refatoração depois |
 
 ---
 
-# 7. O que falta para fechar SET-6
+# 8. O que falta para fechar SET-6
 
 Segundo os critérios de aceite do próprio SET-6:
 
@@ -314,14 +414,18 @@ Segundo os critérios de aceite do próprio SET-6:
 - [x] Pedro confirma preço e periodicidade (§4.4) — **R$27,90/mês, fixo para
       os 30 primeiros clientes, só mensal, confirmado em 2026-08-08.** Preço
       padrão pós-lançamento fica para uma decisão futura.
-- [ ] Pedro confirma meios de pagamento (§3.2) — em especial se Pix
-      Automático entra já no MVP ou fica para uma iteração seguinte.
+- [x] Pedro confirma meios de pagamento (§3.3) — **só cartão no lançamento;
+      Pix Automático fica para depois da conta Asaas confirmar elegibilidade;
+      boleto fora do MVP, confirmado em 2026-08-08.**
 - [x] Pedro confirma a política de falha de cobrança e cancelamento (§5.2/§5.3)
       — **suspender ao esgotar as 5 tentativas do Asaas (~2 dias), cancelamento
       efetivo no fim do ciclo pago, confirmado em 2026-08-08.**
 - [ ] Este documento (ou seu conteúdo) referenciado nas issues SET-22/23/24/25
       como a decisão registrada, e as issues movidas para `Done` no Linear.
 
-Nenhum item de implementação (SET-16, 26–35) deve começar antes desses cinco
-pontos — é exatamente o risco que o próprio SET-6 nomeia: "retrabalho e
-acoplamento ao gateway se implementação começar antes das decisões."
+**As quatro decisões de conteúdo estão fechadas.** Só falta o passo
+administrativo: mover SET-22/23/24/25 (e o próprio SET-6) para `Done` no
+Linear — isso não depende mais de nenhuma investigação, só de revisão final
+do Pedro. A partir daí, os itens de implementação (SET-16, 26–35) podem
+começar sem o risco que o próprio SET-6 nomeia: "retrabalho e acoplamento ao
+gateway se implementação começar antes das decisões."
