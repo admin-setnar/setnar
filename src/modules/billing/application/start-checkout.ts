@@ -55,6 +55,7 @@ export async function startCheckout(
 
   const checkout = await paymentGateway.createCheckout({
     externalCustomerId: customer.externalCustomerId,
+    paymentMethod: 'credit_card',
     amount: { amountCents: reservation.amountCents, currency: 'BRL' },
     localSubscriptionId: reservation.localSubscriptionId,
     callback: input.callback,

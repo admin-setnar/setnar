@@ -55,7 +55,6 @@ as $$
 declare
   v_representative_id    uuid;
   v_existing_id            uuid;
-  v_existing_status       text;
   v_existing_amount       integer;
   v_automated_count        integer;
   v_founding_price_cents  constant integer := 2790;
@@ -73,7 +72,7 @@ begin
 
   perform pg_advisory_xact_lock(hashtext('billing_founding_cohort_reservation'));
 
-  select s.id, s.status, s.amount_cents into v_existing_id, v_existing_status, v_existing_amount
+  select s.id, s.amount_cents into v_existing_id, v_existing_amount
   from public.subscriptions s
   where s.representative_id = v_representative_id;
 

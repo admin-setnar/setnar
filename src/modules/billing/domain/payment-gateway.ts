@@ -1,4 +1,4 @@
-import type { Money } from '@/modules/billing/domain/subscription';
+import type { Money, PaymentMethod } from '@/modules/billing/domain/subscription';
 
 export interface CreateCustomerInput {
   readonly name: string;
@@ -25,6 +25,7 @@ export interface CheckoutCallbackUrls {
 
 export interface CreateCheckoutInput {
   readonly externalCustomerId: string;
+  readonly paymentMethod: PaymentMethod;
   readonly amount: Money;
   /**
    * O `id` da própria linha em `subscriptions` (já reservada por
@@ -62,6 +63,12 @@ export type CancelSubscriptionResult =
  * na página hospedada do próprio Asaas, nunca no nosso servidor. Nenhum
  * campo de cartão (número, CVV, validade) existe em lugar nenhum deste
  * módulo agora — não é uma omissão, é a correção.
+ *
+ * `CreateCheckoutInput.paymentMethod` existe desde já — mesmo só aceitando
+ * `'credit_card'` hoje — porque o Asaas Checkout também aceita `PIX`/`BOLETO`
+ * em `billingTypes`; quando Pix Automático entrar (SET-24, decisão em
+ * aberto), é um novo valor de `PaymentMethod` mapeado no adapter, não uma
+ * reescrita do contrato (`BILLING_DECISIONS_PLAN.md` §6.1).
  */
 export interface PaymentGateway {
   createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult>;

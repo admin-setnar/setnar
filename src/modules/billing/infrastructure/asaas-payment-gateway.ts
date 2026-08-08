@@ -8,11 +8,25 @@ import type {
   CreateCustomerResult,
   PaymentGateway,
 } from '@/modules/billing/domain/payment-gateway';
+import type { PaymentMethod } from '@/modules/billing/domain/subscription';
 import {
   mapAsaasCheckoutError,
   mapAsaasCustomerError,
   type AsaasErrorResponseLike,
 } from '@/modules/billing/infrastructure/map-asaas-error';
+
+/**
+ * Único valor legal hoje (SET-24) mapeia para o único `billingType` que o
+ * Checkout Asaas recebe deste projeto. Ampliar — Pix Automático como um
+ * segundo valor de `PaymentMethod` — é uma entrada nova aqui, não uma
+ * reescrita da função nem do contrato do port.
+ */
+function mapPaymentMethodToAsaasBillingType(method: PaymentMethod): string {
+  switch (method) {
+    case 'credit_card':
+      return 'CREDIT_CARD';
+  }
+}
 
 /**
  * Config lida uma única vez pela factory (`asaas-payment-gateway-factory.ts`)
@@ -71,7 +85,7 @@ export class AsaasPaymentGateway implements PaymentGateway {
    */
   async createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult> {
     const response = await this.post('/v3/checkouts', {
-      billingTypes: ['CREDIT_CARD'],
+      billingTypes: [mapPaymentMethodToAsaasBillingType(input.paymentMethod)],
       chargeTypes: ['RECURRENT'],
       externalReference: input.localSubscriptionId,
       callback: {
