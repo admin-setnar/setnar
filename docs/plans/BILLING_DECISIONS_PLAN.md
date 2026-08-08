@@ -8,7 +8,7 @@
 > §2.4 registrou ("não existe infraestrutura de job/webhook neste projeto") e
 > deixou consciente para este momento
 
-**Status:** Proposed
+**Status:** Proposed — SET-23 (gateway) decidido; SET-22, SET-24 e SET-25 seguem abertos
 **Authority:** Non-normative (ver `docs/plans/README.md`)
 **Code baseline:** `9859330`, branch `admin/set-11-corrigir-canonical-e-open-graph-das-paginas-publicas` (`main` no mesmo commit na prática — SET-11 já mergeado), em 2026-08-08.
 **Last reviewed:** 2026-08-08
@@ -69,42 +69,35 @@ polling.
 | **Vindi** | Sim — é o core do produto, régua de cobrança e reemissão automática de cartão vencido inclusos | Pix recorrente via parceiro | Sim (R$3,50/boleto pago) | **A partir de R$149/mês fixo** | 2,85–4,14% | — | Melhor "billing engine" pronto, mas o fixo mensal é caro para validar hipótese com poucos clientes iniciais |
 | **Stripe** | Sim (Billing), robustíssimo internacionalmente | **Pix apenas "para convidados" no Brasil hoje** — não é self-serve para conta brasileira nova | Sim, mas sem confirmação clara de recorrência nativa | R$ 0 | ~3,99%+ | Limitado | Melhor DX do mercado, mas o gap de Pix nativo é grave para o público-alvo deste produto |
 
-## 2.3 Recomendação
+## 2.3 Decisão — **Asaas confirmado por Pedro em 2026-08-08**
 
-**Recomendo Asaas ou Mercado Pago, nessa ordem, e recomendo contra Stripe e
-Vindi para este momento específico.**
+Contra Vindi e Stripe, pelas mesmas razões já levantadas: fixo mensal alto
+demais para a fase de validação (Vindi) e Pix não self-serve para conta
+brasileira nova (Stripe).
 
-- **Contra Vindi agora:** o fixo mensal (R$149+) é um custo operacional antes
-  de existir um único cliente pagante — o MVP Goal é validar disposição a
-  pagar, e um custo fixo alto nesse ponto é o tipo de aposta que
-  `PRODUCT.md` (Release Strategy: "small scope, low risk") desaconselha. Fica
-  como opção natural de migração **se** a validação for bem-sucedida e o
-  volume justificar um billing engine dedicado — a régua de cobrança e a
-  reemissão automática de cartão da Vindi são reais vantagens em escala.
-- **Contra Stripe agora:** Pix não está disponível self-serve para conta
-  brasileira nova (só "para convidados", segundo a documentação atual) — isso
-  reduz o produto, para o público deste MVP, a essencialmente cartão, que é o
-  meio de pagamento com mais fricção e maior taxa para quem paga do próprio
-  bolso.
-- **Asaas** tem a documentação mais explícita de Pix Automático + assinatura
-  + webhook num único produto, taxa de emissão Pix zero (só cobra na
-  liquidação), e zero custo fixo — perfil de custo alinhado a "poucos
-  clientes, ticket baixo, ainda validando".
-- **Mercado Pago** ganha em reconhecimento de marca pelo usuário final
-  (representante autônomo provavelmente já usa Mercado Pago no dia a dia,
-  o que pode reduzir abandono no checkout) e já embute retry automático nas
-  assinaturas — mas a taxa de cartão citada (a partir de 3,99%, D+30) é mais
-  alta e o repasse mais lento que o Asaas.
+Entre Asaas e Mercado Pago, a decisão foi Asaas. Razões que pesaram:
 
-Se o Pedro quiser reduzir a decisão a uma pergunta: **confiança de marca no
-checkout (Mercado Pago) vs. custo de transação mais baixo (Asaas).** Ambos
-atendem igualmente aos critérios técnicos (webhook, Pix, sem fixo mensal).
+1. **Custo de transação.** Cartão 1,99% + R$0,49 contra "a partir de 3,99%"
+   do Mercado Pago não é uma diferença marginal — numa faixa de preço de
+   R$29–59/mês (§4.3), cada ponto percentual de taxa é uma fração relevante
+   da própria mensalidade, e isso importa mais numa fase com poucos clientes
+   do que numa fase de escala.
+2. **Repasse mais rápido**, contra D+30 do cartão no Mercado Pago — ajuda
+   caixa numa fase sem receita recorrente estabelecida.
+3. **Documentação de Pix Automático mais madura** — reduz risco de
+   implementação para SET-29 (webhook) e para a reavaliação de SET-24 quando
+   Pix Automático entrar como meio adicional.
 
-**Nota para SET-27 (boundary/adapter):** qualquer um desses provedores deve
-ficar atrás de uma porta própria (padrão já usado no projeto —
-`RepresentativeOnboardingGateway`, ADR-041), para que a troca entre Asaas e
-Mercado Pago, se um dia acontecer, não vaze para `set_activation_status` nem
-para a policy de leitura.
+O reconhecimento de marca do Mercado Pago no checkout (o representante
+provavelmente já usa Mercado Pago no dia a dia) é um argumento real, mas de
+conversão — não de custo nem de risco técnico. Numa fase que ainda está
+testando "será que pagam", taxa mais baixa e caixa mais rápido pesam mais do
+que uma fricção de checkout ainda não medida.
+
+**Nota para SET-27 (boundary/adapter):** o Asaas deve ficar atrás de uma
+porta própria (padrão já usado no projeto — `RepresentativeOnboardingGateway`,
+ADR-041), para que uma eventual migração de provedor no futuro não vaze para
+`set_activation_status` nem para a policy de leitura.
 
 ---
 
@@ -251,7 +244,7 @@ não neste documento — aqui só fica registrado que a política escolhida
 
 | Decisão | Issue | Recomendação | Reversibilidade se errado |
 |---|---|---|---|
-| Gateway | SET-23 | Asaas (ou Mercado Pago, se preferir reconhecimento de marca no checkout) | Média — mitigada se SET-27 isolar o gateway atrás de um adapter |
+| Gateway | SET-23 | **Asaas — decidido** (2026-08-08) | Média — mitigada se SET-27 isolar o gateway atrás de um adapter |
 | Meios de pagamento | SET-24 | Cartão obrigatório; Pix Automático assim que confirmada a cobertura no gateway escolhido; boleto fora do MVP | Alta — adicionar um meio depois é aditivo |
 | Preço | SET-22 | R$29–59/mês, plano único, sem anual por ora | Alta — preço de SaaS é o parâmetro mais barato de ajustar depois |
 | Periodicidade | SET-22 | Só mensal no MVP | Alta — anual pode ser adicionado depois sem quebrar nada |
@@ -264,9 +257,7 @@ não neste documento — aqui só fica registrado que a política escolhida
 
 Segundo os critérios de aceite do próprio SET-6:
 
-- [ ] Pedro escolhe entre Asaas e Mercado Pago (§2.3) — ou pede mais
-      investigação (ex.: abrir conta de teste em ambos e comparar o
-      checkout real).
+- [x] Pedro escolhe o gateway (§2.3) — **Asaas, confirmado em 2026-08-08.**
 - [ ] Pedro confirma ou ajusta a faixa de preço (§4.3) e a decisão de
       "só mensal por ora" (§4.2).
 - [ ] Pedro confirma meios de pagamento (§3.2) — em especial se Pix
