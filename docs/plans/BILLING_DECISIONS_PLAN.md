@@ -8,7 +8,7 @@
 > §2.4 registrou ("não existe infraestrutura de job/webhook neste projeto") e
 > deixou consciente para este momento
 
-**Status:** Proposed — SET-23 (gateway) decidido; SET-22, SET-24 e SET-25 seguem abertos
+**Status:** Proposed — SET-23 (gateway) e SET-22 (preço/periodicidade) decididos; SET-24 e SET-25 seguem abertos
 **Authority:** Non-normative (ver `docs/plans/README.md`)
 **Code baseline:** `9859330`, branch `admin/set-11-corrigir-canonical-e-open-graph-das-paginas-publicas` (`main` no mesmo commit na prática — SET-11 já mergeado), em 2026-08-08.
 **Last reviewed:** 2026-08-08
@@ -188,6 +188,40 @@ no mesmo patamar de um produto que já mostra resultado, antes de mostrar
 resultado, é fricção adicional numa fase que já está testando disposição a
 pagar.
 
+## 4.4 Decisão — **preço de lançamento confirmado por Pedro em 2026-08-08**
+
+**R$27,90/mês, cobrança mensal, para os 30 primeiros clientes pagantes.**
+Fixo enquanto o representante mantiver a assinatura ativa — não é uma
+promoção com prazo, é um preço fidelizado ("founding customers"). Abaixo da
+própria faixa sugerida em §4.3, o que é coerente com o objetivo de reduzir
+fricção máxima na validação: R$27,90 é um ticket baixo o suficiente para não
+ser, sozinho, motivo de recusa — o que isola melhor a hipótese real do MVP
+("o representante vê valor nisso?") do ruído de "achei caro".
+
+**Periodicidade:** só mensal, conforme Opção A (§4.2) — sem plano anual no
+lançamento.
+
+**Em aberto, e não decidido aqui:**
+
+- **Preço padrão pós-lançamento** (para quem assinar depois que as 30 vagas
+  se esgotarem). Pedro optou por não fixar esse número agora e revisitar com
+  dado real da validação — a faixa de §4.3 (R$29–59/mês) segue como
+  referência quando essa decisão for tomada.
+- **Mecânica de limite das 30 vagas.** Este documento decide o *preço*, não
+  a implementação. Precisa de uma forma de contar quantas Subscriptions já
+  nasceram no preço de lançamento e impedir uma 31ª — não é uma migration
+  nova (uma contagem de linhas em `subscriptions` já responde "quantos
+  ativaram no preço de lançamento"), mas **é** uma regra de negócio que o
+  checkout (SET-28) precisa aplicar antes de criar a cobrança, não depois.
+  Cabe a SET-28, não a este documento, decidir exatamente onde essa checagem
+  vive.
+- **Como o preço fica gravado.** Como o preço agora varia por cliente (não é
+  mais "o valor do plano", é "o valor que este representante fechou"),
+  `subscriptions` precisa guardar o valor cobrado por linha, não depender de
+  uma constante fixa no código — isso é uma implicação direta para SET-26
+  (modelagem do lifecycle/contrato de entitlement), registrada aqui para não
+  se perder até lá.
+
 ---
 
 # 5. SET-25 — Política de falha de cobrança e cancelamento
@@ -246,8 +280,8 @@ não neste documento — aqui só fica registrado que a política escolhida
 |---|---|---|---|
 | Gateway | SET-23 | **Asaas — decidido** (2026-08-08) | Média — mitigada se SET-27 isolar o gateway atrás de um adapter |
 | Meios de pagamento | SET-24 | Cartão obrigatório; Pix Automático assim que confirmada a cobertura no gateway escolhido; boleto fora do MVP | Alta — adicionar um meio depois é aditivo |
-| Preço | SET-22 | R$29–59/mês, plano único, sem anual por ora | Alta — preço de SaaS é o parâmetro mais barato de ajustar depois |
-| Periodicidade | SET-22 | Só mensal no MVP | Alta — anual pode ser adicionado depois sem quebrar nada |
+| Preço | SET-22 | **R$27,90/mês — decidido**, fixo para os 30 primeiros clientes; preço padrão pós-lançamento fica em aberto | Alta — preço de SaaS é o parâmetro mais barato de ajustar depois, mas o registro do preço por Subscription (§4.4) precisa existir desde já |
+| Periodicidade | SET-22 | **Só mensal — decidido** | Alta — anual pode ser adicionado depois sem quebrar nada |
 | Falha de cobrança | SET-25 | Janela de tolerância de 3 dias + retry do gateway, depois suspensão (reaproveita E1/E4 já implementados) | Alta — janela é um parâmetro, não uma migration |
 | Cancelamento | SET-25 | Efetivo no fim do ciclo pago; requer estado `canceled` distinto de `suspended` | Média — muda o enum de `subscriptions.status`, mas é aditivo |
 
@@ -258,8 +292,9 @@ não neste documento — aqui só fica registrado que a política escolhida
 Segundo os critérios de aceite do próprio SET-6:
 
 - [x] Pedro escolhe o gateway (§2.3) — **Asaas, confirmado em 2026-08-08.**
-- [ ] Pedro confirma ou ajusta a faixa de preço (§4.3) e a decisão de
-      "só mensal por ora" (§4.2).
+- [x] Pedro confirma preço e periodicidade (§4.4) — **R$27,90/mês, fixo para
+      os 30 primeiros clientes, só mensal, confirmado em 2026-08-08.** Preço
+      padrão pós-lançamento fica para uma decisão futura.
 - [ ] Pedro confirma meios de pagamento (§3.2) — em especial se Pix
       Automático entra já no MVP ou fica para uma iteração seguinte.
 - [ ] Pedro confirma a janela de tolerância e a política de cancelamento
