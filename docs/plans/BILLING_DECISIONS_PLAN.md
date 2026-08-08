@@ -8,7 +8,7 @@
 > §2.4 registrou ("não existe infraestrutura de job/webhook neste projeto") e
 > deixou consciente para este momento
 
-**Status:** Proposed — SET-23 (gateway) e SET-22 (preço/periodicidade) decididos; SET-24 e SET-25 seguem abertos
+**Status:** Proposed — SET-23 (gateway), SET-22 (preço/periodicidade) e SET-25 (falha/cancelamento) decididos; só SET-24 (meios de pagamento) segue aberto
 **Authority:** Non-normative (ver `docs/plans/README.md`)
 **Code baseline:** `9859330`, branch `admin/set-11-corrigir-canonical-e-open-graph-das-paginas-publicas` (`main` no mesmo commit na prática — SET-11 já mergeado), em 2026-08-08.
 **Last reviewed:** 2026-08-08
@@ -226,51 +226,70 @@ lançamento.
 
 # 5. SET-25 — Política de falha de cobrança e cancelamento
 
-## 5.1 Falha de cobrança (dunning)
+## 5.1 Mecânica real do Asaas (levantada após SET-23 fechar em Asaas)
 
-Segue o padrão já citado como boa prática de mercado e compatível com o que
-os dois gateways candidatos oferecem nativamente (retry embutido em
-assinaturas):
+Documentação do Asaas confirma um comportamento concreto, que substitui a
+estimativa genérica da versão anterior deste documento:
 
-1. Cobrança falha → gateway dispara webhook de falha → `subscriptions.status`
-   permanece `active` durante uma **janela de tolerância curta** (recomendo
-   3 dias corridos), para absorver falhas transitórias (saldo insuficiente
-   momentâneo, cartão temporariamente bloqueado).
-2. Nova tentativa automática do gateway (a maioria já reenvia em D+1/D+3;
-   confirmar a régua exata do provedor escolhido em SET-23 antes de
-   implementar SET-29).
-3. Se todas as tentativas falharem dentro da janela: `status` vai para
-   `suspended`. Isso já é o comportamento existente — a policy pública deixa
-   de resolver a página (E1, já implementado), o hub mostra o terceiro estado
-   visual já implementado em E4 ("publicado, mas assinatura inativa"). Nenhum
-   dado é apagado; `product_activations.status` permanece `published` (mesma
-   decisão de design de E1 — despublicar é irreversível, suspender não é).
-4. Pagamento regularizado a qualquer momento → um único UPSERT (mesmo
-   caminho de E3, agora disparado pelo webhook em vez de manualmente) volta
-   `status` para `active` e a página volta a resolver, sem reprocessamento
-   manual.
+- No vencimento, o Asaas faz **3 tentativas automáticas no próprio dia**
+  (a cada 6h — 8h, 14h, 20h) e, se ainda falhar, **mais 2 tentativas no dia
+  seguinte** — **5 tentativas ao todo, encerradas em até 2 dias após o
+  vencimento**.
+- Esgotadas as tentativas, a cobrança fica **vencida** e **não há mais
+  retry automático** — o pagador precisa acessar a fatura e reinserir um
+  cartão válido manualmente.
+- **Webhooks do Asaas são por cobrança (`PAYMENT_*`), não por assinatura.**
+  Cada evento carrega o `subscription` a que pertence — é assim que SET-29
+  vai amarrar o evento à linha certa em `subscriptions`. Não existe um
+  webhook nativo de "assinatura suspensa"; quem decide suspender é o próprio
+  SETNAR, reagindo ao evento de cobrança vencida sem mais tentativas.
 
-## 5.2 Cancelamento
+## 5.2 Decisão — falha de cobrança, **confirmada por Pedro em 2026-08-08**
 
-**Opção A — Cancelamento efetiva no fim do ciclo já pago (recomendo).** O
-representante cancela, mas continua com a Subscription `active` até o fim do
-período que já pagou; a próxima cobrança simplesmente não é gerada. Evita
-reembolso proporcional (fora de escopo, `PRODUCT.md`) e é o padrão mais comum
-em SaaS de assinatura mensal simples.
+**Suspender assim que o Asaas esgotar as tentativas (~2 dias após o
+vencimento), sem janela de tolerância adicional própria.**
 
-**Opção B — Cancelamento imediato.** Mais simples de explicar ao usuário
-("cancelei, já não tenho acesso"), mas descarta dias já pagos sem
-justificativa visível para quem pagou — mais difícil de defender numa
-categoria (representação comercial) onde o representante pode estar no meio
-de uma campanha ativa com o link publicado.
+1. Cobrança vence → Asaas tenta 5x em até 2 dias → durante essa janela,
+   `subscriptions.status` permanece `active` (é o próprio Asaas tentando,
+   SETNAR não faz nada além de aguardar o webhook conclusivo).
+2. Cobrança esgota as tentativas sem sucesso → webhook `PAYMENT_*` conclusivo
+   chega → `subscriptions.status` vai para `suspended`. Comportamento já
+   existente é reaproveitado sem mudança: a policy pública deixa de resolver
+   a página (E1), o hub mostra o terceiro estado visual já implementado em
+   E4 ("publicado, mas assinatura inativa"). Nenhum dado é apagado;
+   `product_activations.status` permanece `published`.
+3. Pagador regulariza (reinsere cartão válido na fatura) a qualquer momento
+   → webhook de pagamento confirmado → mesmo UPSERT de hoje (caminho de E3,
+   agora disparado pelo webhook) volta `status` para `active`.
 
-Recomendo A. Requer que `subscriptions` saiba distinguir "cancelado, mas
+Por que sem tolerância extra: o Asaas já dá 2 dias e 5 tentativas de chance
+— é o próprio provedor absorvendo falhas transitórias (saldo momentâneo,
+bloqueio temporário). Adicionar um timer próprio por cima exigiria guardar
+"quando venceu" e checar prazo periodicamente, que é exatamente o tipo de
+infraestrutura de job que `SPRINT_E_PLAN.md` §2.4 registrou que o projeto
+conscientemente não tem — e o SETNAR continua 100% reativo a webhook, sem
+polling.
+
+## 5.3 Decisão — cancelamento, **confirmada por Pedro em 2026-08-08**
+
+**Efetivo no fim do ciclo já pago, não imediato.** O representante cancela,
+mas a Subscription continua `active` até o fim do período que já pagou; a
+próxima cobrança simplesmente não é gerada (removendo a assinatura no Asaas
+no momento do pedido de cancelamento — "Remover assinatura" já impede novas
+cobranças futuras sem afetar o acesso local, que é controlado pelo próprio
+`subscriptions.status`/data de vigência no SETNAR, não pelo estado da
+assinatura no Asaas). Evita reembolso proporcional (fora de escopo,
+`PRODUCT.md`) e não descarta dias já pagos de um representante que pode
+estar no meio de uma campanha ativa com o link publicado.
+
+**Implicação direta para SET-26 (lifecycle/schema), registrada aqui para não
+se perder até lá:** isso exige que `subscriptions` distinga "cancelado, mas
 ainda dentro do período pago" de "suspenso por falha de pagamento" — hoje o
-enum não faz essa distinção (só `active`/`suspended` estão em uso real). Isso
-é uma decisão de schema pequena que cabe em SET-26 (lifecycle da assinatura),
-não neste documento — aqui só fica registrado que a política escolhida
-**exige** esse terceiro estado (`canceled`, já previsto em `DOMAIN_MODEL.md`
-§8.14, ainda não usado no código).
+enum só usa `active`/`suspended` de fato. `DOMAIN_MODEL.md` §8.14 já prevê um
+terceiro estado (`Canceled`) no lifecycle-alvo, ainda não usado no código.
+SET-26 também precisa de uma data de vigência (fim do ciclo pago) para saber
+até quando um `canceled` continua contando como acesso válido — não é mais
+suficiente que `is_subscription_active()` olhe só para `status`.
 
 ---
 
@@ -282,8 +301,8 @@ não neste documento — aqui só fica registrado que a política escolhida
 | Meios de pagamento | SET-24 | Cartão obrigatório; Pix Automático assim que confirmada a cobertura no gateway escolhido; boleto fora do MVP | Alta — adicionar um meio depois é aditivo |
 | Preço | SET-22 | **R$27,90/mês — decidido**, fixo para os 30 primeiros clientes; preço padrão pós-lançamento fica em aberto | Alta — preço de SaaS é o parâmetro mais barato de ajustar depois, mas o registro do preço por Subscription (§4.4) precisa existir desde já |
 | Periodicidade | SET-22 | **Só mensal — decidido** | Alta — anual pode ser adicionado depois sem quebrar nada |
-| Falha de cobrança | SET-25 | Janela de tolerância de 3 dias + retry do gateway, depois suspensão (reaproveita E1/E4 já implementados) | Alta — janela é um parâmetro, não uma migration |
-| Cancelamento | SET-25 | Efetivo no fim do ciclo pago; requer estado `canceled` distinto de `suspended` | Média — muda o enum de `subscriptions.status`, mas é aditivo |
+| Falha de cobrança | SET-25 | **Decidido** — suspender assim que o Asaas esgotar as 5 tentativas (~2 dias após vencimento), sem tolerância extra; reaproveita E1/E4 já implementados | Alta — é um parâmetro reativo a webhook, não uma migration |
+| Cancelamento | SET-25 | **Decidido** — efetivo no fim do ciclo pago; requer estado `canceled` distinto de `suspended` e data de vigência | Média — muda o enum de `subscriptions.status` e adiciona uma data, mas é aditivo |
 
 ---
 
@@ -297,8 +316,9 @@ Segundo os critérios de aceite do próprio SET-6:
       padrão pós-lançamento fica para uma decisão futura.
 - [ ] Pedro confirma meios de pagamento (§3.2) — em especial se Pix
       Automático entra já no MVP ou fica para uma iteração seguinte.
-- [ ] Pedro confirma a janela de tolerância e a política de cancelamento
-      no fim do ciclo (§5).
+- [x] Pedro confirma a política de falha de cobrança e cancelamento (§5.2/§5.3)
+      — **suspender ao esgotar as 5 tentativas do Asaas (~2 dias), cancelamento
+      efetivo no fim do ciclo pago, confirmado em 2026-08-08.**
 - [ ] Este documento (ou seu conteúdo) referenciado nas issues SET-22/23/24/25
       como a decisão registrada, e as issues movidas para `Done` no Linear.
 
