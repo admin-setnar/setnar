@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { after } from 'next/server';
@@ -7,13 +8,13 @@ import {
   reportAnalyticsFailure,
 } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
-import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
 import { resolveCompanyVertical } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
 import { CONEXAO_CLUB_TABS } from '@/modules/representatives/domain/product-content/conexao-club';
-import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
 import { AuthorizedRepresentativeIdentificationBlock } from '@/modules/representatives/presentation/authorized-representative-identification-block';
+import { resolveCommercialPageMetadata } from '@/modules/representatives/presentation/commercial-page-metadata';
 import { ComplianceNotice } from '@/modules/representatives/presentation/compliance-notice';
 import { ProductContentTabs } from '@/modules/representatives/presentation/product-content-tabs';
+import { resolveCommercialPageActivation } from '@/modules/representatives/presentation/resolve-commercial-page-activation';
 import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
 import { BrandTokensStyle } from '@/modules/tenancy/presentation/brand-tokens';
 import { Container } from '@/shared/layout/container';
@@ -53,8 +54,20 @@ import { Text } from '@/shared/ui/typography';
  * anti-enumeration principle already applied to login's error messages
  * (ADR-018): nobody probing subdomains can tell "representative doesn't
  * exist" apart from "product not activated" apart from "not published yet"
- * from the outside.
+ * from the outside. `generateMetadata` below applies the same principle to
+ * `<head>`, not only the body — see `resolveCommercialPageMetadata`'s own
+ * doc comment for how returning `{}` achieves that for free.
  */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ productSlug: string }>;
+}): Promise<Metadata> {
+  const [{ productSlug }, requestHeaders] = await Promise.all([params, headers()]);
+  const activation = await resolveCommercialPageActivation(requestHeaders.get('host'), productSlug);
+  return resolveCommercialPageMetadata(activation);
+}
+
 export default async function ProductPage({
   params,
 }: {
@@ -62,12 +75,7 @@ export default async function ProductPage({
 }) {
   const [{ productSlug }, requestHeaders] = await Promise.all([params, headers()]);
 
-  const repository = await getRepresentativeRepository();
-  const activation = await resolveRepresentativeActivation(
-    repository,
-    requestHeaders.get('host'),
-    productSlug,
-  );
+  const activation = await resolveCommercialPageActivation(requestHeaders.get('host'), productSlug);
 
   if (!activation) {
     notFound();
