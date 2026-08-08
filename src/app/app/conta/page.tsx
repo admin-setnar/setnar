@@ -3,6 +3,9 @@ import Link from 'next/link';
 
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { LogoutButton } from '@/modules/auth/presentation/logout-button';
+import { CheckoutForm } from '@/modules/billing/presentation/checkout-form';
+import { getSubscriptionViewState } from '@/modules/billing/presentation/subscription-view-state';
+import { getSubscriptionRepository } from '@/modules/billing/infrastructure/subscription-repository-factory';
 import { resolveFirstPublicationFeedbackEligibility } from '@/modules/feedback/presentation/resolve-first-publication-eligibility';
 import { resolveValuePerceptionFeedbackEligibility } from '@/modules/feedback/presentation/resolve-value-perception-eligibility';
 import {
@@ -47,6 +50,9 @@ export default async function AccountPage() {
     ]);
     showValuePerceptionFeedback = !firstPublicationEligible && valuePerceptionEligible;
   }
+
+  const subscriptionView = representative ? await (await getSubscriptionRepository()).getOwnSubscription() : null;
+  const subscriptionState = getSubscriptionViewState(subscriptionView);
 
   return (
     <div className="space-y-8">
@@ -96,6 +102,42 @@ export default async function AccountPage() {
           ) : null}
         </Card>
       </section>
+
+      {representative ? (
+        <section id="assinatura" aria-labelledby="assinatura-titulo" className="scroll-mt-8">
+          <Card variant="outlined" padding="lg" className="space-y-5">
+            <div className="space-y-1">
+              <Text id="assinatura-titulo" as="h2" variant="title">Assinatura</Text>
+              <Text as="p" variant="caption">
+                Necessária para publicar suas páginas e mantê-las no ar.
+              </Text>
+            </div>
+            {subscriptionState.kind === 'active' ? (
+              <FormAlert tone="success" title="Sua assinatura está ativa." />
+            ) : null}
+            {subscriptionState.kind === 'active_until' ? (
+              <FormAlert
+                tone="success"
+                title="Assinatura cancelada"
+                description={`Você mantém acesso até ${new Date(subscriptionState.currentPeriodEnd).toLocaleDateString('pt-BR')}.`}
+              />
+            ) : null}
+            {subscriptionState.kind === 'awaiting_payment' ? (
+              <FormAlert
+                tone="success"
+                title="Aguardando confirmação de pagamento"
+                description="Assim que o pagamento for confirmado, sua assinatura é ativada automaticamente."
+              />
+            ) : null}
+            {subscriptionState.kind === 'inactive' ? (
+              <FormAlert tone="error" title="Sua assinatura não está ativa" description="Assine novamente para voltar a publicar suas páginas." />
+            ) : null}
+            {subscriptionState.kind === 'none' || subscriptionState.kind === 'checkout_incomplete' || subscriptionState.kind === 'inactive' ? (
+              <CheckoutForm />
+            ) : null}
+          </Card>
+        </section>
+      ) : null}
 
       <section aria-labelledby="dados-acesso-titulo">
         <Card variant="outlined" padding="lg" className="space-y-5">
