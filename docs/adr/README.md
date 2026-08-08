@@ -114,6 +114,7 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 068 | `submit_lead` passa a consumir a regra canônica de acesso público | DOMAIN_MODEL.md | Consolidates with ADR-065; follows ADR-067 | [`ADR-068-submit-lead-passa-a-consumir-a-regra-canonica-de-acesso-publico.md`](ADR-068-submit-lead-passa-a-consumir-a-regra-canonica-de-acesso-publico.md) |
 | 069 | Infraestrutura mínima compartilhada de microfeedback qualitativo | ARCHITECTURE.md | Extends ADR-047; first consumer SET-61 | [`ADR-069-infraestrutura-minima-compartilhada-de-microfeedback-qualitativo.md`](ADR-069-infraestrutura-minima-compartilhada-de-microfeedback-qualitativo.md) |
 | 070 | Microfeedback de percepção de valor (SET-62) reusa a infraestrutura do ADR-069 sem nova migration | ARCHITECTURE.md | Extends ADR-069; second consumer of `FeedbackPrompt`, now promoted to `shared/ui/` | [`ADR-070-microfeedback-de-percepcao-de-valor-set-62-reusa-a-infra.md`](ADR-070-microfeedback-de-percepcao-de-valor-set-62-reusa-a-infra.md) |
+| 071 | Metadata dinâmica e imagem Open Graph por Commercial Page, com fallback anti-enumeração (SET-11) | ARCHITECTURE.md | Applies ADR-030's anti-enumeration principle to `<head>`/image; reuses ADR-046's URL-from-`SITE_URL` shape; respects ADR-031's port separation | [`ADR-071-metadata-dinamica-e-imagem-open-graph-por-commercial-page.md`](ADR-071-metadata-dinamica-e-imagem-open-graph-por-commercial-page.md) |
 
 ## Existing code and migration comments still say `README.md`
 

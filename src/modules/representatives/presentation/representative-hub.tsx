@@ -1,6 +1,5 @@
 import Link from 'next/link';
 
-import { SITE_URL } from '@/config/site';
 import type { FirstPublicationResponse } from '@/modules/feedback/domain/feedback';
 import {
   VALUE_PERCEPTION_DETAIL_LABEL,
@@ -12,6 +11,7 @@ import type { Representative } from '@/modules/representatives/domain/representa
 import type { RepresentativeCatalogEntry } from '@/modules/representatives/domain/representative-catalog-repository';
 import { isRepresentativeProfileComplete } from '@/modules/representatives/domain/representative-rules';
 import { getActivationViewState } from '@/modules/representatives/presentation/activation-view-state';
+import { buildCommercialPageUrl } from '@/modules/representatives/presentation/commercial-page-url';
 import { ProductActivationCard } from '@/modules/representatives/presentation/product-activation-card';
 import { QrCodeCard } from '@/modules/representatives/presentation/qr-code-card';
 import { Card } from '@/shared/ui/card';
@@ -29,7 +29,8 @@ import { Text } from '@/shared/ui/typography';
  * module already uses between a Server Component owning data and a small
  * `'use client'` island owning interaction.
  *
- * D5.3 — the public link. Composed from `SITE_URL`
+ * D5.3 — the public link, from `buildCommercialPageUrl()`
+ * (`presentation/commercial-page-url.ts`), composed from `SITE_URL`
  * (`config/site.ts`, `https://setnar.com` unless overridden by
  * `NEXT_PUBLIC_SITE_URL`), not from the current request's `Host` header:
  * `/app/paginas` is always visited on the root domain, never on a Representative's
@@ -37,11 +38,11 @@ import { Text } from '@/shared/ui/typography';
  * is the gap `RepresentativeHubPlaceholder`'s own doc comment flagged
  * ("nothing in TenantClientView/useTenant() exposes the root hostname
  * today") — closed by reusing the config that already IS this project's
- * single source of truth for its own root domain (`buildTenantMetadata`,
- * `config/seo.ts`, builds `openGraph.url` from the same constant), instead
- * of adding a new one. Matches ADR-026's shape (`<slug>.<domain>`, no path
- * prefix) and only ever shown for a `published` entry — an unpublished or
- * draft activation has no reachable public page yet.
+ * single source of truth for its own root domain. Matches ADR-026's shape
+ * (`<slug>.<domain>`, no path prefix) and only ever shown for a `published`
+ * entry — an unpublished or draft activation has no reachable public page
+ * yet. `buildCommercialPageUrl()` also backs the canonical/Open Graph URL
+ * `[productSlug]/page.tsx` emits (SET-11) — one derivation, not three.
  *
  * Profile editing lives in `/app/conta`; this pages-only surface displays an
  * actionable link there whenever the central publication prerequisites are
@@ -89,7 +90,6 @@ export function RepresentativeHub({
    */
   showValuePerceptionFeedback?: boolean;
 }) {
-  const rootHost = new URL(SITE_URL).hostname;
   const profileComplete = isRepresentativeProfileComplete(representative);
 
   return (
@@ -146,6 +146,7 @@ export function RepresentativeHub({
         ) : null}
         {catalog.map((entry) => {
           const viewState = getActivationViewState(entry.state, subscriptionActive, profileComplete);
+          const pageUrl = buildCommercialPageUrl(representative, entry.product);
 
           return (
           <div key={entry.product.id} className="space-y-2">
@@ -160,18 +161,15 @@ export function RepresentativeHub({
                 <Text as="p" variant="caption" className="pl-1">
                   Página no ar:{' '}
                   <a
-                    href={`https://${representative.slug}.${rootHost}/${entry.product.slug}`}
+                    href={pageUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-brand underline underline-offset-2"
                   >
-                    {representative.slug}.{rootHost}/{entry.product.slug}
+                    {pageUrl.replace(/^https:\/\//, '')}
                   </a>
                 </Text>
-                <QrCodeCard
-                  url={`https://${representative.slug}.${rootHost}/${entry.product.slug}`}
-                  fileName={`${representative.slug}-${entry.product.slug}.png`}
-                />
+                <QrCodeCard url={pageUrl} fileName={`${representative.slug}-${entry.product.slug}.png`} />
               </>
             ) : null}
           </div>
