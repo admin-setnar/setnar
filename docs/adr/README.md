@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
-This is the index of every ADR in the project: 70 decisions, numbered `ADR-001`
-through `ADR-070`, one file per decision. This folder is the authority on
+This is the index of every ADR in the project: 74 decisions, numbered `ADR-001`
+through `ADR-074`, one file per decision. This folder is the authority on
 **why the code is the way it is** — see `docs/README.md` § *Which document
 wins* on how an ADR relates to the normative documents.
 
@@ -115,6 +115,9 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 069 | Infraestrutura mínima compartilhada de microfeedback qualitativo | ARCHITECTURE.md | Extends ADR-047; first consumer SET-61 | [`ADR-069-infraestrutura-minima-compartilhada-de-microfeedback-qualitativo.md`](ADR-069-infraestrutura-minima-compartilhada-de-microfeedback-qualitativo.md) |
 | 070 | Microfeedback de percepção de valor (SET-62) reusa a infraestrutura do ADR-069 sem nova migration | ARCHITECTURE.md | Extends ADR-069; second consumer of `FeedbackPrompt`, now promoted to `shared/ui/` | [`ADR-070-microfeedback-de-percepcao-de-valor-set-62-reusa-a-infra.md`](ADR-070-microfeedback-de-percepcao-de-valor-set-62-reusa-a-infra.md) |
 | 071 | Metadata dinâmica e imagem Open Graph por Commercial Page, com fallback anti-enumeração (SET-11) | ARCHITECTURE.md | Applies ADR-030's anti-enumeration principle to `<head>`/image; reuses ADR-046's URL-from-`SITE_URL` shape; respects ADR-031's port separation | [`ADR-071-metadata-dinamica-e-imagem-open-graph-por-commercial-page.md`](ADR-071-metadata-dinamica-e-imagem-open-graph-por-commercial-page.md) |
+| 072 | Lifecycle de `subscriptions` e graça pós-cancelamento sem job (SET-26) | DOMAIN_MODEL.md | Implements BILLING_DECISIONS_PLAN.md §5/§6.2; reuses ADR-063's `is_subscription_active` and the reactivation UPSERT from `SPRINT_E_PLAN.md` §3.1 | [`ADR-072-lifecycle-de-subscriptions-e-graca-pos-cancelamento-sem-job.md`](ADR-072-lifecycle-de-subscriptions-e-graca-pos-cancelamento-sem-job.md) |
+| 073 | `PaymentGateway` usa o Checkout Asaas hospedado, não cartão inline (SET-27) | ARCHITECTURE.md | Corrects an unreviewed same-day implementation choice; same port/adapter/factory shape as ADR-041 | [`ADR-073-payment-gateway-checkout-asaas-hospedado-nao-cartao-inline.md`](ADR-073-payment-gateway-checkout-asaas-hospedado-nao-cartao-inline.md) |
+| 074 | Checkout reserva a vaga/preço atomicamente antes de tocar o Asaas (SET-28) | DOMAIN_MODEL.md / ARCHITECTURE.md | Depends on ADR-073's `createCheckout`; same `null`/`redirect()` convention as ADR-042/045 | [`ADR-074-checkout-reserva-atomica-das-30-vagas-antes-do-asaas.md`](ADR-074-checkout-reserva-atomica-das-30-vagas-antes-do-asaas.md) |
 
 ## Existing code and migration comments still say `README.md`
 

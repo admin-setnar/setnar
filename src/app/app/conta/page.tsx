@@ -3,6 +3,9 @@ import Link from 'next/link';
 
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { LogoutButton } from '@/modules/auth/presentation/logout-button';
+import { CheckoutForm } from '@/modules/billing/presentation/checkout-form';
+import { getSubscriptionViewState } from '@/modules/billing/presentation/subscription-view-state';
+import { getSubscriptionRepository } from '@/modules/billing/infrastructure/subscription-repository-factory';
 import { resolveFirstPublicationFeedbackEligibility } from '@/modules/feedback/presentation/resolve-first-publication-eligibility';
 import { resolveValuePerceptionFeedbackEligibility } from '@/modules/feedback/presentation/resolve-value-perception-eligibility';
 import {
@@ -22,9 +25,15 @@ import { Text } from '@/shared/ui/typography';
 
 export const metadata: Metadata = { title: 'Conta' };
 
-export default async function AccountPage() {
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ checkout?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) return null;
+
+  const { checkout: checkoutParam } = await searchParams;
 
   const representative = await (await getRepresentativeAccountRepository()).findByProfileId(user.id);
 
@@ -47,6 +56,26 @@ export default async function AccountPage() {
     ]);
     showValuePerceptionFeedback = !firstPublicationEligible && valuePerceptionEligible;
   }
+
+  const subscriptionView = representative ? await (await getSubscriptionRepository()).getOwnSubscription() : null;
+  const subscriptionState = getSubscriptionViewState(subscriptionView);
+
+  // `startCheckoutAction` (modules/billing/presentation/actions.ts) sends
+  // the Asaas Checkout callback here with `?checkout=success|canceled|expired`
+  // — but the local row only knows about a real payment once the webhook
+  // (SET-29/30, not shipped yet) writes it. Without this, a representative
+  // who just paid successfully on Asaas's hosted page would land back here
+  // and see the checkout form again, because `hasExternalSubscription` is
+  // still false at this point. `checkoutJustSucceeded` bridges that gap:
+  // trust the redirect enough to show "aguardando confirmação" instead of
+  // the form, but never enough to claim the subscription is `active` — that
+  // claim still waits for the webhook, same principle as
+  // BILLING_DECISIONS_PLAN.md's "redirect não concede entitlement".
+  const checkoutJustSucceeded =
+    checkoutParam === 'success' && subscriptionState.kind !== 'active' && subscriptionState.kind !== 'active_until';
+  const showCheckoutForm =
+    !checkoutJustSucceeded &&
+    (subscriptionState.kind === 'none' || subscriptionState.kind === 'checkout_incomplete' || subscriptionState.kind === 'inactive');
 
   return (
     <div className="space-y-8">
@@ -96,6 +125,46 @@ export default async function AccountPage() {
           ) : null}
         </Card>
       </section>
+
+      {representative ? (
+        <section id="assinatura" aria-labelledby="assinatura-titulo" className="scroll-mt-8">
+          <Card variant="outlined" padding="lg" className="space-y-5">
+            <div className="space-y-1">
+              <Text id="assinatura-titulo" as="h2" variant="title">Assinatura</Text>
+              <Text as="p" variant="caption">
+                Necessária para publicar suas páginas e mantê-las no ar.
+              </Text>
+            </div>
+            {subscriptionState.kind === 'active' ? (
+              <FormAlert tone="success" title="Sua assinatura está ativa." />
+            ) : null}
+            {subscriptionState.kind === 'active_until' ? (
+              <FormAlert
+                tone="success"
+                title="Assinatura cancelada"
+                description={`Você mantém acesso até ${new Date(subscriptionState.currentPeriodEnd).toLocaleDateString('pt-BR')}.`}
+              />
+            ) : null}
+            {subscriptionState.kind === 'awaiting_payment' || checkoutJustSucceeded ? (
+              <FormAlert
+                tone="success"
+                title="Aguardando confirmação de pagamento"
+                description="Assim que o pagamento for confirmado, sua assinatura é ativada automaticamente."
+              />
+            ) : null}
+            {subscriptionState.kind === 'inactive' ? (
+              <FormAlert tone="error" title="Sua assinatura não está ativa" description="Assine novamente para voltar a publicar suas páginas." />
+            ) : null}
+            {checkoutParam === 'canceled' ? (
+              <FormAlert tone="error" title="Checkout cancelado" description="Você pode tentar novamente quando quiser." />
+            ) : null}
+            {checkoutParam === 'expired' ? (
+              <FormAlert tone="error" title="O link de pagamento expirou" description="Tente novamente para gerar um novo link." />
+            ) : null}
+            {showCheckoutForm ? <CheckoutForm /> : null}
+          </Card>
+        </section>
+      ) : null}
 
       <section aria-labelledby="dados-acesso-titulo">
         <Card variant="outlined" padding="lg" className="space-y-5">
