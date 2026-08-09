@@ -119,6 +119,21 @@ configurada neste projeto ainda. Ver `supabase/README.md` §8 para os passos
 de cadastro do Webhook e o aviso de observar `billing_events.outcome` de
 perto na primeira ativação real.
 
+**Atualização pós primeira ativação real (mesmo dia):** o fluxo completo foi
+testado contra o Sandbox — checkout pago de verdade, webhook `CHECKOUT_PAID`
+entregue, `subscriptions` ativada corretamente. Mas o payload real revelou que
+o risco aceito abaixo ("`checkout.subscription.id` não confirmado") era
+otimista: o campo simplesmente **não existe** em `CHECKOUT_PAID` — não é uma
+divergência de formato, é a ausência do dado. `external_subscription_id`
+ficaria `null` para sempre, quebrando o casamento das cobranças de renovação
+seguintes. Corrigido tratando `SUBSCRIPTION_CREATED` (migration
+`20260828000000_handle_subscription_created_event.sql`), que carrega
+`subscription.id` + `subscription.externalReference` e grava a coluna uma
+única vez (`coalesce`), sem tocar `status`/`current_period_end`. Exige
+assinar esse evento no painel do Asaas (`supabase/README.md` §8) — passo
+manual ainda não confirmado como feito no ambiente de produção real (só no
+Sandbox de teste usado para validar este código).
+
 #### Consequências
 
 - Um checkout pago agora ativa a Subscription sem intervenção manual — fecha

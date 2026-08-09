@@ -579,16 +579,27 @@ https://setnar.com/api/billing/asaas-webhook
 preview — o Asaas permite mais de um Webhook ativo apontando para hosts
 diferentes).
 
-**Eventos a assinar** (categorias "Cobranças" e "Checkout" — qualquer outro
-evento chega e é reconhecido como `ignored`, não precisa desmarcar
-manualmente, mas assinar só o necessário reduz ruído):
+**Eventos a assinar** (categorias "Cobranças", "Checkout" e "Assinaturas" —
+qualquer outro evento chega e é reconhecido como `ignored`, não precisa
+desmarcar manualmente, mas assinar só o necessário reduz ruído):
 
 ```
 CHECKOUT_PAID
 PAYMENT_CONFIRMED
 PAYMENT_RECEIVED
 PAYMENT_OVERDUE
+SUBSCRIPTION_CREATED
 ```
+
+`SUBSCRIPTION_CREATED` (categoria "Assinaturas") é obrigatório, não opcional —
+achado testando contra um pagamento real no Sandbox: o payload de
+`CHECKOUT_PAID` não traz o `id` real da assinatura recorrente em nenhum campo
+(só `checkout.subscription.cycle`/`endDate`/`nextDueDate`). Sem
+`SUBSCRIPTION_CREATED`, `subscriptions.external_subscription_id` fica `null`
+para sempre, e a cobrança do próximo ciclo (`PAYMENT_CONFIRMED`/
+`PAYMENT_RECEIVED`, que só carregam `payment.subscription`, não
+`externalReference`) não teria como casar de volta à linha local. Ver o
+comentário em `supabase/migrations/20260828000000_handle_subscription_created_event.sql`.
 
 **Token de autenticação:** o mesmo valor exato de `ASAAS_WEBHOOK_TOKEN` (seção
 5). Desde 20/fev/2026 o Asaas passou a **exigir** esse token em todo Webhook
