@@ -509,6 +509,9 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 LOGIN_ATTEMPT_SALT=
 ANALYTICS_IP_SALT=
+ASAAS_API_KEY=
+ASAAS_BASE_URL=
+ASAAS_WEBHOOK_TOKEN=
 ```
 
 As duas primeiras são as chaves públicas do projeto (Settings → API).
@@ -534,6 +537,13 @@ exatamente o que a postura conservadora de LGPD do
 `LOGIN_ATTEMPT_SALT`: gerar uma vez, não trocar sem motivo (invalida os
 hashes já gravados).
 
+`ASAAS_API_KEY`/`ASAAS_BASE_URL` são server-only (SET-27,
+`asaas-payment-gateway-factory.ts`) — a chave de API do Asaas (sandbox
+enquanto testando, produção depois) e o host correspondente. `ASAAS_WEBHOOK_TOKEN`
+é o token estático comparado ao header `asaas-access-token` em todo evento
+recebido (SET-29) — ver a seção 8 abaixo para o cadastro do Webhook no painel
+do Asaas com o mesmo valor.
+
 ## 6. Região das funções na Vercel
 
 Confirmar que o projeto Vercel está configurado para rodar as funções em
@@ -550,6 +560,55 @@ Supabase nem na Vercel além do que os passos 1-6 já cobrem. Ver ADR-053 no
 `README.md` principal para o código (módulo `analytics` novo, `after()` para
 a visita, rota `/api/track-click` para o clique) e a **Verificação manual
 obrigatória** própria mais abaixo neste arquivo.
+
+## 8. Cadastrar o Webhook do Asaas (SET-29/30)
+
+Necessário para que pagamentos reais ativem a Subscription — sem isso, o
+checkout (SET-28) continua reservando e redirecionando normalmente, mas
+`subscriptions` nunca sai de `suspended`, mesmo que o cliente pague.
+
+No painel do Asaas, **Integrações → Webhooks → Novo Webhook**:
+
+**URL:**
+
+```
+https://setnar.com/api/billing/asaas-webhook
+```
+
+(ou `https://<preview>.vercel.app/api/billing/asaas-webhook` num ambiente de
+preview — o Asaas permite mais de um Webhook ativo apontando para hosts
+diferentes).
+
+**Eventos a assinar** (categorias "Cobranças" e "Checkout" — qualquer outro
+evento chega e é reconhecido como `ignored`, não precisa desmarcar
+manualmente, mas assinar só o necessário reduz ruído):
+
+```
+CHECKOUT_PAID
+PAYMENT_CONFIRMED
+PAYMENT_RECEIVED
+PAYMENT_OVERDUE
+```
+
+**Token de autenticação:** o mesmo valor exato de `ASAAS_WEBHOOK_TOKEN` (seção
+5). Desde 20/fev/2026 o Asaas passou a **exigir** esse token em todo Webhook
+cadastrado, com regra de complexidade própria (desde 02/mar/2026): mínimo 32
+caracteres, sem espaços, sem sequência numérica nem 4 letras repetidas.
+Gere uma string aleatória que já cumpra isso, grave em `ASAAS_WEBHOOK_TOKEN`
+(Vercel, seção 5) **antes** de cadastrar o Webhook, e cole o mesmo valor aqui.
+
+**Sem HMAC/assinatura de payload** — a autenticação do Asaas é só este token
+estático no header `asaas-access-token`, comparado em tempo constante por
+`verify-asaas-webhook-token.ts`. Ver ADR-075 para o raciocínio completo
+(por que token e não assinatura, deduplicação por `id` do evento, guarda
+contra evento atrasado/fora de ordem).
+
+**Sem sandbox configurado neste projeto ainda** — até existir uma conta Asaas
+real (produção ou sandbox) apontando para este Webhook, `apply_billing_event()`
+só foi validado com payloads sintéticos (formato documentado pelo Asaas,
+`docs.asaas.com/docs/payment-events`/`docs.asaas.com/docs/checkout-events`),
+não com tráfego real do provedor. Primeira ativação real deve ser observada
+de perto (`billing_events.outcome`) até acumular confiança.
 
 ## Verificação manual obrigatória — policies de leitura própria (passo 8)
 

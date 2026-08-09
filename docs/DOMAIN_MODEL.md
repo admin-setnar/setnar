@@ -830,16 +830,17 @@ Domain Services represent business processes that do not belong naturally to a s
 
 ### 14.3 Subscription (Platform-level)
 
-> **Status update (2026-08-08).** The transitions below are the approved
+> **Status update (2026-08-09).** The transitions below are the approved
 > policy (`docs/plans/BILLING_DECISIONS_PLAN.md` §5, confirmed by the
 > Product Owner) that SET-26 onward implements — they replace the earlier
 > `[Inferred]` version of this section, which assumed immediate cancellation
-> and a terminal Canceled state. As of SET-26, the schema
-> (`subscriptions.current_period_end`, `is_subscription_active()`) already
-> supports the grace-until-period-end and reactivation transitions described
-> here; the webhook-driven automation that writes these transitions from
-> real payment events (SET-29/30) has not shipped yet — until it does,
-> `Suspended`/grace-period `Canceled` still only happen by manual write.
+> and a terminal Canceled state. As of SET-29/30 (ADR-075), `Activated →
+> Active` and `Active ↔ Suspended` are written automatically by the Asaas
+> webhook reacting to real payment events — `Suspended`/`Active` no longer
+> require a manual write. `Active --(customer cancels)--> Canceled` still
+> does: that transition belongs to SET-32 (cancellation), not shipped yet —
+> until it ships, a Canceled row (and its already-implemented grace read via
+> `is_subscription_active()`) only exists if written manually.
 
 **States:** Activated → Active → Suspended → Canceled (Suspended can return to Active; Canceled can return to Active by resubscribing)
 
