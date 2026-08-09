@@ -41,6 +41,18 @@ export const asaasWebhookSchema = z
       })
       .passthrough()
       .optional(),
+    // `SUBSCRIPTION_CREATED` (não `payment`/`checkout`): único evento cujo
+    // payload carrega o `id` real da assinatura recorrente junto do mesmo
+    // `externalReference` usado no Checkout — ver comentário na migration
+    // `20260828000000_handle_subscription_created_event.sql`.
+    subscription: z
+      .object({
+        id: z.string().optional(),
+        customer: z.string().optional(),
+        externalReference: z.string().optional(),
+      })
+      .passthrough()
+      .optional(),
   })
   .passthrough();
 

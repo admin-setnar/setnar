@@ -40,13 +40,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  const { id, event, payment, checkout } = parsed.data;
+  const { id, event, payment, checkout, subscription } = parsed.data;
   const checkoutSubscription = typeof checkout?.subscription === 'object' ? checkout.subscription : null;
 
+  // `subscription` (topo do payload) só existe em `SUBSCRIPTION_CREATED` —
+  // é a única fonte do `id` real da assinatura recorrente, já que
+  // `checkout.subscription` em `CHECKOUT_PAID` não traz `id` nenhum (ver
+  // migration `20260828000000_handle_subscription_created_event.sql`).
   const asaasSubscriptionId =
-    payment?.subscription ?? (typeof checkout?.subscription === 'string' ? checkout.subscription : checkoutSubscription?.id) ?? null;
-  const asaasCustomerId = payment?.customer ?? checkout?.customer ?? null;
-  const externalReference = payment?.externalReference ?? checkout?.externalReference ?? null;
+    payment?.subscription ??
+    (typeof checkout?.subscription === 'string' ? checkout.subscription : checkoutSubscription?.id) ??
+    subscription?.id ??
+    null;
+  const asaasCustomerId = payment?.customer ?? checkout?.customer ?? subscription?.customer ?? null;
+  const externalReference = payment?.externalReference ?? checkout?.externalReference ?? subscription?.externalReference ?? null;
   const nextDueDate = payment?.nextDueDate ?? checkoutSubscription?.nextDueDate ?? null;
 
   try {

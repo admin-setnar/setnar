@@ -121,6 +121,30 @@ describe('apply_billing_event RPC (Postgres, integration)', { skip: !canRun }, (
     assert.equal(row?.current_period_end?.slice(0, 10), futureDate(30));
   });
 
+  it('records external_subscription_id on SUBSCRIPTION_CREATED without touching status or current_period_end, and never overwrites it once set', async () => {
+    const before_ = await subscriptionRow();
+
+    const { data, error } = await callEvent({
+      eventId: `evt-${randomUUID()}`,
+      eventType: 'SUBSCRIPTION_CREATED',
+      // Id diferente do já gravado por CHECKOUT_PAID (`sub_test_1`) — o
+      // `coalesce()` em `apply_billing_event` deve preservar o valor
+      // existente, nunca sobrescrever com este.
+      asaasSubscriptionId: 'sub_should_not_overwrite',
+      asaasCustomerId: 'cus_should_not_overwrite',
+      externalReference: subscriptionId,
+    });
+    assert.equal(error, null);
+    assert.equal(data?.[0]?.outcome, 'applied');
+    assert.equal(data?.[0]?.subscription_id, subscriptionId);
+
+    const after_ = await subscriptionRow();
+    assert.equal(after_?.external_subscription_id, 'sub_test_1');
+    assert.equal(after_?.external_customer_id, 'cus_test_1');
+    assert.equal(after_?.status, before_?.status);
+    assert.equal(after_?.current_period_end, before_?.current_period_end);
+  });
+
   it('is idempotent on a duplicate event id — same event, no double effect', async () => {
     const eventId = `evt-${randomUUID()}`;
     const first = await callEvent({
