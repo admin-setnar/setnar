@@ -29,6 +29,9 @@ function fakePaymentGateway(overrides: Partial<PaymentGateway> = {}): PaymentGat
       throw new Error('not used by cancelSubscription');
     },
     cancelSubscription: () => Promise.resolve({ status: 'canceled' }),
+    getLatestPayment: () => {
+      throw new Error('not used by cancelSubscription');
+    },
     ...overrides,
   };
 }

@@ -614,12 +614,84 @@ estático no header `asaas-access-token`, comparado em tempo constante por
 (por que token e não assinatura, deduplicação por `id` do evento, guarda
 contra evento atrasado/fora de ordem).
 
-**Sem sandbox configurado neste projeto ainda** — até existir uma conta Asaas
-real (produção ou sandbox) apontando para este Webhook, `apply_billing_event()`
-só foi validado com payloads sintéticos (formato documentado pelo Asaas,
-`docs.asaas.com/docs/payment-events`/`docs.asaas.com/docs/checkout-events`),
-não com tráfego real do provedor. Primeira ativação real deve ser observada
-de perto (`billing_events.outcome`) até acumular confiança.
+**Validado com tráfego real do Sandbox** (mesmo dia): checkout pago de
+verdade, `CHECKOUT_PAID` entregue e aplicado, `SUBSCRIPTION_CREATED`
+gravando `external_subscription_id` (ver
+`20260828000000_handle_subscription_created_event.sql`). `apply_billing_event()`
+não depende mais só de payloads sintéticos para os eventos de assinatura.
+
+## 9. Reconciliar uma assinatura manualmente (SET-33)
+
+Existe para o único cenário que o webhook idempotente (seção 8) não resolve
+sozinho: o evento nunca chegou (fila do Asaas pausada, entrega falhou nas
+tentativas dele, etc.). `scripts/reconcile-billing-subscription.ts` pergunta
+ao Asaas qual é o pagamento mais recente de verdade
+(`GET /v3/payments?subscription=...`) e alimenta o mesmo
+`apply_billing_event()` que o webhook usa — nenhuma lógica de estado nova,
+só uma fonte alternativa para o mesmo pipe idempotente.
+
+**Uso:**
+
+```
+npm run reconcile:billing -- --representative-id=<uuid> --reason="..." --actor="Seu nome" [--apply]
+```
+
+- `--representative-id`, `--reason` e `--actor` são **obrigatórios** — o
+  script recusa rodar sem os três. A posse de `SUPABASE_SERVICE_ROLE_KEY` +
+  `ASAAS_API_KEY` (nunca expostas à aplicação) é a própria autorização;
+  este projeto não tem sistema de roles/admin (`docs/plans/SPRINT_E_PLAN.md`
+  §2.4), e não é este passo que deveria introduzir um.
+- **Sem `--apply`, roda em modo leitura** — só consulta o Asaas e imprime o
+  que faria (`outcome=would_apply` quando encontraria algo acionável).
+  **Nada é gravado** nesse modo, nem em `subscriptions` nem na trilha de
+  auditoria. Rode sempre primeiro sem `--apply` para conferir o que vai
+  acontecer.
+- Com `--apply`, escreve de verdade: aplica o evento reconciliado via
+  `apply_billing_event()` e grava uma linha em
+  `billing_reconciliation_log` (ator, motivo, resultado — nunca o payload
+  cru do Asaas, que pode carregar e-mail/telefone do customer).
+- **Repetição é segura por construção**: o `asaas_event_id` sintético usado
+  é o `id` real do pagamento no Asaas — se um webhook atrasado chegar depois
+  com o mesmo id, a `unique constraint` de sempre em `billing_events`
+  ignora o duplicado sozinha. Rodar o script duas vezes para a mesma
+  assinatura nunca duplica a ativação.
+
+**Outcomes possíveis** (coluna `outcome` de `billing_reconciliation_log`):
+
+| Outcome | Significado |
+| --- | --- |
+| `no_subscription` | Representante sem `Subscription`, ou sem `external_subscription_id` (nunca automatizada) — nada a reconciliar. |
+| `no_payment_found` | O Asaas não tem nenhum pagamento para essa assinatura. |
+| `gateway_error` | A consulta ao Asaas falhou — nenhuma escrita local acontece. |
+| `ignored` | O pagamento mais recente do Asaas está num status sem transição de entitlement definida (ex.: `PENDING`, reembolso, chargeback). |
+| `applied` / `duplicate` / `unmatched` | Mesmos outcomes de `apply_billing_event()` (seção 8) — o evento reconciliado passou pelo mesmo pipe do webhook. |
+
+**Procedimento de incidente** (ex.: representante reporta acesso perdido
+mesmo tendo pago, ou suporte encontra `billing_events.outcome = 'unmatched'`
+para um evento que deveria ter ativado uma assinatura):
+
+1. Rode sem `--apply` primeiro e confira o `outcome` impresso.
+2. Se `would_apply`, rode de novo com `--apply`.
+3. Confirme em `subscriptions` que `status`/`current_period_end` refletem o
+   esperado, e em `billing_reconciliation_log` que a linha de auditoria foi
+   gravada com o motivo correto.
+4. Se o resultado não for o esperado (ex.: `apply_billing_event` aplicou
+   algo diferente do previsto), o rollback é uma correção manual direta em
+   `subscriptions` via SQL — nunca um segundo script. `current_period_end`
+   e `status` são as únicas colunas que a reconciliação toca; reverter é
+   um `UPDATE` de volta ao valor anterior (visível no histórico da própria
+   investigação, já que nenhuma coluna é sobrescrita sem o valor anterior
+   ter sido conferido no passo 3).
+
+**Ensaiado** (2026-08-09) contra o banco de teste conectado e o Asaas
+Sandbox real: representante sem `Subscription` (`no_subscription`),
+`Subscription` `provider = 'manual'` sem `external_subscription_id`
+(`no_subscription`), e um `external_subscription_id` inexistente contra a
+API real do Asaas (`no_payment_found` — confirma autenticação e parsing
+funcionando contra tráfego real). O caminho "encontra um pagamento
+divergente e reconcilia de verdade" **não foi ensaiado** — exigiria uma
+assinatura Sandbox real fora de sincronia, que não existe neste momento;
+mesma limitação já aceita para outras partes do billing (ADR-075/076).
 
 ## Verificação manual obrigatória — policies de leitura própria (passo 8)
 

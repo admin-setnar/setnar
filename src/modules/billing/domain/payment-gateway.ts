@@ -54,6 +54,26 @@ export type CancelSubscriptionResult =
   | { readonly status: 'error' };
 
 /**
+ * Os únicos três status de pagamento do Asaas que `apply_billing_event()`
+ * trata como acionáveis — `PENDING`/`REFUNDED`/estornos/etc. existem na API
+ * real (`docs.asaas.com/reference/list-payments`) mas não têm nenhuma
+ * transição de entitlement definida (SET-25); a reconciliação (SET-33) só
+ * reaplica os três abaixo, o resto é relatado sem escrita nenhuma.
+ */
+export type ReconcilablePaymentStatus = 'CONFIRMED' | 'RECEIVED' | 'OVERDUE';
+
+export type GetLatestPaymentResult =
+  | {
+      readonly status: 'found';
+      readonly paymentId: string;
+      readonly paymentStatus: ReconcilablePaymentStatus | 'OTHER';
+      readonly customerId: string | null;
+      readonly dueDate: string | null;
+    }
+  | { readonly status: 'not_found' }
+  | { readonly status: 'error' };
+
+/**
  * Port para o gateway de pagamento (SET-27) — Asaas hoje
  * (`docs/plans/BILLING_DECISIONS_PLAN.md` §2.3).
  *
@@ -78,4 +98,6 @@ export interface PaymentGateway {
   createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult>;
   createCheckout(input: CreateCheckoutInput): Promise<CreateCheckoutResult>;
   cancelSubscription(externalSubscriptionId: string): Promise<CancelSubscriptionResult>;
+  /** SET-33 — consulta o pagamento mais recente de uma assinatura no Asaas, para reconciliar um webhook perdido. */
+  getLatestPayment(externalSubscriptionId: string): Promise<GetLatestPaymentResult>;
 }

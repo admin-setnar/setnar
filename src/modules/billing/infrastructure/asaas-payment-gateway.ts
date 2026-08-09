@@ -6,9 +6,11 @@ import type {
   CreateCheckoutResult,
   CreateCustomerInput,
   CreateCustomerResult,
+  GetLatestPaymentResult,
   PaymentGateway,
 } from '@/modules/billing/domain/payment-gateway';
 import type { PaymentMethod } from '@/modules/billing/domain/subscription';
+import { fetchAsaasLatestPayment } from '@/modules/billing/infrastructure/fetch-asaas-latest-payment';
 import {
   mapAsaasCheckoutError,
   mapAsaasCustomerError,
@@ -163,6 +165,11 @@ export class AsaasPaymentGateway implements PaymentGateway {
     if (response.status === 404) return { status: 'not_found' };
     if (!response.ok) return { status: 'error' };
     return { status: 'canceled' };
+  }
+
+  /** SET-33 — ver `fetch-asaas-latest-payment.ts`; extraída para fora deste arquivo para ser chamável de `scripts/reconcile-billing-subscription.ts`, que roda fora do bundle Next.js (`server-only` lança incondicionalmente fora dele). */
+  async getLatestPayment(externalSubscriptionId: string): Promise<GetLatestPaymentResult> {
+    return fetchAsaasLatestPayment(this.config, externalSubscriptionId);
   }
 
   private async post(path: string, body: unknown): Promise<Response> {
