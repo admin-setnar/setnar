@@ -28,6 +28,11 @@ function mapPaymentMethodToAsaasBillingType(method: PaymentMethod): string {
   }
 }
 
+/** Data corrida de hoje em UTC, formato `AAAA-MM-DD` — ver o comentário em `createCheckout`. */
+function nextChargeDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 /**
  * Config lida uma única vez pela factory (`asaas-payment-gateway-factory.ts`)
  * e injetada aqui — o adapter nunca lê `process.env` diretamente.
@@ -120,6 +125,15 @@ export class AsaasPaymentGateway implements PaymentGateway {
       customer: input.externalCustomerId,
       subscription: {
         cycle: 'MONTHLY',
+        // Obrigatório pela API do Asaas ("O campo nextDueDate deve ser
+        // informado.", achado testando checkout real contra o Sandbox) —
+        // a data da primeira cobrança do ciclo recorrente. Hoje: o cliente
+        // é cobrado assim que conclui o pagamento na página hospedada, não
+        // depois. Data corrida em UTC (`toISOString`) — o runtime não tem
+        // fuso de Brasília garantido; na pior janela (fim do dia em
+        // Brasília) a primeira cobrança fica marcada para o dia UTC
+        // seguinte, no máximo poucas horas de folga, nunca atraso real.
+        nextDueDate: nextChargeDate(),
       },
     });
 
