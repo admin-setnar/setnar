@@ -95,8 +95,8 @@ async function resolveCallbackBaseUrl(): Promise<string> {
  */
 export async function cancelSubscriptionAction(): Promise<CancelSubscriptionFailure | null> {
   const result = await safeBillingCall(async () => {
-    const [subscriptionGateway, paymentGateway] = await Promise.all([getSubscriptionGateway(), getPaymentGateway()]);
-    return cancelSubscription(subscriptionGateway, paymentGateway);
+    const subscriptionGateway = await getSubscriptionGateway();
+    return cancelSubscription(subscriptionGateway, getPaymentGateway);
   });
 
   if (result.status === 'canceled' || result.status === 'already_canceled') {

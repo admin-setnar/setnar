@@ -26,10 +26,17 @@ export type CancelOwnSubscriptionResult =
  *    cobrança futura no Asaas"). Uma falha no passo 2 nunca chega aqui —
  *    "falha externa não mostra sucesso falso", mesmo princípio já aplicado
  *    ao checkout (`start-checkout.ts`).
+ *
+ * `getPaymentGateway` é um construtor tardio (`() => PaymentGateway`), não
+ * uma instância já pronta — achado no smoke test manual: construir o
+ * gateway sempre, mesmo quando `externalSubscriptionId` é `null`, faz
+ * `AsaasPaymentGateway`'s próprio factory (`asaas-payment-gateway-factory.ts`)
+ * lançar por credencial ausente mesmo num caminho que nunca precisaria dela
+ * (linha `provider = 'manual'`). Só é chamado dentro do `if` abaixo.
  */
 export async function cancelSubscription(
   subscriptionGateway: SubscriptionGateway,
-  paymentGateway: PaymentGateway,
+  getPaymentGateway: () => PaymentGateway,
 ): Promise<CancelOwnSubscriptionResult> {
   const prepared = await subscriptionGateway.prepareCancellation();
 
@@ -37,7 +44,7 @@ export async function cancelSubscription(
   if (prepared.status !== 'cancelable') return { status: prepared.status };
 
   if (prepared.externalSubscriptionId) {
-    const gatewayResult = await paymentGateway.cancelSubscription(prepared.externalSubscriptionId);
+    const gatewayResult = await getPaymentGateway().cancelSubscription(prepared.externalSubscriptionId);
     if (gatewayResult.status === 'error') return { status: 'error' };
   }
 

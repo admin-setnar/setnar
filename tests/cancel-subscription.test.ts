@@ -50,7 +50,7 @@ describe('cancelSubscription (application)', () => {
       },
     });
 
-    const result = await cancelSubscription(subscriptionGateway, paymentGateway);
+    const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
     assert.deepEqual(result, { status: 'canceled' });
     assert.equal(gatewayCalledWith, 'sub_123');
     assert.equal(confirmCalled, true);
@@ -68,7 +68,7 @@ describe('cancelSubscription (application)', () => {
       },
     });
 
-    const result = await cancelSubscription(subscriptionGateway, paymentGateway);
+    const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
     assert.deepEqual(result, { status: 'already_canceled' });
     assert.equal(gatewayCalled, false);
   });
@@ -85,13 +85,14 @@ describe('cancelSubscription (application)', () => {
       },
     });
 
-    const result = await cancelSubscription(subscriptionGateway, paymentGateway);
+    const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
     assert.deepEqual(result, { status: 'not_found' });
     assert.equal(gatewayCalled, false);
   });
 
   it('skips the payment gateway entirely when there is no external id to cancel (manual/fixture rows)', async () => {
     let gatewayCalled = false;
+    let gatewayConstructed = false;
     const subscriptionGateway = fakeSubscriptionGateway({
       prepareCancellation: () => Promise.resolve({ status: 'cancelable', externalSubscriptionId: null }),
     });
@@ -102,8 +103,17 @@ describe('cancelSubscription (application)', () => {
       },
     });
 
-    const result = await cancelSubscription(subscriptionGateway, paymentGateway);
+    const result = await cancelSubscription(subscriptionGateway, () => {
+      // Achado no smoke test manual: o construtor real (`getPaymentGateway`
+      // do factory) lança se ASAAS_API_KEY/ASAAS_BASE_URL não estiverem
+      // configuradas — mesmo num caminho que nunca usaria o gateway. Não
+      // basta o *método* nunca ser chamado, o *construtor* também não pode
+      // ser invocado.
+      gatewayConstructed = true;
+      return paymentGateway;
+    });
     assert.deepEqual(result, { status: 'canceled' });
+    assert.equal(gatewayConstructed, false);
     assert.equal(gatewayCalled, false);
   });
 
@@ -119,7 +129,7 @@ describe('cancelSubscription (application)', () => {
       cancelSubscription: (): Promise<CancelSubscriptionResult> => Promise.resolve({ status: 'not_found' }),
     });
 
-    const result = await cancelSubscription(subscriptionGateway, paymentGateway);
+    const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
     assert.deepEqual(result, { status: 'canceled' });
     assert.equal(confirmCalled, true);
   });
@@ -136,7 +146,7 @@ describe('cancelSubscription (application)', () => {
       cancelSubscription: (): Promise<CancelSubscriptionResult> => Promise.resolve({ status: 'error' }),
     });
 
-    const result = await cancelSubscription(subscriptionGateway, paymentGateway);
+    const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
     assert.deepEqual(result, { status: 'error' });
     assert.equal(confirmCalled, false);
   });
@@ -147,7 +157,7 @@ describe('cancelSubscription (application)', () => {
     });
     const paymentGateway = fakePaymentGateway();
 
-    const result = await cancelSubscription(subscriptionGateway, paymentGateway);
+    const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
     assert.deepEqual(result, { status: 'error' });
   });
 
@@ -168,7 +178,7 @@ describe('cancelSubscription (application)', () => {
       },
     });
 
-    const result = await cancelSubscription(subscriptionGateway, paymentGateway);
+    const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
     assert.deepEqual(result, { status: 'error' });
     assert.equal(gatewayCalled, false);
     assert.equal(confirmCalled, false);
