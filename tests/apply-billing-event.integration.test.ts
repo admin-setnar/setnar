@@ -13,6 +13,11 @@ const service = canRun ? createClient(url!, serviceKey!, { auth: { persistSessio
 let userId = '';
 let representativeId = '';
 let subscriptionId = '';
+// Eventos "unmatched"/"ignored" de propósito (ver os testes correspondentes
+// abaixo) nunca recebem `subscription_id` — a limpeza por
+// `billing_events.subscription_id = subscriptionId` no `after()` não os
+// alcança. Rastreados aqui para não vazar linha órfã a cada `npm run test`.
+const createdEventIds: string[] = [];
 
 function futureDate(days: number): string {
   return new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
@@ -26,6 +31,7 @@ async function callEvent(overrides: {
   externalReference?: string | null;
   nextDueDate?: string | null;
 }) {
+  createdEventIds.push(overrides.eventId);
   return service!.rpc('apply_billing_event', {
     p_event_id: overrides.eventId,
     p_event_type: overrides.eventType,
@@ -93,8 +99,10 @@ describe('apply_billing_event RPC (Postgres, integration)', { skip: !canRun }, (
   });
 
   after(async () => {
+    if (createdEventIds.length > 0) {
+      await service!.from('billing_events').delete().in('asaas_event_id', createdEventIds);
+    }
     if (representativeId) {
-      await service!.from('billing_events').delete().eq('subscription_id', subscriptionId);
       await service!.from('subscriptions').delete().eq('representative_id', representativeId);
       await service!.from('representatives').delete().eq('id', representativeId);
     }
