@@ -5,6 +5,10 @@ export interface StartCheckoutInput {
   readonly holderName: string;
   readonly holderDocumentId: string;
   readonly holderEmail: string;
+  /** Telefone comercial do representante (perfil já cadastrado), não um campo do formulário de checkout. */
+  readonly holderPhone: string;
+  readonly postalCode: string;
+  readonly addressNumber: string;
   readonly callback: CheckoutCallbackUrls;
 }
 
@@ -48,6 +52,9 @@ export async function startCheckout(
     name: input.holderName,
     documentId: input.holderDocumentId,
     email: input.holderEmail,
+    phone: input.holderPhone,
+    postalCode: input.postalCode,
+    addressNumber: input.addressNumber,
   });
 
   if (customer.status === 'rejected') return { status: 'rejected', reason: customer.reason };

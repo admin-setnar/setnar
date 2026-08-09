@@ -6,6 +6,17 @@
  */
 export const DOCUMENT_ID_PATTERN = /^\d{11}$|^\d{14}$/;
 
+/**
+ * CEP — só dígitos, 8 posições. Exigido pelo Asaas para criar um customer
+ * apto a cobrança recorrente (`chargeTypes: ['RECURRENT']`, ver
+ * `asaas-payment-gateway.ts`): sem `postalCode`/`addressNumber` no customer,
+ * a criação do Checkout falha com `invalid_object` pedindo endereço
+ * completo. Enviando só CEP + número, o próprio Asaas resolve
+ * logradouro/bairro/cidade/UF — não é preciso pedir esses campos aqui
+ * (achado testando o checkout real contra o Sandbox).
+ */
+export const POSTAL_CODE_PATTERN = /^\d{8}$/;
+
 export function stripNonDigits(value: string): string {
   return value.replace(/\D/g, '');
 }

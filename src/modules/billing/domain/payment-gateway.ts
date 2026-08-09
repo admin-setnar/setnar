@@ -4,6 +4,10 @@ export interface CreateCustomerInput {
   readonly name: string;
   readonly documentId: string;
   readonly email: string;
+  /** Telefone comercial já cadastrado no onboarding do representante — nunca coletado de novo no checkout. */
+  readonly phone: string;
+  readonly postalCode: string;
+  readonly addressNumber: string;
 }
 
 export type CreateCustomerResult =

@@ -15,12 +15,14 @@ import { Input } from '@/shared/ui/input';
 
 /**
  * Formulário de checkout (SET-28). Só coleta o necessário para criar o
- * "customer" no Asaas — nome, documento, e-mail. O cartão é digitado na
- * página hospedada do Asaas, nunca aqui (ver `domain/payment-gateway.ts`
- * para o porquê). Em caso de sucesso, `startCheckoutAction` já faz o
- * `redirect()` para lá — este componente só precisa tratar a falha; não
- * existe um branch de "sucesso" para renderizar, a navegação acontece
- * antes disso.
+ * "customer" no Asaas — nome, documento, e-mail, CEP e número do endereço
+ * (o Asaas resolve logradouro/bairro/cidade/UF a partir do CEP; telefone
+ * reaproveita o já cadastrado no onboarding, não é pedido aqui). O cartão é
+ * digitado na página hospedada do Asaas, nunca aqui (ver
+ * `domain/payment-gateway.ts` para o porquê). Em caso de sucesso,
+ * `startCheckoutAction` já faz o `redirect()` para lá — este componente só
+ * precisa tratar a falha; não existe um branch de "sucesso" para renderizar,
+ * a navegação acontece antes disso.
  */
 export function CheckoutForm() {
   const [failure, setFailure] = useState<StartCheckoutFailure | null>(null);
@@ -82,6 +84,33 @@ export function CheckoutForm() {
             invalid={invalid}
             disabled={isSubmitting}
             {...register('holderEmail')}
+          />
+        )}
+      </FormField>
+
+      <FormField label="CEP" error={errors.postalCode?.message}>
+        {({ id, describedBy, invalid }) => (
+          <Input
+            id={id}
+            inputMode="numeric"
+            autoComplete="postal-code"
+            aria-describedby={describedBy}
+            invalid={invalid}
+            disabled={isSubmitting}
+            {...register('postalCode')}
+          />
+        )}
+      </FormField>
+
+      <FormField label="Número do endereço" error={errors.addressNumber?.message}>
+        {({ id, describedBy, invalid }) => (
+          <Input
+            id={id}
+            autoComplete="address-line2"
+            aria-describedby={describedBy}
+            invalid={invalid}
+            disabled={isSubmitting}
+            {...register('addressNumber')}
           />
         )}
       </FormField>

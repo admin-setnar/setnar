@@ -9,6 +9,9 @@ import { getSubscriptionGateway } from '@/modules/billing/infrastructure/subscri
 import type { StartCheckoutFailure } from '@/modules/billing/presentation/checkout-error-messages';
 import { safeBillingCall } from '@/modules/billing/presentation/safe-billing-call';
 import { checkoutSchema, type CheckoutFormValues } from '@/modules/billing/presentation/schemas/checkout.schema';
+import { stripNonDigits } from '@/modules/billing/domain/billing-rules';
+import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
+import { getRepresentativeAccountRepository } from '@/modules/representatives/infrastructure/representative-account-repository-factory';
 
 /**
  * Inicia o checkout do plano único (SET-28) via Checkout Asaas hospedado.
@@ -29,11 +32,23 @@ export async function startCheckoutAction(values: CheckoutFormValues): Promise<S
   const contaUrl = (checkout: 'success' | 'canceled' | 'expired') => `${callbackBaseUrl}/app/conta?checkout=${checkout}`;
 
   return safeBillingCall(async () => {
+    // Telefone vem do perfil já cadastrado (onboarding), nunca do
+    // formulário de checkout — ver checkout.schema.ts. Sem representante ou
+    // sem telefone, não há como criar o customer no Asaas; mapeado para o
+    // mesmo `{ status: 'error' }` genérico que qualquer outra falha
+    // inesperada deste fluxo.
+    const user = await getCurrentUser();
+    const representative = user ? await (await getRepresentativeAccountRepository()).findByProfileId(user.id) : null;
+    if (!representative?.phone) return { status: 'error' } as const;
+
     const [subscriptionGateway, paymentGateway] = await Promise.all([getSubscriptionGateway(), getPaymentGateway()]);
     const result = await startCheckout(subscriptionGateway, paymentGateway, {
       holderName: parsed.data.holderName,
       holderDocumentId: parsed.data.holderDocumentId,
       holderEmail: parsed.data.holderEmail,
+      holderPhone: stripNonDigits(representative.phone),
+      postalCode: parsed.data.postalCode,
+      addressNumber: parsed.data.addressNumber,
       callback: {
         successUrl: contaUrl('success'),
         cancelUrl: contaUrl('canceled'),

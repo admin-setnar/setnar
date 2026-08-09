@@ -54,11 +54,23 @@ export interface AsaasConfig {
 export class AsaasPaymentGateway implements PaymentGateway {
   constructor(private readonly config: AsaasConfig) {}
 
+  /**
+   * `phone`/`postalCode`/`addressNumber` (SET-28 follow-up, achado testando
+   * o checkout real): sem eles, `POST /v3/checkouts` com `chargeTypes:
+   * ['RECURRENT']` rejeita com `invalid_object` — "O campo phone/address/
+   * addressNumber/postalCode/province/city deve existir para o customer
+   * informado." Enviando só `postalCode` + `addressNumber` aqui, o Asaas
+   * resolve `address`/`province`/`city` sozinho a partir do CEP — não é
+   * preciso enviar os três (confirmado contra `docs.asaas.com`).
+   */
   async createCustomer(input: CreateCustomerInput): Promise<CreateCustomerResult> {
     const response = await this.post('/v3/customers', {
       name: input.name,
       cpfCnpj: input.documentId,
       email: input.email,
+      phone: input.phone,
+      postalCode: input.postalCode,
+      addressNumber: input.addressNumber,
     });
 
     if (response.ok) {
