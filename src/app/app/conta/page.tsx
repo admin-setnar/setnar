@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { LogoutButton } from '@/modules/auth/presentation/logout-button';
 import { CheckoutForm } from '@/modules/billing/presentation/checkout-form';
-import { getSubscriptionViewState } from '@/modules/billing/presentation/subscription-view-state';
+import { getSubscriptionPanelState, getSubscriptionViewState } from '@/modules/billing/presentation/subscription-view-state';
 import { getSubscriptionRepository } from '@/modules/billing/infrastructure/subscription-repository-factory';
 import { resolveFirstPublicationFeedbackEligibility } from '@/modules/feedback/presentation/resolve-first-publication-eligibility';
 import { resolveValuePerceptionFeedbackEligibility } from '@/modules/feedback/presentation/resolve-value-perception-eligibility';
@@ -60,22 +60,13 @@ export default async function AccountPage({
   const subscriptionView = representative ? await (await getSubscriptionRepository()).getOwnSubscription() : null;
   const subscriptionState = getSubscriptionViewState(subscriptionView);
 
-  // `startCheckoutAction` (modules/billing/presentation/actions.ts) sends
-  // the Asaas Checkout callback here with `?checkout=success|canceled|expired`
-  // — but the local row only knows about a real payment once the webhook
-  // (SET-29/30, not shipped yet) writes it. Without this, a representative
-  // who just paid successfully on Asaas's hosted page would land back here
-  // and see the checkout form again, because `hasExternalSubscription` is
-  // still false at this point. `checkoutJustSucceeded` bridges that gap:
-  // trust the redirect enough to show "aguardando confirmação" instead of
-  // the form, but never enough to claim the subscription is `active` — that
-  // claim still waits for the webhook, same principle as
-  // BILLING_DECISIONS_PLAN.md's "redirect não concede entitlement".
-  const checkoutJustSucceeded =
-    checkoutParam === 'success' && subscriptionState.kind !== 'active' && subscriptionState.kind !== 'active_until';
-  const showCheckoutForm =
-    !checkoutJustSucceeded &&
-    (subscriptionState.kind === 'none' || subscriptionState.kind === 'checkout_incomplete' || subscriptionState.kind === 'inactive');
+  // `startCheckoutAction` (modules/billing/presentation/actions.ts) sends the
+  // Asaas Checkout callback here with `?checkout=success|canceled|expired` —
+  // `getSubscriptionPanelState` folds that redirect signal and the persisted
+  // `subscriptionState.kind` into one exhaustive decision (banner +
+  // show-the-form-or-not), see its own doc comment for why the two must
+  // never be computed as separate, independently-driftable booleans.
+  const subscriptionPanel = getSubscriptionPanelState(subscriptionState, checkoutParam);
 
   return (
     <div className="space-y-8">
@@ -135,25 +126,12 @@ export default async function AccountPage({
                 Necessária para publicar suas páginas e mantê-las no ar.
               </Text>
             </div>
-            {subscriptionState.kind === 'active' ? (
-              <FormAlert tone="success" title="Sua assinatura está ativa." />
-            ) : null}
-            {subscriptionState.kind === 'active_until' ? (
+            {subscriptionPanel.banner ? (
               <FormAlert
-                tone="success"
-                title="Assinatura cancelada"
-                description={`Você mantém acesso até ${new Date(subscriptionState.currentPeriodEnd).toLocaleDateString('pt-BR')}.`}
+                tone={subscriptionPanel.banner.tone}
+                title={subscriptionPanel.banner.title}
+                description={subscriptionPanel.banner.description}
               />
-            ) : null}
-            {subscriptionState.kind === 'awaiting_payment' || checkoutJustSucceeded ? (
-              <FormAlert
-                tone="success"
-                title="Aguardando confirmação de pagamento"
-                description="Assim que o pagamento for confirmado, sua assinatura é ativada automaticamente."
-              />
-            ) : null}
-            {subscriptionState.kind === 'inactive' ? (
-              <FormAlert tone="error" title="Sua assinatura não está ativa" description="Assine novamente para voltar a publicar suas páginas." />
             ) : null}
             {checkoutParam === 'canceled' ? (
               <FormAlert tone="error" title="Checkout cancelado" description="Você pode tentar novamente quando quiser." />
@@ -161,7 +139,7 @@ export default async function AccountPage({
             {checkoutParam === 'expired' ? (
               <FormAlert tone="error" title="O link de pagamento expirou" description="Tente novamente para gerar um novo link." />
             ) : null}
-            {showCheckoutForm ? <CheckoutForm /> : null}
+            {subscriptionPanel.showCheckoutForm ? <CheckoutForm /> : null}
           </Card>
         </section>
       ) : null}

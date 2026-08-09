@@ -126,6 +126,86 @@ describe('central public page accessibility (Postgres, integration)', { skip: !c
     await service!.from('subscriptions').update({ status: 'active' }).eq('representative_id', representativeId);
   });
 
+  // SET-25/20260823000000 added a grace clause to is_subscription_active() —
+  // 'canceled' stays active while current_period_end is still in the future.
+  // Never re-verified through the three consumers this function actually
+  // gates (this RLS policy, Analytics below, and the publish RPC) until now.
+  it('keeps a published page publicly accessible during the post-cancellation grace period', async () => {
+    const futureEnd = new Date(Date.now() + 5 * 86_400_000).toISOString();
+    await service!
+      .from('subscriptions')
+      .update({ status: 'canceled', current_period_end: futureEnd })
+      .eq('representative_id', representativeId);
+    assert.equal(await publicActivationCount(), 1);
+
+    const { data, error } = await service!.rpc('record_page_visit', {
+      p_representative_slug: representativeSlug,
+      p_product_slug: productSlug,
+      p_referrer: null,
+      p_ip_hash: `grace-${randomUUID()}`,
+      p_user_agent: 'Mozilla/5.0',
+    });
+    assert.equal(error, null);
+    assert.equal(data, true);
+
+    await service!
+      .from('subscriptions')
+      .update({ status: 'active', current_period_end: null })
+      .eq('representative_id', representativeId);
+  });
+
+  it('hides a published page and rejects Analytics once the grace period has elapsed', async () => {
+    const pastEnd = new Date(Date.now() - 86_400_000).toISOString();
+    await service!
+      .from('subscriptions')
+      .update({ status: 'canceled', current_period_end: pastEnd })
+      .eq('representative_id', representativeId);
+    assert.equal(await publicActivationCount(), 0);
+
+    const { data, error } = await service!.rpc('record_whatsapp_click', {
+      p_representative_slug: representativeSlug,
+      p_product_slug: productSlug,
+      p_referrer: null,
+      p_ip_hash: `post-grace-${randomUUID()}`,
+      p_user_agent: 'Mozilla/5.0',
+    });
+    assert.equal(error, null);
+    assert.equal(data, false);
+
+    await service!
+      .from('subscriptions')
+      .update({ status: 'active', current_period_end: null })
+      .eq('representative_id', representativeId);
+  });
+
+  it('blocks republication once the grace period has elapsed, through the same gate that publishes', async () => {
+    const pastEnd = new Date(Date.now() - 86_400_000).toISOString();
+    await service!
+      .from('subscriptions')
+      .update({ status: 'canceled', current_period_end: pastEnd })
+      .eq('representative_id', representativeId);
+
+    const { data: unpublish, error: unpublishError } = await ownerClient!.rpc('set_activation_status', {
+      p_product_id: productId,
+      p_status: 'unpublished',
+    });
+    assert.equal(unpublishError, null);
+    assert.equal(unpublish?.[0]?.status, 'updated');
+
+    const { data: republish, error: republishError } = await ownerClient!.rpc('set_activation_status', {
+      p_product_id: productId,
+      p_status: 'published',
+    });
+    assert.equal(republishError, null);
+    assert.equal(republish?.[0]?.status, 'subscription_not_active');
+
+    await service!
+      .from('subscriptions')
+      .update({ status: 'active', current_period_end: null })
+      .eq('representative_id', representativeId);
+    await service!.from('product_activations').update({ status: 'published' }).eq('id', activationId);
+  });
+
   it('hides persisted published when representative is suspended', async () => {
     await service!.from('representatives').update({ status: 'suspended' }).eq('id', representativeId);
     assert.equal(await publicActivationCount(), 0);

@@ -26,6 +26,7 @@ export async function startCheckoutAction(values: CheckoutFormValues): Promise<S
   if (!parsed.success) return { status: 'error' };
 
   const callbackBaseUrl = await resolveCallbackBaseUrl();
+  const contaUrl = (checkout: 'success' | 'canceled' | 'expired') => `${callbackBaseUrl}/app/conta?checkout=${checkout}`;
 
   return safeBillingCall(async () => {
     const [subscriptionGateway, paymentGateway] = await Promise.all([getSubscriptionGateway(), getPaymentGateway()]);
@@ -34,9 +35,9 @@ export async function startCheckoutAction(values: CheckoutFormValues): Promise<S
       holderDocumentId: parsed.data.holderDocumentId,
       holderEmail: parsed.data.holderEmail,
       callback: {
-        successUrl: `${callbackBaseUrl}/app/conta?checkout=success`,
-        cancelUrl: `${callbackBaseUrl}/app/conta?checkout=canceled`,
-        expiredUrl: `${callbackBaseUrl}/app/conta?checkout=expired`,
+        successUrl: contaUrl('success'),
+        cancelUrl: contaUrl('canceled'),
+        expiredUrl: contaUrl('expired'),
       },
     });
 
@@ -49,7 +50,11 @@ export async function startCheckoutAction(values: CheckoutFormValues): Promise<S
  * Mesma resolução de origem que `resolveResetCallbackUrl`
  * (`modules/auth/presentation/actions.ts`) — `x-forwarded-proto` é o que a
  * Vercel define em produção; sem ele (dev local), assume `http` para
- * `localhost`.
+ * `localhost`. Deliberadamente baseada no `Host` da requisição, não em
+ * `SITE_URL`: um checkout iniciado a partir de uma preview deployment da
+ * Vercel precisa redirecionar de volta para essa mesma preview, não para
+ * produção (mesmo raciocínio documentado em `supabase/README.md` §3 para o
+ * link de redefinição de senha).
  */
 async function resolveCallbackBaseUrl(): Promise<string> {
   const headerList = await headers();

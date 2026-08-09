@@ -136,6 +136,15 @@ export async function updatePasswordAction(values: ResetPasswordFormValues): Pro
  * `x-forwarded-proto` is what Vercel sets in production; falls back to
  * `http` for local dev, where that header is absent and the host is
  * `localhost`.
+ *
+ * Deliberately reads the request's `Host` header instead of `SITE_URL`:
+ * Vercel preview deployments each get a distinct `*.vercel.app` subdomain,
+ * and `supabase/README.md` §3 documents the matching wildcard entry
+ * (`https://*-<team-or-account-slug>.vercel.app/auth/callback`) added to
+ * Supabase's Redirect URLs allow-list specifically so a password reset
+ * requested from a preview deploy lands back on that same preview, not on
+ * production. Pinning this to `SITE_URL` would silently break that — every
+ * environment would email a production link instead of its own.
  */
 async function resolveResetCallbackUrl(): Promise<string> {
   const headerList = await headers();
