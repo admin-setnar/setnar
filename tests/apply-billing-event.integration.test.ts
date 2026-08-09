@@ -101,11 +101,14 @@ describe('apply_billing_event RPC (Postgres, integration)', { skip: !canRun }, (
     if (userId) await service!.auth.admin.deleteUser(userId);
   });
 
-  it('activates the subscription on the first CHECKOUT_PAID, matched by externalReference', async () => {
+  it('activates the subscription on the first CHECKOUT_PAID, matched by externalReference — real payload carries no subscription id', async () => {
     const { data, error } = await callEvent({
       eventId: `evt-${randomUUID()}`,
       eventType: 'CHECKOUT_PAID',
-      asaasSubscriptionId: 'sub_test_1',
+      // `null`, não um id sintético: o payload real de CHECKOUT_PAID não traz
+      // nenhum campo `id` dentro de `checkout.subscription` (achado testando
+      // contra o Sandbox, ADR-075) — só SUBSCRIPTION_CREATED traz.
+      asaasSubscriptionId: null,
       asaasCustomerId: 'cus_test_1',
       externalReference: subscriptionId,
       nextDueDate: futureDate(30),
@@ -116,33 +119,54 @@ describe('apply_billing_event RPC (Postgres, integration)', { skip: !canRun }, (
 
     const row = await subscriptionRow();
     assert.equal(row?.status, 'active');
-    assert.equal(row?.external_subscription_id, 'sub_test_1');
+    assert.equal(row?.external_subscription_id, null);
     assert.equal(row?.external_customer_id, 'cus_test_1');
     assert.equal(row?.current_period_end?.slice(0, 10), futureDate(30));
   });
 
-  it('records external_subscription_id on SUBSCRIPTION_CREATED without touching status or current_period_end, and never overwrites it once set', async () => {
-    const before_ = await subscriptionRow();
+  it('SUBSCRIPTION_CREATED backfills external_subscription_id from null, a later renewal matches by it alone, and a repeat never overwrites it', async () => {
+    assert.equal((await subscriptionRow())?.external_subscription_id, null);
 
-    const { data, error } = await callEvent({
+    const created = await callEvent({
       eventId: `evt-${randomUUID()}`,
       eventType: 'SUBSCRIPTION_CREATED',
-      // Id diferente do já gravado por CHECKOUT_PAID (`sub_test_1`) — o
-      // `coalesce()` em `apply_billing_event` deve preservar o valor
-      // existente, nunca sobrescrever com este.
-      asaasSubscriptionId: 'sub_should_not_overwrite',
-      asaasCustomerId: 'cus_should_not_overwrite',
+      asaasSubscriptionId: 'sub_test_1',
+      asaasCustomerId: 'cus_test_1',
       externalReference: subscriptionId,
     });
-    assert.equal(error, null);
-    assert.equal(data?.[0]?.outcome, 'applied');
-    assert.equal(data?.[0]?.subscription_id, subscriptionId);
+    assert.equal(created.error, null);
+    assert.equal(created.data?.[0]?.outcome, 'applied');
 
-    const after_ = await subscriptionRow();
-    assert.equal(after_?.external_subscription_id, 'sub_test_1');
-    assert.equal(after_?.external_customer_id, 'cus_test_1');
-    assert.equal(after_?.status, before_?.status);
-    assert.equal(after_?.current_period_end, before_?.current_period_end);
+    const afterCreated = await subscriptionRow();
+    assert.equal(afterCreated?.external_subscription_id, 'sub_test_1');
+    assert.equal(afterCreated?.status, 'active');
+    assert.equal(afterCreated?.current_period_end?.slice(0, 10), futureDate(30));
+
+    // O motivo de existir: a cobrança de renovação do próximo ciclo só
+    // carrega `payment.subscription`, nunca `externalReference` — precisa
+    // casar só pelo id que acabou de ser gravado por SUBSCRIPTION_CREATED.
+    const renewal = await callEvent({
+      eventId: `evt-${randomUUID()}`,
+      eventType: 'PAYMENT_RECEIVED',
+      asaasSubscriptionId: 'sub_test_1',
+      nextDueDate: futureDate(45),
+    });
+    assert.equal(renewal.error, null);
+    assert.equal(renewal.data?.[0]?.outcome, 'applied');
+    assert.equal(renewal.data?.[0]?.subscription_id, subscriptionId);
+    assert.equal((await subscriptionRow())?.current_period_end?.slice(0, 10), futureDate(45));
+
+    // Redelivery/evento fora de ordem: um segundo SUBSCRIPTION_CREATED nunca
+    // sobrescreve o id já gravado.
+    const duplicate = await callEvent({
+      eventId: `evt-${randomUUID()}`,
+      eventType: 'SUBSCRIPTION_CREATED',
+      asaasSubscriptionId: 'sub_should_not_overwrite',
+      externalReference: subscriptionId,
+    });
+    assert.equal(duplicate.error, null);
+    assert.equal(duplicate.data?.[0]?.outcome, 'applied');
+    assert.equal((await subscriptionRow())?.external_subscription_id, 'sub_test_1');
   });
 
   it('is idempotent on a duplicate event id — same event, no double effect', async () => {
