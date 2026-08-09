@@ -98,6 +98,11 @@ export class AsaasPaymentGateway implements PaymentGateway {
           name: 'Assinatura SETNAR',
           description: 'Assinatura mensal da plataforma SETNAR',
           value: input.amount.amountCents / 100,
+          // Obrigatório pela API do Asaas mesmo para um item de assinatura
+          // único (sem noção de "quantidade" no nosso domínio) — omitir
+          // gera `parser_error`/"O campo 'quantity' precisa ser informado."
+          // Achado testando checkout real contra o Sandbox.
+          quantity: 1,
         },
       ],
       customer: input.externalCustomerId,
