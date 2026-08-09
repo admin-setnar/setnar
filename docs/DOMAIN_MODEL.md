@@ -836,11 +836,10 @@ Domain Services represent business processes that do not belong naturally to a s
 > `[Inferred]` version of this section, which assumed immediate cancellation
 > and a terminal Canceled state. As of SET-29/30 (ADR-075), `Activated →
 > Active` and `Active ↔ Suspended` are written automatically by the Asaas
-> webhook reacting to real payment events — `Suspended`/`Active` no longer
-> require a manual write. `Active --(customer cancels)--> Canceled` still
-> does: that transition belongs to SET-32 (cancellation), not shipped yet —
-> until it ships, a Canceled row (and its already-implemented grace read via
-> `is_subscription_active()`) only exists if written manually.
+> webhook reacting to real payment events. As of SET-32 (ADR-076),
+> `Active/Suspended --(customer cancels)--> Canceled` is written automatically
+> too, initiated by the Representative from `/app/conta` — no transition in
+> this state machine requires a manual write anymore.
 
 **States:** Activated → Active → Suspended → Canceled (Suspended can return to Active; Canceled can return to Active by resubscribing)
 

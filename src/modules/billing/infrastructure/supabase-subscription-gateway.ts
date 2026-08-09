@@ -2,8 +2,17 @@ import 'server-only';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import type { ReserveCheckoutSlotResult, SubscriptionGateway } from '@/modules/billing/domain/subscription-gateway';
-import { mapReserveCheckoutSlotResult } from '@/modules/billing/infrastructure/map-subscription-gateway-result';
+import type {
+  ConfirmCancellationResult,
+  PrepareCancellationResult,
+  ReserveCheckoutSlotResult,
+  SubscriptionGateway,
+} from '@/modules/billing/domain/subscription-gateway';
+import {
+  mapConfirmCancellationResult,
+  mapPrepareCancellationResult,
+  mapReserveCheckoutSlotResult,
+} from '@/modules/billing/infrastructure/map-subscription-gateway-result';
 
 export class SupabaseSubscriptionGateway implements SubscriptionGateway {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -11,5 +20,15 @@ export class SupabaseSubscriptionGateway implements SubscriptionGateway {
   async reserveCheckoutSlot(): Promise<ReserveCheckoutSlotResult> {
     const { data, error } = await this.supabase.rpc('reserve_billing_checkout_slot');
     return mapReserveCheckoutSlotResult(data, error);
+  }
+
+  async prepareCancellation(): Promise<PrepareCancellationResult> {
+    const { data, error } = await this.supabase.rpc('prepare_own_subscription_cancellation');
+    return mapPrepareCancellationResult(data, error);
+  }
+
+  async confirmCancellation(): Promise<ConfirmCancellationResult> {
+    const { data, error } = await this.supabase.rpc('confirm_own_subscription_cancellation');
+    return mapConfirmCancellationResult(data, error);
   }
 }

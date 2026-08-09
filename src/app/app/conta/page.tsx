@@ -3,6 +3,7 @@ import Link from 'next/link';
 
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { LogoutButton } from '@/modules/auth/presentation/logout-button';
+import { CancelSubscriptionPanel } from '@/modules/billing/presentation/cancel-subscription-panel';
 import { CheckoutForm } from '@/modules/billing/presentation/checkout-form';
 import { getSubscriptionPanelState, getSubscriptionViewState } from '@/modules/billing/presentation/subscription-view-state';
 import { getSubscriptionRepository } from '@/modules/billing/infrastructure/subscription-repository-factory';
@@ -140,6 +141,7 @@ export default async function AccountPage({
               <FormAlert tone="error" title="O link de pagamento expirou" description="Tente novamente para gerar um novo link." />
             ) : null}
             {subscriptionPanel.showCheckoutForm ? <CheckoutForm /> : null}
+            {subscriptionPanel.canCancel ? <CancelSubscriptionPanel /> : null}
           </Card>
         </section>
       ) : null}

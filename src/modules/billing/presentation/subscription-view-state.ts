@@ -51,6 +51,8 @@ export interface SubscriptionPanelBanner {
 export interface SubscriptionPanelState {
   readonly banner: SubscriptionPanelBanner | null;
   readonly showCheckoutForm: boolean;
+  /** SET-32: verdadeiro só para `active`/`payment_failed` — há uma assinatura no Asaas para cancelar e ela ainda não foi cancelada. */
+  readonly canCancel: boolean;
 }
 
 interface KindPanel extends SubscriptionPanelState {
@@ -74,6 +76,7 @@ function getKindPanel(state: SubscriptionViewState): KindPanel {
         banner: { tone: 'success', title: 'Sua assinatura está ativa.' },
         showCheckoutForm: false,
         confirmedActive: true,
+        canCancel: true,
       };
     case 'active_until':
       return {
@@ -84,6 +87,10 @@ function getKindPanel(state: SubscriptionViewState): KindPanel {
         },
         showCheckoutForm: false,
         confirmedActive: true,
+        // Já cancelada — nada a repetir. `prepare_own_subscription_cancellation()`
+        // devolveria `already_canceled` de qualquer forma; esconder o botão
+        // aqui evita a viagem ao servidor para descobrir isso.
+        canCancel: false,
       };
     case 'payment_failed':
       return {
@@ -94,6 +101,10 @@ function getKindPanel(state: SubscriptionViewState): KindPanel {
         },
         showCheckoutForm: true,
         confirmedActive: false,
+        // Cobrança já falhou, acesso já perdido (SET-25) — cancelar aqui só
+        // formaliza que o representante não quer mais tentar regularizar
+        // (DOMAIN_MODEL.md §14.3, "Active/Suspended→Canceled").
+        canCancel: true,
       };
     case 'inactive':
       return {
@@ -104,10 +115,11 @@ function getKindPanel(state: SubscriptionViewState): KindPanel {
         },
         showCheckoutForm: true,
         confirmedActive: false,
+        canCancel: false,
       };
     case 'checkout_incomplete':
     case 'none':
-      return { banner: null, showCheckoutForm: true, confirmedActive: false };
+      return { banner: null, showCheckoutForm: true, confirmedActive: false, canCancel: false };
     default: {
       const exhaustive: never = state;
       return exhaustive;
@@ -150,8 +162,9 @@ export function getSubscriptionPanelState(
         description: 'Assim que o pagamento for confirmado, sua assinatura é ativada automaticamente.',
       },
       showCheckoutForm: false,
+      canCancel: false,
     };
   }
 
-  return { banner: kindPanel.banner, showCheckoutForm: kindPanel.showCheckoutForm };
+  return { banner: kindPanel.banner, showCheckoutForm: kindPanel.showCheckoutForm, canCancel: kindPanel.canCancel };
 }

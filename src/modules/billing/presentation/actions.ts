@@ -2,10 +2,13 @@
 
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 
+import { cancelSubscription } from '@/modules/billing/application/cancel-subscription';
 import { startCheckout } from '@/modules/billing/application/start-checkout';
 import { getPaymentGateway } from '@/modules/billing/infrastructure/asaas-payment-gateway-factory';
 import { getSubscriptionGateway } from '@/modules/billing/infrastructure/subscription-gateway-factory';
+import type { CancelSubscriptionFailure } from '@/modules/billing/presentation/cancel-subscription-error-messages';
 import type { StartCheckoutFailure } from '@/modules/billing/presentation/checkout-error-messages';
 import { safeBillingCall } from '@/modules/billing/presentation/safe-billing-call';
 import { checkoutSchema, type CheckoutFormValues } from '@/modules/billing/presentation/schemas/checkout.schema';
@@ -76,4 +79,30 @@ async function resolveCallbackBaseUrl(): Promise<string> {
   const host = headerList.get('host') ?? 'localhost:3000';
   const protocol = headerList.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https');
   return `${protocol}://${host}`;
+}
+
+/**
+ * Cancela a própria assinatura (SET-32). `null` significa sucesso — mesma
+ * convenção de `setActivationStatusAction`: esta ação nunca `redirect()`a,
+ * `revalidatePath` refaz o Server Component com o novo estado
+ * (`SubscriptionViewState` passa a `active_until`/`inactive`, o que já
+ * derruba o próprio botão de cancelar do próximo render — ver
+ * `subscription-view-state.ts`). `already_canceled` também conta como
+ * sucesso — clicar de novo numa aba obsoleta não deve parecer um erro.
+ *
+ * Revalida `/app/paginas` também: perder entitlement muda `canPublish`/
+ * `isPubliclyAvailable` no hub, não só o painel de `/app/conta`.
+ */
+export async function cancelSubscriptionAction(): Promise<CancelSubscriptionFailure | null> {
+  const result = await safeBillingCall(async () => {
+    const [subscriptionGateway, paymentGateway] = await Promise.all([getSubscriptionGateway(), getPaymentGateway()]);
+    return cancelSubscription(subscriptionGateway, paymentGateway);
+  });
+
+  if (result.status === 'canceled' || result.status === 'already_canceled') {
+    revalidatePath('/app/conta');
+    revalidatePath('/app/paginas');
+    return null;
+  }
+  return result;
 }

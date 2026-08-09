@@ -81,7 +81,11 @@ describe('getSubscriptionPanelState', () => {
 
   it('shows only the checkout form, no banner, for "none" and "checkout_incomplete"', () => {
     for (const state of [{ kind: 'none' }, { kind: 'checkout_incomplete' }] as const) {
-      assert.deepEqual(getSubscriptionPanelState(state, undefined), { banner: null, showCheckoutForm: true });
+      assert.deepEqual(getSubscriptionPanelState(state, undefined), {
+        banner: null,
+        showCheckoutForm: true,
+        canCancel: false,
+      });
     }
   });
 
@@ -101,6 +105,7 @@ describe('getSubscriptionPanelState', () => {
     assert.deepEqual(getSubscriptionPanelState({ kind: 'active' }, undefined), {
       banner: { tone: 'success', title: 'Sua assinatura está ativa.' },
       showCheckoutForm: false,
+      canCancel: true,
     });
   });
 
@@ -118,6 +123,41 @@ describe('getSubscriptionPanelState', () => {
       const result = getSubscriptionPanelState(state, 'success');
       assert.equal(result.showCheckoutForm, false, `kind=${state.kind}`);
       assert.equal(result.banner?.title, 'Aguardando confirmação de pagamento', `kind=${state.kind}`);
+    }
+  });
+
+  it('SET-32: only allows canceling from "active" and "payment_failed" — never from an already-canceled or never-started state', () => {
+    const expected: Record<SubscriptionViewState['kind'], boolean> = {
+      none: false,
+      checkout_incomplete: false,
+      payment_failed: true,
+      active: true,
+      active_until: false,
+      inactive: false,
+    };
+    for (const state of ALL_KINDS) {
+      const result = getSubscriptionPanelState(state, undefined);
+      assert.equal(result.canCancel, expected[state.kind], `kind=${state.kind}`);
+    }
+  });
+
+  it('SET-32: ?checkout=success never grants canceling for a kind the persisted state does not already allow', () => {
+    // `active`/`active_until` are `confirmedActive` — the redirect param
+    // never overrides them, so `canCancel` passes through unchanged
+    // (true/false respectively, same as without the param). Every other
+    // kind gets forced into the "aguardando confirmação" branch, which
+    // never allows canceling.
+    const expected: Record<SubscriptionViewState['kind'], boolean> = {
+      none: false,
+      checkout_incomplete: false,
+      payment_failed: false,
+      active: true,
+      active_until: false,
+      inactive: false,
+    };
+    for (const state of ALL_KINDS) {
+      const result = getSubscriptionPanelState(state, 'success');
+      assert.equal(result.canCancel, expected[state.kind], `kind=${state.kind}`);
     }
   });
 

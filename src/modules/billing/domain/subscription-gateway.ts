@@ -22,6 +22,28 @@ export type ReserveCheckoutSlotResult =
   | { readonly status: 'representative_not_found' }
   | { readonly status: 'error' };
 
+/**
+ * Cancelamento (SET-32) — dois passos, não um, porque a chamada ao Asaas
+ * (rede, feita pela camada de aplicação) precisa acontecer ENTRE a leitura
+ * do `external_subscription_id` e a escrita de `status = 'canceled'`; ver o
+ * comentário no topo de `20260829000000_add_subscription_cancellation.sql`.
+ */
+export type PrepareCancellationResult =
+  | { readonly status: 'cancelable'; readonly externalSubscriptionId: string | null }
+  | { readonly status: 'already_canceled' }
+  | { readonly status: 'not_found' }
+  | { readonly status: 'error' };
+
+export type ConfirmCancellationResult =
+  | { readonly status: 'canceled' }
+  | { readonly status: 'already_canceled' }
+  | { readonly status: 'not_found' }
+  | { readonly status: 'error' };
+
 export interface SubscriptionGateway {
   reserveCheckoutSlot(): Promise<ReserveCheckoutSlotResult>;
+  /** Lê o id externo a cancelar (se houver) e valida elegibilidade — nunca escreve. */
+  prepareCancellation(): Promise<PrepareCancellationResult>;
+  /** Só deve ser chamada depois que o gateway de pagamento confirma o cancelamento externo. */
+  confirmCancellation(): Promise<ConfirmCancellationResult>;
 }
