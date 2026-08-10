@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
-This is the index of every ADR in the project: 74 decisions, numbered `ADR-001`
-through `ADR-074`, one file per decision. This folder is the authority on
+This is the index of every ADR in the project: 78 decisions, numbered `ADR-001`
+through `ADR-078`, one file per decision. This folder is the authority on
 **why the code is the way it is** — see `docs/README.md` § *Which document
 wins* on how an ADR relates to the normative documents.
 
@@ -118,6 +118,10 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 072 | Lifecycle de `subscriptions` e graça pós-cancelamento sem job (SET-26) | DOMAIN_MODEL.md | Implements BILLING_DECISIONS_PLAN.md §5/§6.2; reuses ADR-063's `is_subscription_active` and the reactivation UPSERT from `SPRINT_E_PLAN.md` §3.1 | [`ADR-072-lifecycle-de-subscriptions-e-graca-pos-cancelamento-sem-job.md`](ADR-072-lifecycle-de-subscriptions-e-graca-pos-cancelamento-sem-job.md) |
 | 073 | `PaymentGateway` usa o Checkout Asaas hospedado, não cartão inline (SET-27) | ARCHITECTURE.md | Corrects an unreviewed same-day implementation choice; same port/adapter/factory shape as ADR-041 | [`ADR-073-payment-gateway-checkout-asaas-hospedado-nao-cartao-inline.md`](ADR-073-payment-gateway-checkout-asaas-hospedado-nao-cartao-inline.md) |
 | 074 | Checkout reserva a vaga/preço atomicamente antes de tocar o Asaas (SET-28) | DOMAIN_MODEL.md / ARCHITECTURE.md | Depends on ADR-073's `createCheckout`; same `null`/`redirect()` convention as ADR-042/045 | [`ADR-074-checkout-reserva-atomica-das-30-vagas-antes-do-asaas.md`](ADR-074-checkout-reserva-atomica-das-30-vagas-antes-do-asaas.md) |
+| 075 | Webhook do Asaas: token estático, idempotência por evento, SET-29+30 na mesma função (SET-29, SET-30) | ARCHITECTURE.md | Closes the accepted risk from ADR-074; consumes `reserve_billing_checkout_slot()`'s `externalReference`; reads ADR-072's `is_subscription_active` without changing it | [`ADR-075-webhook-asaas-token-estatico-idempotencia-por-evento.md`](ADR-075-webhook-asaas-token-estatico-idempotencia-por-evento.md) |
+| 076 | Cancelamento da assinatura: duas RPCs em volta da chamada ao Asaas, graça preservada por omissão (SET-32) | DOMAIN_MODEL.md | Implements BILLING_DECISIONS_PLAN.md §5.3; consumes ADR-072's grace semantics without changing them | [`ADR-076-cancelamento-da-assinatura-duas-rpcs-em-volta-da-chamada-ao-asaas.md`](ADR-076-cancelamento-da-assinatura-duas-rpcs-em-volta-da-chamada-ao-asaas.md) |
+| 077 | Reconciliação de billing reaproveita `apply_billing_event()`, sem painel administrativo (SET-33) | ARCHITECTURE.md | Consumes ADR-075's `apply_billing_event()` without changing it; same "no job infra" reasoning as SPRINT_E_PLAN.md §2.4 | [`ADR-077-reconciliacao-de-billing-reaproveita-apply-billing-event-sem-painel.md`](ADR-077-reconciliacao-de-billing-reaproveita-apply-billing-event-sem-painel.md) |
+| 078 | Trial gratuito de 30 dias: status explícito, conversão antecipada nunca derruba entitlement (SET-67) | DOMAIN_MODEL.md | Implements the two decisions closed in SET-66; extends ADR-063/072's `is_subscription_active` and ADR-074/076's `reserve_billing_checkout_slot` without changing their signatures | [`ADR-078-trial-gratuito-30-dias-status-explicito-conversao-nunca-derruba-entitlement.md`](ADR-078-trial-gratuito-30-dias-status-explicito-conversao-nunca-derruba-entitlement.md) |
 
 ## Existing code and migration comments still say `README.md`
 

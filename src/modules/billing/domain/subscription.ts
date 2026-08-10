@@ -4,8 +4,16 @@
  * política aprovada (SET-25) mantém `active` durante toda a janela de retry
  * do próprio gateway e só escreve `suspended` quando ela esgota — ver
  * `docs/plans/BILLING_DECISIONS_PLAN.md` §5.
+ *
+ * `'trialing'` (SET-67) nasce em `register_representative()`, na conclusão
+ * do onboarding — nunca reaproveita `past_due`/`suspended`. `current_period_end`
+ * guarda o fim do trial, mesma coluna já usada para a graça pós-cancelamento;
+ * `is_subscription_active()` reavalia essa data ao vivo em toda leitura, sem
+ * job. A linha permanece `trialing` para sempre após a expiração — o mesmo
+ * padrão já usado para `canceled` (DOMAIN_MODEL.md §14.3) — até uma
+ * conversão real escrever `active`.
  */
-export type SubscriptionStatus = 'active' | 'past_due' | 'suspended' | 'canceled';
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'suspended' | 'canceled';
 
 /**
  * Único valor legal hoje é `'credit_card'` (SET-24). Ampliar para Pix

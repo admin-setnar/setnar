@@ -67,6 +67,27 @@ describe('getSubscriptionViewState', () => {
       { kind: 'payment_failed' },
     );
   });
+
+  it('SET-67: maps "trialing" com current_period_end no futuro a "trialing"', () => {
+    const currentPeriodEnd = new Date(Date.now() + 30 * 86_400_000).toISOString();
+    assert.deepEqual(getSubscriptionViewState(view({ status: 'trialing', currentPeriodEnd })), {
+      kind: 'trialing',
+      trialEndsAt: currentPeriodEnd,
+    });
+  });
+
+  it('SET-67: maps "trialing" com current_period_end no passado a "trial_expired" — a linha nunca muda de status sozinha', () => {
+    const currentPeriodEnd = new Date(Date.now() - 86_400_000).toISOString();
+    assert.deepEqual(getSubscriptionViewState(view({ status: 'trialing', currentPeriodEnd })), {
+      kind: 'trial_expired',
+    });
+  });
+
+  it('SET-67: maps "trialing" sem current_period_end a "trial_expired" — nenhum trial sem data', () => {
+    assert.deepEqual(getSubscriptionViewState(view({ status: 'trialing', currentPeriodEnd: null })), {
+      kind: 'trial_expired',
+    });
+  });
 });
 
 describe('getSubscriptionPanelState', () => {
@@ -77,6 +98,8 @@ describe('getSubscriptionPanelState', () => {
     { kind: 'active' },
     { kind: 'active_until', currentPeriodEnd: new Date(Date.now() + 86_400_000).toISOString() },
     { kind: 'inactive' },
+    { kind: 'trialing', trialEndsAt: new Date(Date.now() + 30 * 86_400_000).toISOString() },
+    { kind: 'trial_expired' },
   ];
 
   it('shows only the checkout form, no banner, for "none" and "checkout_incomplete"', () => {
@@ -117,13 +140,34 @@ describe('getSubscriptionPanelState', () => {
     assert.ok(result.banner!.description!.includes(new Date(currentPeriodEnd).toLocaleDateString('pt-BR')));
   });
 
-  it('overrides every non-active kind with the "aguardando confirmação" banner and hides the form on ?checkout=success', () => {
+  it('SET-67: shows a success banner with the trial end date, and still shows the checkout form (early conversion), for "trialing"', () => {
+    const trialEndsAt = new Date(Date.now() + 30 * 86_400_000).toISOString();
+    const result = getSubscriptionPanelState({ kind: 'trialing', trialEndsAt }, undefined);
+    assert.equal(result.showCheckoutForm, true);
+    assert.equal(result.banner?.tone, 'success');
+    assert.ok(result.banner!.description!.includes(new Date(trialEndsAt).toLocaleDateString('pt-BR')));
+  });
+
+  it('SET-67: shows an error banner and the checkout form for "trial_expired"', () => {
+    const result = getSubscriptionPanelState({ kind: 'trial_expired' }, undefined);
+    assert.equal(result.showCheckoutForm, true);
+    assert.equal(result.banner?.tone, 'error');
+  });
+
+  it('overrides every non-active, non-trialing kind with the "aguardando confirmação" banner and hides the form on ?checkout=success', () => {
     for (const state of ALL_KINDS) {
-      if (state.kind === 'active' || state.kind === 'active_until') continue;
+      if (state.kind === 'active' || state.kind === 'active_until' || state.kind === 'trialing') continue;
       const result = getSubscriptionPanelState(state, 'success');
       assert.equal(result.showCheckoutForm, false, `kind=${state.kind}`);
       assert.equal(result.banner?.title, 'Aguardando confirmação de pagamento', `kind=${state.kind}`);
     }
+  });
+
+  it('SET-67: ?checkout=success never overrides "trialing" — it is already confirmedActive', () => {
+    const trialEndsAt = new Date(Date.now() + 30 * 86_400_000).toISOString();
+    const result = getSubscriptionPanelState({ kind: 'trialing', trialEndsAt }, 'success');
+    assert.equal(result.banner?.title, 'Seu período de teste está ativo.');
+    assert.equal(result.showCheckoutForm, true);
   });
 
   it('SET-32: only allows canceling from "active" and "payment_failed" — never from an already-canceled or never-started state', () => {
@@ -134,6 +178,8 @@ describe('getSubscriptionPanelState', () => {
       active: true,
       active_until: false,
       inactive: false,
+      trialing: false,
+      trial_expired: false,
     };
     for (const state of ALL_KINDS) {
       const result = getSubscriptionPanelState(state, undefined);
@@ -154,6 +200,10 @@ describe('getSubscriptionPanelState', () => {
       active: true,
       active_until: false,
       inactive: false,
+      // `trialing` é `confirmedActive`, então o override nem entra em jogo —
+      // `canCancel` passa direto (`false`, mesma coisa sem o param).
+      trialing: false,
+      trial_expired: false,
     };
     for (const state of ALL_KINDS) {
       const result = getSubscriptionPanelState(state, 'success');

@@ -600,7 +600,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Business description:** The commercial agreement between a paying customer (Representative in Stage 1–4; Company in Stage 5) and SETNAR.
 **Purpose:** SETNAR's own revenue mechanism and the gate for platform capability.
 **Identity:** Uniquely identified, owned by exactly one Representative or exactly one Company.
-**Lifecycle:** Activated → Active → (optionally) Suspended (non-payment) → (optionally) Canceled. See Section 14.
+**Lifecycle:** Trialing (30 days, from onboarding) → Activated → Active → (optionally) Suspended (non-payment) → (optionally) Canceled. See Section 14.
 **Relationships:** Owned by a Representative or Company; constrains the publication capability of Commercial Pages.
 **Invariants:** A Commercial Page cannot remain Published if its owner's Subscription is not Active (see Section 14 for the precise transition and grace behavior, which is an inferred, conservative rule since PRODUCT.md does not specify billing enforcement mechanics for the MVP).
 **Future evolution:** Stage 5 introduces Company-level Subscriptions covering multiple Representatives at once.
@@ -840,10 +840,22 @@ Domain Services represent business processes that do not belong naturally to a s
 > `Active/Suspended --(customer cancels)--> Canceled` is written automatically
 > too, initiated by the Representative from `/app/conta` — no transition in
 > this state machine requires a manual write anymore.
+>
+> **Status update (2026-08-10, SET-67).** A `Trialing` state now precedes
+> `Activated`: every successful `register_representative()` call starts a
+> 30-day free trial with entitlement equivalent to `Active`, decided and
+> confirmed by the Product Owner in SET-66. `Trialing` is not a discount or
+> a grace period on another state — it is its own status, never a reuse of
+> `past_due`/`suspended`. Converting to a paid Subscription during the trial
+> (`reserve_billing_checkout_slot()`) never revokes access mid-checkout: the
+> row stays `Trialing` until the Asaas webhook actually confirms payment.
 
-**States:** Activated → Active → Suspended → Canceled (Suspended can return to Active; Canceled can return to Active by resubscribing)
+**States:** Trialing → Activated → Active → Suspended → Canceled (Suspended can return to Active; Canceled can return to Active by resubscribing)
 
 ```
+[—] --(onboarding completes, register_representative()) --> [Trialing, 30 days, no charge]
+[Trialing] --(trial_ends_at passes with no conversion)--> access revoked, row remains Trialing
+[Trialing] --(customer converts, any time during the trial)--> [Activated]
 [Activated] --(first successful payment)--> [Active]
 [Active] --(all of the gateway's own retry attempts fail)--> [Suspended]
 [Suspended] --(payment resolved)--> [Active]
@@ -852,10 +864,11 @@ Domain Services represent business processes that do not belong naturally to a s
 [Canceled] --(customer resubscribes, any time)--> [Active]
 ```
 
-**Permitted transitions:** Activated→Active; Active↔Suspended; Active/Suspended→Canceled; Canceled→Active.
-**Forbidden transitions:** None absolute. The earlier rule ("Canceled is terminal, a new Subscription must be created") does not hold in this schema: `subscriptions.representative_id` is `unique` — there is exactly one row per Representative, reused by UPSERT for every transition, including reactivation after cancellation (same mechanism already used for reactivation after suspension). A Canceled Subscription regains Active by the same UPSERT a first-time subscriber uses, not by creating a second row.
-**Grace semantics:** Cancellation does not immediately revoke access. `current_period_end` (already present on the row, populated by the gateway's confirmed-payment event) marks the boundary; access is granted while `status = 'active'` OR (`status = 'canceled'` AND `current_period_end` is in the future) — evaluated live on every read, not by a scheduled job (this project has none by design, `docs/plans/SPRINT_E_PLAN.md` §2.4).
-**Business rule:** Active is the only Status under which owned Commercial Pages may be Published (Rule 21).
+**Permitted transitions:** —→Trialing (once, at onboarding); Trialing→Activated; Activated→Active; Active↔Suspended; Active/Suspended→Canceled; Canceled→Active.
+**Forbidden transitions:** None absolute among the paid states. The earlier rule ("Canceled is terminal, a new Subscription must be created") does not hold in this schema: `subscriptions.representative_id` is `unique` — there is exactly one row per Representative, reused by UPSERT for every transition, including reactivation after cancellation (same mechanism already used for reactivation after suspension) and including the trial itself — the trial and the eventual paid Subscription are the same row, not a second one created on conversion. `Trialing` is reachable exactly once per Representative: `register_representative()` is itself guarded against a second call for the same account (`already_registered`), so no code path grants a second trial.
+**Grace semantics:** Cancellation does not immediately revoke access. `current_period_end` (already present on the row, populated by the gateway's confirmed-payment event) marks the boundary; access is granted while `status = 'active'` OR (`status in ('canceled', 'trialing')` AND `current_period_end` is in the future) — evaluated live on every read, not by a scheduled job (this project has none by design, `docs/plans/SPRINT_E_PLAN.md` §2.4). The same mechanism that grants post-cancellation grace grants the trial: `current_period_end` doubles as `trial_ends_at` for a `Trialing` row, no separate column.
+**Business rule:** Active is the only Status under which owned Commercial Pages may be Published (Rule 21) — **as of SET-67, `Trialing` (unexpired) grants the same entitlement**, via the same `is_subscription_active()` mechanism, so this rule now reads "Active or an unexpired Trialing".
+**Founding-slot rule:** the 30 founding-price slots (`BILLING_DECISIONS_PLAN.md` §4.4) count only real payment attempts (`provider not in ('manual', 'trial')`) — starting or sitting in a trial never consumes a slot; only converting does.
 
 ### 14.4 Product
 

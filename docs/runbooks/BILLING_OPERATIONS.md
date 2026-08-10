@@ -95,6 +95,32 @@ order by created_at desc
 limit 20;
 ```
 
+**Funil trial → pago (SET-67).** Nenhuma tabela/evento de analytics novo —
+`representatives.created_at` já é o instante de início do trial (`register_representative()`
+grava a linha de `subscriptions` com `status = 'trialing'` no mesmo passo);
+a conversão fica registrada em `subscriptions.updated_at` quando o status
+sai de `trialing`. Decisão de escopo registrada no plano do SET-67:
+consistente com o resto do módulo (sem fila/job) e com `QR_ANALYTICS_PLAN.md`
+(painel de analytics segue não implementado de propósito).
+
+```sql
+select
+  r.id as representative_id,
+  r.created_at as trial_started_at,
+  s.status,
+  s.updated_at as last_status_change,
+  (s.status <> 'trialing') as converted
+from representatives r
+join subscriptions s on s.representative_id = r.id
+order by r.created_at desc;
+```
+
+`converted = true` e `status = 'active'` é uma conversão fechada; `status =
+'trialing'` com `current_period_end` no passado é um trial expirado sem
+conversão; `status in ('suspended', 'canceled')` com `provider = 'asaas'`
+é uma conversão iniciada que não se confirmou (pagamento falhou, ou nunca
+chegou o webhook).
+
 ---
 
 ## 3. Incidente: webhook parado

@@ -23,7 +23,9 @@ export type SubscriptionViewState =
   | { readonly kind: 'payment_failed' }
   | { readonly kind: 'active' }
   | { readonly kind: 'active_until'; readonly currentPeriodEnd: string }
-  | { readonly kind: 'inactive' };
+  | { readonly kind: 'inactive' }
+  | { readonly kind: 'trialing'; readonly trialEndsAt: string }
+  | { readonly kind: 'trial_expired' };
 
 export function getSubscriptionViewState(view: OwnSubscriptionView | null): SubscriptionViewState {
   if (!view) return { kind: 'none' };
@@ -35,6 +37,16 @@ export function getSubscriptionViewState(view: OwnSubscriptionView | null): Subs
       return { kind: 'active_until', currentPeriodEnd: view.currentPeriodEnd };
     }
     return { kind: 'inactive' };
+  }
+
+  // SET-67: `trial_ends_at` mora na mesma coluna `current_period_end` — a
+  // linha nunca deixa de ser `trialing` sozinha na expiração (mesmo padrão
+  // de `canceled` acima); só uma conversão real escreve `active`.
+  if (view.status === 'trialing') {
+    if (view.currentPeriodEnd && new Date(view.currentPeriodEnd) > new Date()) {
+      return { kind: 'trialing', trialEndsAt: view.currentPeriodEnd };
+    }
+    return { kind: 'trial_expired' };
   }
 
   // status === 'suspended' (ou 'past_due', reservado e sem uso real — ver
@@ -120,6 +132,33 @@ function getKindPanel(state: SubscriptionViewState): KindPanel {
     case 'checkout_incomplete':
     case 'none':
       return { banner: null, showCheckoutForm: true, confirmedActive: false, canCancel: false };
+    case 'trialing':
+      return {
+        banner: {
+          tone: 'success',
+          title: 'Seu período de teste está ativo.',
+          description: `Grátis até ${new Date(state.trialEndsAt).toLocaleDateString('pt-BR')}. Assine quando quiser continuar depois disso.`,
+        },
+        showCheckoutForm: true,
+        // Já tem entitlement real agora (SET-67) — mas, ao contrário de
+        // `active`/`active_until`, nada foi cobrado ainda, então o
+        // formulário de checkout continua visível para permitir converter
+        // a qualquer momento durante o trial.
+        confirmedActive: true,
+        // Nada agendado no Asaas para cancelar — o trial só expira sozinho.
+        canCancel: false,
+      };
+    case 'trial_expired':
+      return {
+        banner: {
+          tone: 'error',
+          title: 'Seu período de teste acabou',
+          description: 'Assine para voltar a publicar suas páginas.',
+        },
+        showCheckoutForm: true,
+        confirmedActive: false,
+        canCancel: false,
+      };
     default: {
       const exhaustive: never = state;
       return exhaustive;
