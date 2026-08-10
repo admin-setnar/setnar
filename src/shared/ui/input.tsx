@@ -52,7 +52,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         disabled={disabled}
         aria-invalid={invalid || undefined}
         className={cn(
-          'peer h-full w-full bg-transparent text-[15px] text-content outline-none',
+          'peer h-full w-full bg-transparent text-base text-content outline-none',
           'placeholder:text-content-subtle disabled:cursor-not-allowed',
         )}
         {...props}
