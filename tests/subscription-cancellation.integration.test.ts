@@ -11,6 +11,16 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
  * então os testes chamam via um client autenticado como o próprio
  * representante (mesmo padrão de `ownerClient` em
  * `public-accessibility.integration.test.ts`), não via service role.
+ *
+ * SET-63 (`supabase/migrations/20260902000000_add_cancellation_feedback_event.sql`)
+ * estende `confirm_own_subscription_cancellation()` para também abrir uma
+ * linha fresca em `feedback_responses` (`context = 'cancellation'`) em cada
+ * transição real para `canceled` — nunca nos caminhos `already_canceled`/
+ * `changed`/`not_found`. Os testes abaixo que produzem uma transição real
+ * verificam essa linha também; um teste dedicado no fim do arquivo prova o
+ * critério de aceite central do SET-63: um segundo evento de cancelamento
+ * (reativação + novo cancelamento) abre uma SEGUNDA linha, independente da
+ * primeira já ter sido respondida.
  */
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -46,6 +56,16 @@ async function subscriptionRow() {
     .eq('id', subscriptionId)
     .single();
   return data;
+}
+
+async function cancellationFeedbackRows() {
+  const { data } = await service!
+    .from('feedback_responses')
+    .select('id, shown_at, answered_at, dismissed_at, created_at')
+    .eq('representative_id', representativeId)
+    .eq('context', 'cancellation')
+    .order('created_at', { ascending: true });
+  return data ?? [];
 }
 
 describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canRun }, () => {
@@ -96,6 +116,7 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
 
   after(async () => {
     if (representativeId) {
+      await service!.from('feedback_responses').delete().eq('representative_id', representativeId);
       await service!.from('subscriptions').delete().eq('representative_id', representativeId);
       await service!.from('representatives').delete().eq('id', representativeId);
     }
@@ -160,12 +181,24 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
     // `+00:00`, não `Z` — mesmo valor, representação textual diferente.
     assert.equal(new Date(row!.current_period_end!).getTime(), new Date(currentPeriodEnd).getTime());
     assert.equal(row?.external_subscription_id, 'sub_test_cancel_1');
+
+    // SET-63: a transição real para 'canceled' abre uma linha fresca e não
+    // resolvida em feedback_responses — 'shown_at' fica null até o prompt
+    // realmente montar no navegador (record_feedback_shown), não no
+    // momento em que o servidor só concluiu o cancelamento internamente.
+    const feedbackRows = await cancellationFeedbackRows();
+    assert.equal(feedbackRows.length, 1);
+    assert.equal(feedbackRows[0]?.shown_at, null);
+    assert.equal(feedbackRows[0]?.answered_at, null);
+    assert.equal(feedbackRows[0]?.dismissed_at, null);
   });
 
   it('is idempotent — confirming an already-canceled subscription again reports "already_canceled", not an error', async () => {
     const { data: prepared, error: prepareError } = await ownerClient!.rpc('prepare_own_subscription_cancellation');
     assert.equal(prepareError, null);
     assert.deepEqual(prepared?.[0], { status: 'already_canceled', external_subscription_id: null });
+
+    const rowsBefore = await cancellationFeedbackRows();
 
     const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation', {
       p_external_subscription_id: null,
@@ -175,9 +208,29 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
 
     const row = await subscriptionRow();
     assert.equal(row?.status, 'canceled');
+
+    // No new event actually happened — no second feedback row either.
+    assert.deepEqual(await cancellationFeedbackRows(), rowsBefore);
   });
 
-  it('also allows canceling from "suspended" — formalizes giving up on a failed payment', async () => {
+  it('SET-63: a second cancellation event opens a fresh, unresolved feedback row — even though the first one was already answered', async () => {
+    // Simulates the representative having answered the first cancellation's
+    // prompt (the exact scenario the "reuse the latest row" default RPC
+    // behavior would otherwise break — see this file's own header).
+    const [firstRow] = await cancellationFeedbackRows();
+    assert.ok(firstRow, 'the previous test must have already opened the first cancellation event\'s row');
+    const { data: resolvedFirst, error: resolveFirstError } = await ownerClient!.rpc('resolve_feedback', {
+      p_context: 'cancellation',
+      p_outcome: 'answered',
+      p_response: 'price',
+      p_response_detail: null,
+    });
+    assert.equal(resolveFirstError, null);
+    assert.equal(resolvedFirst?.[0]?.status, 'updated');
+
+    // Reactivates (as if the representative subscribed again), then
+    // suspends — same "also allows canceling from suspended" scenario as
+    // before, now doubling as the second, independent cancellation event.
     const { error: updateError } = await service!
       .from('subscriptions')
       .update({ status: 'suspended', external_subscription_id: 'sub_test_cancel_2' })
@@ -194,6 +247,29 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
     assert.equal(confirmError, null);
     assert.deepEqual(confirmed?.[0], { status: 'canceled' });
     assert.equal((await subscriptionRow())?.status, 'canceled');
+
+    const rows = await cancellationFeedbackRows();
+    assert.equal(rows.length, 2, 'the second cancellation must open a second row, never reuse the first (already-resolved) one');
+    assert.equal(rows[0]?.id, firstRow!.id);
+    assert.ok(rows[0]?.answered_at, 'the first event\'s row stays exactly as answered — never touched by the second event');
+    const secondRow = rows[1]!;
+    assert.notEqual(secondRow.id, firstRow!.id);
+    assert.equal(secondRow.shown_at, null);
+    assert.equal(secondRow.answered_at, null);
+    assert.equal(secondRow.dismissed_at, null);
+
+    // record_feedback_shown must reuse this second row (not the resolved
+    // first one) and set shown_at on it, once the prompt actually mounts.
+    const { data: shown, error: shownError } = await ownerClient!.rpc('record_feedback_shown', { p_context: 'cancellation' });
+    assert.equal(shownError, null);
+    assert.equal(shown?.[0]?.id, secondRow.id);
+
+    const { data: secondRowAfterShown } = await service!
+      .from('feedback_responses')
+      .select('shown_at')
+      .eq('id', secondRow.id)
+      .single();
+    assert.ok(secondRowAfterShown?.shown_at);
   });
 
   it('reports "cancelable" with a null external id for a manual/fixture row, and confirms it the same way', async () => {
@@ -202,6 +278,8 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
       .update({ status: 'active', external_subscription_id: null, provider: 'manual' })
       .eq('id', subscriptionId);
     assert.equal(updateError, null);
+
+    const rowsBefore = await cancellationFeedbackRows();
 
     const { data: prepared, error: prepareError } = await ownerClient!.rpc('prepare_own_subscription_cancellation');
     assert.equal(prepareError, null);
@@ -212,6 +290,10 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
     });
     assert.equal(confirmError, null);
     assert.deepEqual(confirmed?.[0], { status: 'canceled' });
+
+    // A third real transition — a third fresh row.
+    const rowsAfter = await cancellationFeedbackRows();
+    assert.equal(rowsAfter.length, rowsBefore.length + 1);
   });
 
   it('reports "changed" and does not cancel when the external id no longer matches what prepare read (webhook race)', async () => {
@@ -234,6 +316,8 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
       .eq('id', subscriptionId);
     assert.equal(raceError, null);
 
+    const rowsBefore = await cancellationFeedbackRows();
+
     const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation', {
       p_external_subscription_id: prepared?.[0]?.external_subscription_id ?? null,
     });
@@ -243,5 +327,8 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
     const row = await subscriptionRow();
     assert.equal(row?.status, 'active', 'no cancellation is confirmed when the row moved out from under it');
     assert.equal(row?.external_subscription_id, 'sub_test_cancel_race');
+
+    // No real cancellation happened — no feedback event either.
+    assert.deepEqual(await cancellationFeedbackRows(), rowsBefore);
   });
 });

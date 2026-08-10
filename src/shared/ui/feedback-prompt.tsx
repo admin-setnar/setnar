@@ -13,6 +13,17 @@ import { Text } from '@/shared/ui/typography';
 export interface FeedbackPromptOption {
   readonly value: string;
   readonly label: string;
+  /**
+   * Overrides the prompt-level `detailLabel` for this specific option's
+   * complementary field — SET-63's "Qual funcionalidade estava faltando?"
+   * (missing_feature) is a different question from its "Conte brevemente o
+   * que aconteceu." (technical_problem/expected_something_else/other), so a
+   * single shared `detailLabel` (SET-61/62's shape, one label for every
+   * option in `optionsWithDetail`) is not expressive enough once a context
+   * needs more than one wording. Falls back to `detailLabel` when unset —
+   * SET-61/62 never set this and keep working unchanged.
+   */
+  readonly detailLabel?: string;
 }
 
 /**
@@ -139,7 +150,9 @@ export function FeedbackPrompt({
       {expandedOption ? (
         <div className="space-y-2">
           <label htmlFor={`feedback-detail-${context}`} className="text-sm text-content-muted">
-            {detailLabel ?? 'Quer contar mais? (opcional)'}
+            {options.find((option) => option.value === expandedOption)?.detailLabel ??
+              detailLabel ??
+              'Quer contar mais? (opcional)'}
           </label>
           <div className="flex gap-2">
             <input

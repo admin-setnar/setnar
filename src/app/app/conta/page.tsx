@@ -7,6 +7,12 @@ import { CancelSubscriptionPanel } from '@/modules/billing/presentation/cancel-s
 import { CheckoutForm } from '@/modules/billing/presentation/checkout-form';
 import { getSubscriptionPanelState, getSubscriptionViewState } from '@/modules/billing/presentation/subscription-view-state';
 import { getSubscriptionRepository } from '@/modules/billing/infrastructure/subscription-repository-factory';
+import {
+  CANCELLATION_FEEDBACK_OPTIONS,
+  CANCELLATION_FEEDBACK_QUESTION,
+  CANCELLATION_OPTIONS_WITH_DETAIL,
+} from '@/modules/feedback/presentation/cancellation-feedback-options';
+import { resolveCancellationFeedbackEligibility } from '@/modules/feedback/presentation/resolve-cancellation-feedback-eligibility';
 import { resolveFirstPublicationFeedbackEligibility } from '@/modules/feedback/presentation/resolve-first-publication-eligibility';
 import { resolveValuePerceptionFeedbackEligibility } from '@/modules/feedback/presentation/resolve-value-perception-eligibility';
 import {
@@ -38,28 +44,31 @@ export default async function AccountPage({
 
   const representative = await (await getRepresentativeAccountRepository()).findByProfileId(user.id);
 
-  // SET-62: `/app/conta` is the second of the two screens the trigger
-  // allows the prompt on (`/app/paginas` is the other). Also checks
-  // `first_publication`'s own eligibility here — not to render SET-61's
-  // prompt (that stays `/app/paginas`-only), but because a representative
-  // could otherwise see SET-61 on `/app/paginas` and SET-62 on `/app/conta`
-  // within the same session, which ADR-070 documents as never allowed. No
-  // cancellation flow exists yet to guard against overlapping (SET-32/
-  // SET-63) — when it ships, that work is responsible for excluding this
-  // prompt from its own screen, same as this check does not need to know
-  // about a screen that does not exist today.
-  let showValuePerceptionFeedback = false;
-  if (representative) {
-    const catalog = await (await getRepresentativeCatalogRepository()).listOwnCatalog(user.id);
-    const [firstPublicationEligible, valuePerceptionEligible] = await Promise.all([
-      resolveFirstPublicationFeedbackEligibility(catalog),
-      resolveValuePerceptionFeedbackEligibility(representative.id),
-    ]);
-    showValuePerceptionFeedback = !firstPublicationEligible && valuePerceptionEligible;
-  }
-
   const subscriptionView = representative ? await (await getSubscriptionRepository()).getOwnSubscription() : null;
   const subscriptionState = getSubscriptionViewState(subscriptionView);
+
+  // SET-62/63: `/app/conta` renders at most one microfeedback prompt per
+  // visit — ADR-070's mutual-exclusion rule, now extended to `cancellation`
+  // (the screen ADR-070 itself flagged as not existing yet, and left that
+  // work responsible for excluding itself from). Priority order:
+  // `first_publication` (checked, never rendered here — `/app/paginas`-only)
+  // > `cancellation` > `value_perception`. Cancellation outranks value
+  // perception deliberately: a representative on the cancellation
+  // confirmation screen has already decided to leave, so asking "is SETNAR
+  // helping you promote your work?" in the same breath would read as
+  // contradictory noise, not a coherent moment to ask either question.
+  let showValuePerceptionFeedback = false;
+  let showCancellationFeedback = false;
+  if (representative) {
+    const catalog = await (await getRepresentativeCatalogRepository()).listOwnCatalog(user.id);
+    const [firstPublicationEligible, valuePerceptionEligible, cancellationEligible] = await Promise.all([
+      resolveFirstPublicationFeedbackEligibility(catalog),
+      resolveValuePerceptionFeedbackEligibility(representative.id),
+      resolveCancellationFeedbackEligibility(subscriptionState.kind === 'active_until'),
+    ]);
+    showCancellationFeedback = !firstPublicationEligible && cancellationEligible;
+    showValuePerceptionFeedback = !firstPublicationEligible && !showCancellationFeedback && valuePerceptionEligible;
+  }
 
   // `startCheckoutAction` (modules/billing/presentation/actions.ts) sends the
   // Asaas Checkout callback here with `?checkout=success|canceled|expired` —
@@ -132,6 +141,14 @@ export default async function AccountPage({
                 tone={subscriptionPanel.banner.tone}
                 title={subscriptionPanel.banner.title}
                 description={subscriptionPanel.banner.description}
+              />
+            ) : null}
+            {showCancellationFeedback ? (
+              <FeedbackPrompt
+                context="cancellation"
+                question={CANCELLATION_FEEDBACK_QUESTION}
+                options={CANCELLATION_FEEDBACK_OPTIONS}
+                optionsWithDetail={CANCELLATION_OPTIONS_WITH_DETAIL}
               />
             ) : null}
             {checkoutParam === 'canceled' ? (

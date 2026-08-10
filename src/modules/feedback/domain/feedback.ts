@@ -25,6 +25,25 @@ export type FirstPublicationResponse = 'easy' | 'reasonable' | 'difficult';
  */
 export type ValuePerceptionResponse = 'yes' | 'partly' | 'no';
 
+/**
+ * SET-63's one-click answers to "Qual foi o motivo principal do
+ * cancelamento?" — the 9 categories from the product brief, validated
+ * server-side by `resolve_feedback` scoped to `context: 'cancellation'`
+ * (`supabase/migrations/20260902000000_add_cancellation_feedback_event.sql`).
+ * A structured, comparable value is always the primary answer; free text is
+ * only ever the optional `response_detail` complement, never a substitute.
+ */
+export type CancellationResponse =
+  | 'not_generating_results'
+  | 'not_using_enough'
+  | 'price'
+  | 'missing_feature'
+  | 'hard_to_configure'
+  | 'no_longer_need'
+  | 'technical_problem'
+  | 'expected_something_else'
+  | 'other';
+
 /** Free-text complement to any response — same 140-character ceiling the migration's CHECK enforces. */
 export const FEEDBACK_DETAIL_MAX_LENGTH = 140;
 

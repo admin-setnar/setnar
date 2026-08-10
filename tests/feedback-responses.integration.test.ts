@@ -13,8 +13,13 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
  * página?". `value_perception`/`pmf` are exercised only to prove the shared
  * infrastructure's `response` contract is not structurally pinned to
  * SET-61's vocabulary (no SET-62/64 flow is implemented here).
- * `cancellation` is exercised only to prove no taxonomy was guessed ahead
- * of SET-63.
+ * `cancellation`'s own 9-category vocabulary (SET-63,
+ * `supabase/migrations/20260902000000_add_cancellation_feedback_event.sql`)
+ * is exercised below too; the "fresh row per cancellation event" behavior
+ * that context alone gets is covered separately in
+ * `subscription-cancellation.integration.test.ts`, the only place a real
+ * cancellation event (`confirm_own_subscription_cancellation`) can be
+ * produced.
  */
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -334,7 +339,7 @@ describe('feedback_responses RPCs (Postgres, integration)', { skip: !canRun }, (
     assert.equal(data?.[0]?.status, 'invalid_outcome');
   });
 
-  it('rejects any answered response for cancellation — SET-63 has not approved a taxonomy yet, so nothing is guessed here', async () => {
+  it('rejects an answered response for cancellation that is not one of SET-63\'s 9 categories', async () => {
     const { data, error } = await owner!.rpc('resolve_feedback', {
       p_context: 'cancellation',
       p_outcome: 'answered',
@@ -343,6 +348,43 @@ describe('feedback_responses RPCs (Postgres, integration)', { skip: !canRun }, (
     });
     assert.equal(error, null);
     assert.equal(data?.[0]?.status, 'invalid_response');
+  });
+
+  it('accepts cancellation\'s own response vocabulary ("price"), with no complementary detail', async () => {
+    await service!.from('feedback_responses').delete().eq('representative_id', ownerRepresentativeId).eq('context', 'cancellation');
+    await owner!.rpc('record_feedback_shown', { p_context: 'cancellation' });
+
+    const { data, error } = await owner!.rpc('resolve_feedback', {
+      p_context: 'cancellation',
+      p_outcome: 'answered',
+      p_response: 'price',
+      p_response_detail: null,
+    });
+    assert.equal(error, null);
+    assert.equal(data?.[0]?.status, 'updated');
+  });
+
+  it('accepts cancellation\'s "missing_feature" category together with its own complementary detail', async () => {
+    await service!.from('feedback_responses').delete().eq('representative_id', ownerRepresentativeId).eq('context', 'cancellation');
+    const { data: shown } = await owner!.rpc('record_feedback_shown', { p_context: 'cancellation' });
+    const rowId = shown?.[0]?.id;
+
+    const { data, error } = await owner!.rpc('resolve_feedback', {
+      p_context: 'cancellation',
+      p_outcome: 'answered',
+      p_response: 'missing_feature',
+      p_response_detail: 'Integração com o calendário do representante.',
+    });
+    assert.equal(error, null);
+    assert.equal(data?.[0]?.status, 'updated');
+
+    const { data: row } = await service!
+      .from('feedback_responses')
+      .select('response, response_detail')
+      .eq('id', rowId)
+      .single();
+    assert.equal(row?.response, 'missing_feature');
+    assert.equal(row?.response_detail, 'Integração com o calendário do representante.');
   });
 
   it('rejects a response_detail over the 140-character limit at the SQL level', async () => {
