@@ -170,8 +170,8 @@ export const setnarTenant: Tenant = {
         {
           title: 'Legal',
           links: [
-            { label: 'Termos de uso', href: '/termos', placeholder: true },
-            { label: 'Política de privacidade', href: '/privacidade', placeholder: true },
+            { label: 'Termos de uso', href: '/termos' },
+            { label: 'Política de privacidade', href: '/privacidade' },
           ],
         },
       ],
