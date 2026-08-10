@@ -297,3 +297,4 @@ Known defects, deferrals and open questions **in the documentation itself**.
 - *Is this entity real or conceptual?* → `DOMAIN_MODEL.md` § 3.1 (status table)
 - *Why was it built this way?* → the ADRs in [`docs/adr/`](adr/README.md)
 - *What is being worked on right now?* → [`plans/`](plans/README.md)
+- *A billing incident is happening right now, what do I do?* → [`runbooks/BILLING_OPERATIONS.md`](runbooks/BILLING_OPERATIONS.md) — operational procedure, non-normative, same status as `plans/`

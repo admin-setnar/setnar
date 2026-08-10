@@ -622,6 +622,11 @@ não depende mais só de payloads sintéticos para os eventos de assinatura.
 
 ## 9. Reconciliar uma assinatura manualmente (SET-33)
 
+**Runbook completo de incidentes de billing (webhook parado, evento
+duplicado, entitlement divergente, rollback, rotação de segredo):**
+[`docs/runbooks/BILLING_OPERATIONS.md`](../docs/runbooks/BILLING_OPERATIONS.md)
+(SET-35). Esta seção cobre só o uso do script de reconciliação em si.
+
 Existe para o único cenário que o webhook idempotente (seção 8) não resolve
 sozinho: o evento nunca chegou (fila do Asaas pausada, entrega falhou nas
 tentativas dele, etc.). `scripts/reconcile-billing-subscription.ts` pergunta
