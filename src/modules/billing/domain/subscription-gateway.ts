@@ -16,7 +16,19 @@
  */
 
 export type ReserveCheckoutSlotResult =
-  | { readonly status: 'reserved'; readonly localSubscriptionId: string; readonly amountCents: number }
+  | {
+      readonly status: 'reserved';
+      readonly localSubscriptionId: string;
+      readonly amountCents: number;
+      /**
+       * Id da assinatura Asaas abandonada quando esta reserva reaproveita uma
+       * linha suspensa/cancelada (retentativa de checkout) — `null` para
+       * cliente novo ou linha que nunca teve id externo. `startCheckout`
+       * cancela este id no Asaas antes de criar o novo checkout, para nunca
+       * deixar duas assinaturas cobrando em paralelo (SET-34 follow-up).
+       */
+      readonly staleExternalSubscriptionId: string | null;
+    }
   | { readonly status: 'already_active' }
   | { readonly status: 'sold_out' }
   | { readonly status: 'representative_not_found' }
@@ -38,12 +50,24 @@ export type ConfirmCancellationResult =
   | { readonly status: 'canceled' }
   | { readonly status: 'already_canceled' }
   | { readonly status: 'not_found' }
+  /**
+   * `external_subscription_id` da linha não bate mais com o id lido por
+   * `prepareCancellation()` (ex.: um webhook reescreveu o campo na janela
+   * entre os dois passos) — nenhuma escrita aconteceu, mesmo "falha externa
+   * não mostra sucesso falso" agora para "estado mudou por baixo".
+   */
+  | { readonly status: 'changed' }
   | { readonly status: 'error' };
 
 export interface SubscriptionGateway {
   reserveCheckoutSlot(): Promise<ReserveCheckoutSlotResult>;
   /** Lê o id externo a cancelar (se houver) e valida elegibilidade — nunca escreve. */
   prepareCancellation(): Promise<PrepareCancellationResult>;
-  /** Só deve ser chamada depois que o gateway de pagamento confirma o cancelamento externo. */
-  confirmCancellation(): Promise<ConfirmCancellationResult>;
+  /**
+   * Só deve ser chamada depois que o gateway de pagamento confirma o
+   * cancelamento externo. `externalSubscriptionId` é o mesmo valor que
+   * `prepareCancellation()` devolveu — a RPC só escreve se a linha ainda
+   * tiver esse id.
+   */
+  confirmCancellation(externalSubscriptionId: string | null): Promise<ConfirmCancellationResult>;
 }

@@ -27,7 +27,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 
-import type { ReconcilablePaymentStatus } from '@/modules/billing/domain/payment-gateway';
+import { resolveReconciliationPlan } from '@/modules/billing/application/reconcile-subscription';
 import { fetchAsaasLatestPayment } from '@/modules/billing/infrastructure/fetch-asaas-latest-payment';
 
 interface CliArgs {
@@ -64,12 +64,6 @@ function parseArgs(argv: readonly string[]): CliArgs {
 
   return { representativeId, reason, actor, apply };
 }
-
-const EVENT_TYPE_BY_PAYMENT_STATUS: Record<ReconcilablePaymentStatus, string> = {
-  CONFIRMED: 'PAYMENT_CONFIRMED',
-  RECEIVED: 'PAYMENT_RECEIVED',
-  OVERDUE: 'PAYMENT_OVERDUE',
-};
 
 async function main() {
   const { representativeId, reason, actor, apply } = parseArgs(process.argv.slice(2));
@@ -133,59 +127,39 @@ async function main() {
 
   const latestPayment = await fetchAsaasLatestPayment(asaasConfig, subscription.external_subscription_id);
 
-  if (latestPayment.status === 'error') {
-    await logOutcome('gateway_error', { subscriptionId: subscription.id });
-    return;
-  }
-  if (latestPayment.status === 'not_found') {
-    await logOutcome('no_payment_found', { subscriptionId: subscription.id });
-    return;
-  }
-  if (latestPayment.paymentStatus === 'OTHER') {
-    await logOutcome('ignored', {
-      subscriptionId: subscription.id,
-      paymentId: latestPayment.paymentId,
-      paymentStatus: latestPayment.paymentStatus,
-      note: 'status do Asaas sem transição de entitlement definida (SET-25) — nada a aplicar',
-    });
-    return;
-  }
+  const plan = resolveReconciliationPlan(
+    {
+      id: subscription.id,
+      externalSubscriptionId: subscription.external_subscription_id,
+      externalCustomerId: subscription.external_customer_id,
+    },
+    latestPayment,
+    apply,
+  );
 
-  const eventType = EVENT_TYPE_BY_PAYMENT_STATUS[latestPayment.paymentStatus];
-
-  if (!apply) {
-    await logOutcome('would_apply', {
-      subscriptionId: subscription.id,
-      paymentId: latestPayment.paymentId,
-      paymentStatus: latestPayment.paymentStatus,
-      eventType,
-    });
+  if (plan.action === 'log') {
+    await logOutcome(plan.outcome, { ...plan.detail });
     return;
   }
 
   const { data: applied, error: applyError } = await service.rpc('apply_billing_event', {
-    p_event_id: latestPayment.paymentId,
-    p_event_type: eventType,
-    p_asaas_subscription_id: subscription.external_subscription_id,
-    p_asaas_customer_id: latestPayment.customerId ?? subscription.external_customer_id,
+    p_event_id: plan.event.eventId,
+    p_event_type: plan.event.eventType,
+    p_asaas_subscription_id: plan.event.asaasSubscriptionId,
+    p_asaas_customer_id: plan.event.asaasCustomerId,
     p_external_reference: null,
-    p_next_due_date: latestPayment.dueDate,
+    p_next_due_date: plan.event.nextDueDate,
     p_payload: { source: 'reconciliation', actor, reason },
   });
 
   if (applyError) {
     console.error('Falha ao aplicar o evento reconciliado:', applyError.message);
-    await logOutcome('gateway_error', { subscriptionId: subscription.id, applyRpcError: applyError.message });
+    await logOutcome('gateway_error', { subscriptionId: plan.detail.subscriptionId, applyRpcError: applyError.message });
     process.exit(1);
   }
 
   const outcome = applied?.[0]?.outcome ?? 'gateway_error';
-  await logOutcome(outcome, {
-    subscriptionId: subscription.id,
-    paymentId: latestPayment.paymentId,
-    paymentStatus: latestPayment.paymentStatus,
-    eventType,
-  });
+  await logOutcome(outcome, { ...plan.detail });
 }
 
 main().catch((error: unknown) => {

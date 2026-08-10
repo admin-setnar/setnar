@@ -13,6 +13,7 @@ import type { StartCheckoutFailure } from '@/modules/billing/presentation/checko
 import { safeBillingCall } from '@/modules/billing/presentation/safe-billing-call';
 import { checkoutSchema, type CheckoutFormValues } from '@/modules/billing/presentation/schemas/checkout.schema';
 import { stripNonDigits } from '@/modules/billing/domain/billing-rules';
+import { formatE164ToBRPhone } from '@/shared/domain/br-phone';
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { getRepresentativeAccountRepository } from '@/modules/representatives/infrastructure/representative-account-repository-factory';
 
@@ -49,7 +50,11 @@ export async function startCheckoutAction(values: CheckoutFormValues): Promise<S
       holderName: parsed.data.holderName,
       holderDocumentId: parsed.data.holderDocumentId,
       holderEmail: parsed.data.holderEmail,
-      holderPhone: stripNonDigits(representative.phone),
+      // `representative.phone` é E.164 (`+55DDNNNNNNNNN`, ver
+      // `br-phone.ts`) — `stripNonDigits` sozinho deixaria o `55` do país
+      // colado no número (achado em code review). `formatE164ToBRPhone`
+      // primeiro reduz ao formato nacional que o customer do Asaas espera.
+      holderPhone: stripNonDigits(formatE164ToBRPhone(representative.phone)),
       postalCode: parsed.data.postalCode,
       addressNumber: parsed.data.addressNumber,
       callback: {

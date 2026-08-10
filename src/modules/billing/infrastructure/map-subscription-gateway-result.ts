@@ -13,7 +13,14 @@ import type {
  * linha só) ou `null`/vazio em caso de erro de rede/RPC.
  */
 export function mapReserveCheckoutSlotResult(
-  data: ReadonlyArray<{ id: string | null; status: string; amount_cents: number | null }> | null,
+  data:
+    | ReadonlyArray<{
+        id: string | null;
+        status: string;
+        amount_cents: number | null;
+        stale_external_subscription_id: string | null;
+      }>
+    | null,
   error: PostgrestError | null,
 ): ReserveCheckoutSlotResult {
   const [row] = data ?? [];
@@ -22,7 +29,12 @@ export function mapReserveCheckoutSlotResult(
   switch (row.status) {
     case 'reserved':
       if (row.amount_cents === null || row.id === null) return { status: 'error' };
-      return { status: 'reserved', localSubscriptionId: row.id, amountCents: row.amount_cents };
+      return {
+        status: 'reserved',
+        localSubscriptionId: row.id,
+        amountCents: row.amount_cents,
+        staleExternalSubscriptionId: row.stale_external_subscription_id,
+      };
     case 'already_active':
       return { status: 'already_active' };
     case 'sold_out':
@@ -67,6 +79,8 @@ export function mapConfirmCancellationResult(
       return { status: 'already_canceled' };
     case 'not_found':
       return { status: 'not_found' };
+    case 'changed':
+      return { status: 'changed' };
     default:
       return { status: 'error' };
   }
