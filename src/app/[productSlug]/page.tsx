@@ -73,7 +73,11 @@ export default async function ProductPage({
 }: {
   params: Promise<{ productSlug: string }>;
 }) {
-  const [{ productSlug }, requestHeaders] = await Promise.all([params, headers()]);
+  const [{ productSlug }, requestHeaders, clientIp] = await Promise.all([
+    params,
+    headers(),
+    getClientIp(),
+  ]);
 
   const activation = await resolveCommercialPageActivation(requestHeaders.get('host'), productSlug);
 
@@ -98,7 +102,7 @@ export default async function ProductPage({
         representativeSlug: representative.slug,
         productSlug: product.slug,
         referrer: requestHeaders.get('referer'),
-        ip: await getClientIp(),
+        ip: clientIp,
         userAgent: requestHeaders.get('user-agent'),
       });
     } catch (error) {
