@@ -197,4 +197,67 @@ describe('reserve_billing_checkout_slot RPC (Postgres, integration)', { skip: !c
       'a stale, abandoned reservation from another representative must not count against the founding-slot cap',
     );
   });
+
+  it('serializes truly concurrent first-time reservations for the same representative — no duplicate row, no unique-violation error', async (t) => {
+    // SET-34: the sequential retry test above ("reuses the same row...")
+    // awaits one call before firing the next, so it never actually exercises
+    // `pg_advisory_xact_lock` — it would pass identically with the lock
+    // removed. This one fires N calls with a single `Promise.all`, no
+    // `await` between them, so they race for real at the Postgres level.
+    // Without the lock, all N would read `v_existing_id is null`
+    // concurrently and all N would attempt the INSERT branch — the `unique`
+    // constraint on `subscriptions.representative_id` would let exactly one
+    // through and surface the rest as raw `23505` errors to the caller
+    // (there is no exception handler around that INSERT), instead of the
+    // graceful "wait, then reuse the same row" this RPC is supposed to
+    // guarantee for a representative with two tabs open, or a double click.
+    const concurrentEmail = `checkout-slot-concurrent-${randomUUID()}@example.invalid`;
+    const concurrentPassword = `T3st-${randomUUID()}-Aa`;
+    const { data: concurrentUser, error: concurrentUserError } = await service!.auth.admin.createUser({
+      email: concurrentEmail,
+      password: concurrentPassword,
+      email_confirm: true,
+    });
+    assert.equal(concurrentUserError, null);
+    const concurrentRepresentativeId = await insertRepresentative(concurrentUser!.user!.id);
+    t.after(async () => {
+      await service!.from('subscriptions').delete().eq('representative_id', concurrentRepresentativeId);
+      await service!.from('representatives').delete().eq('id', concurrentRepresentativeId);
+      await service!.auth.admin.deleteUser(concurrentUser!.user!.id);
+    });
+
+    const concurrentClient = createClient(url!, publicKey!, { auth: { persistSession: false } });
+    const { error: concurrentSignInError } = await concurrentClient.auth.signInWithPassword({
+      email: concurrentEmail,
+      password: concurrentPassword,
+    });
+    assert.equal(concurrentSignInError, null);
+
+    const CONCURRENCY = 5;
+    const results = await Promise.all(
+      Array.from({ length: CONCURRENCY }, () => concurrentClient.rpc('reserve_billing_checkout_slot')),
+    );
+
+    for (const { error } of results) {
+      assert.equal(error, null, 'no concurrent call may surface a raw Postgres error (e.g. a unique-violation race)');
+    }
+
+    const statuses = results.map((r) => r.data?.[0]?.status);
+    assert.ok(
+      statuses.every((status) => status === 'reserved'),
+      `every concurrent first-time reservation must succeed: ${JSON.stringify(statuses)}`,
+    );
+
+    const ids = new Set(results.map((r) => r.data?.[0]?.id));
+    assert.equal(ids.size, 1, 'all concurrent callers must land on the exact same row, never one each');
+
+    const amounts = new Set(results.map((r) => r.data?.[0]?.amount_cents));
+    assert.equal(amounts.size, 1, 'every caller must see the same locked-in price');
+
+    const { count } = await service!
+      .from('subscriptions')
+      .select('id', { count: 'exact', head: true })
+      .eq('representative_id', concurrentRepresentativeId);
+    assert.equal(count, 1, 'the advisory lock must prevent a duplicate row even under true concurrency');
+  });
 });
