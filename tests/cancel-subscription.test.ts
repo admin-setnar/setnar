@@ -37,12 +37,12 @@ function fakePaymentGateway(overrides: Partial<PaymentGateway> = {}): PaymentGat
 }
 
 describe('cancelSubscription (application)', () => {
-  it('happy path: cancels on the gateway, then confirms locally', async () => {
+  it('happy path: cancels on the gateway, then confirms locally with the same external id', async () => {
     let gatewayCalledWith: string | null = null;
-    let confirmCalled = false;
+    let confirmCalledWith: string | null | undefined;
     const subscriptionGateway = fakeSubscriptionGateway({
-      confirmCancellation: () => {
-        confirmCalled = true;
+      confirmCancellation: (externalSubscriptionId) => {
+        confirmCalledWith = externalSubscriptionId;
         return Promise.resolve({ status: 'canceled' });
       },
     });
@@ -56,7 +56,17 @@ describe('cancelSubscription (application)', () => {
     const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
     assert.deepEqual(result, { status: 'canceled' });
     assert.equal(gatewayCalledWith, 'sub_123');
-    assert.equal(confirmCalled, true);
+    assert.equal(confirmCalledWith, 'sub_123');
+  });
+
+  it('treats "changed" from confirm as an error — never a false success when the row moved under it', async () => {
+    const subscriptionGateway = fakeSubscriptionGateway({
+      confirmCancellation: () => Promise.resolve({ status: 'changed' }),
+    });
+    const paymentGateway = fakePaymentGateway();
+
+    const result = await cancelSubscription(subscriptionGateway, () => paymentGateway);
+    assert.deepEqual(result, { status: 'error' });
   });
 
   it('short-circuits on "already_canceled" without ever calling the payment gateway', async () => {

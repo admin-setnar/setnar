@@ -25,6 +25,14 @@ export type StartCheckoutResult =
  *
  * 1. Reserva a vaga/preço ANTES de tocar o gateway (nunca cria um checkout
  *    sem uma linha local correspondente — migration `20260824000000`).
+ *    Numa retentativa (linha reaproveitada), a reserva também devolve o
+ *    `staleExternalSubscriptionId` abandonado — cancelado no Asaas aqui
+ *    mesmo, antes do passo 2, para nunca haver duas assinaturas cobrando em
+ *    paralelo (SET-34 follow-up; migration `20260831000000`). Melhor
+ *    esforço: uma falha nesse cancelamento é logada, nunca bloqueia o
+ *    representante de tentar assinar de novo — a mesma linha já foi
+ *    reaproveitada e o Asaas eventualmente encerra sozinho uma assinatura
+ *    cujos pagamentos continuam falhando.
  * 2. Cria o customer no Asaas (nome/documento/e-mail — nenhum dado de
  *    cartão nunca passa por aqui).
  * 3. Cria o checkout (`chargeTypes: ['RECURRENT']`), com o `id` local como
@@ -47,6 +55,16 @@ export async function startCheckout(
   if (reservation.status === 'already_active') return { status: 'already_active' };
   if (reservation.status === 'sold_out') return { status: 'sold_out' };
   if (reservation.status !== 'reserved') return { status: 'error' };
+
+  if (reservation.staleExternalSubscriptionId) {
+    const canceled = await paymentGateway.cancelSubscription(reservation.staleExternalSubscriptionId);
+    if (canceled.status === 'error') {
+      console.error(
+        'startCheckout: failed to cancel the stale Asaas subscription on retry',
+        reservation.staleExternalSubscriptionId,
+      );
+    }
+  }
 
   const customer = await paymentGateway.createCustomer({
     name: input.holderName,

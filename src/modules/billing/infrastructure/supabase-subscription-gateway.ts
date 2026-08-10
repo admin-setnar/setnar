@@ -27,8 +27,10 @@ export class SupabaseSubscriptionGateway implements SubscriptionGateway {
     return mapPrepareCancellationResult(data, error);
   }
 
-  async confirmCancellation(): Promise<ConfirmCancellationResult> {
-    const { data, error } = await this.supabase.rpc('confirm_own_subscription_cancellation');
+  async confirmCancellation(externalSubscriptionId: string | null): Promise<ConfirmCancellationResult> {
+    const { data, error } = await this.supabase.rpc('confirm_own_subscription_cancellation', {
+      p_external_subscription_id: externalSubscriptionId,
+    });
     return mapConfirmCancellationResult(data, error);
   }
 }

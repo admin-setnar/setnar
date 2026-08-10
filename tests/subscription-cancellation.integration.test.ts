@@ -115,6 +115,7 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
 
     const { data: confirmed, error: confirmError } = await noSubscriptionClient!.rpc(
       'confirm_own_subscription_cancellation',
+      { p_external_subscription_id: null },
     );
     assert.equal(confirmError, null);
     assert.deepEqual(confirmed?.[0], { status: 'not_found' });
@@ -145,7 +146,9 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
     assert.equal(prepareError, null);
     assert.deepEqual(prepared?.[0], { status: 'cancelable', external_subscription_id: 'sub_test_cancel_1' });
 
-    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation');
+    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation', {
+      p_external_subscription_id: prepared?.[0]?.external_subscription_id ?? null,
+    });
     assert.equal(confirmError, null);
     assert.deepEqual(confirmed?.[0], { status: 'canceled' });
 
@@ -164,7 +167,9 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
     assert.equal(prepareError, null);
     assert.deepEqual(prepared?.[0], { status: 'already_canceled', external_subscription_id: null });
 
-    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation');
+    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation', {
+      p_external_subscription_id: null,
+    });
     assert.equal(confirmError, null);
     assert.deepEqual(confirmed?.[0], { status: 'already_canceled' });
 
@@ -183,7 +188,9 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
     assert.equal(prepareError, null);
     assert.deepEqual(prepared?.[0], { status: 'cancelable', external_subscription_id: 'sub_test_cancel_2' });
 
-    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation');
+    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation', {
+      p_external_subscription_id: prepared?.[0]?.external_subscription_id ?? null,
+    });
     assert.equal(confirmError, null);
     assert.deepEqual(confirmed?.[0], { status: 'canceled' });
     assert.equal((await subscriptionRow())?.status, 'canceled');
@@ -200,8 +207,41 @@ describe('subscription cancellation RPCs (Postgres, integration)', { skip: !canR
     assert.equal(prepareError, null);
     assert.deepEqual(prepared?.[0], { status: 'cancelable', external_subscription_id: null });
 
-    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation');
+    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation', {
+      p_external_subscription_id: null,
+    });
     assert.equal(confirmError, null);
     assert.deepEqual(confirmed?.[0], { status: 'canceled' });
+  });
+
+  it('reports "changed" and does not cancel when the external id no longer matches what prepare read (webhook race)', async () => {
+    const { error: updateError } = await service!
+      .from('subscriptions')
+      .update({ status: 'active', external_subscription_id: 'sub_test_cancel_3', provider: 'asaas' })
+      .eq('id', subscriptionId);
+    assert.equal(updateError, null);
+
+    const { data: prepared, error: prepareError } = await ownerClient!.rpc('prepare_own_subscription_cancellation');
+    assert.equal(prepareError, null);
+    assert.deepEqual(prepared?.[0], { status: 'cancelable', external_subscription_id: 'sub_test_cancel_3' });
+
+    // Simulates a late webhook rewriting external_subscription_id between
+    // prepare and confirm (e.g. the stale-subscription race a checkout
+    // retry can produce, see 20260831000000).
+    const { error: raceError } = await service!
+      .from('subscriptions')
+      .update({ external_subscription_id: 'sub_test_cancel_race' })
+      .eq('id', subscriptionId);
+    assert.equal(raceError, null);
+
+    const { data: confirmed, error: confirmError } = await ownerClient!.rpc('confirm_own_subscription_cancellation', {
+      p_external_subscription_id: prepared?.[0]?.external_subscription_id ?? null,
+    });
+    assert.equal(confirmError, null);
+    assert.deepEqual(confirmed?.[0], { status: 'changed' });
+
+    const row = await subscriptionRow();
+    assert.equal(row?.status, 'active', 'no cancellation is confirmed when the row moved out from under it');
+    assert.equal(row?.external_subscription_id, 'sub_test_cancel_race');
   });
 });

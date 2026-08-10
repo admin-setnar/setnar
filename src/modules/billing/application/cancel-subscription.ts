@@ -25,7 +25,10 @@ export type CancelOwnSubscriptionResult =
  *    sucesso (`'canceled'` ou `'not_found'`, ambos significam "não há mais
  *    cobrança futura no Asaas"). Uma falha no passo 2 nunca chega aqui —
  *    "falha externa não mostra sucesso falso", mesmo princípio já aplicado
- *    ao checkout (`start-checkout.ts`).
+ *    ao checkout (`start-checkout.ts`). Recebe o mesmo `externalSubscriptionId`
+ *    que o passo 1 leu: a RPC só escreve se a linha ainda tiver esse id —
+ *    um `'changed'` (webhook reescreveu o campo nessa janela) é tratado
+ *    como `'error'`, nunca como sucesso silencioso.
  *
  * `getPaymentGateway` é um construtor tardio (`() => PaymentGateway`), não
  * uma instância já pronta — achado no smoke test manual: construir o
@@ -48,8 +51,8 @@ export async function cancelSubscription(
     if (gatewayResult.status === 'error') return { status: 'error' };
   }
 
-  const confirmed = await subscriptionGateway.confirmCancellation();
-  if (confirmed.status === 'error') return { status: 'error' };
+  const confirmed = await subscriptionGateway.confirmCancellation(prepared.externalSubscriptionId);
+  if (confirmed.status === 'error' || confirmed.status === 'changed') return { status: 'error' };
   if (confirmed.status === 'not_found') return { status: 'not_found' };
   return { status: confirmed.status };
 }

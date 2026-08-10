@@ -68,6 +68,7 @@ describe('reserve_billing_checkout_slot RPC (Postgres, integration)', { skip: !c
     assert.equal(error, null);
     assert.equal(data?.[0]?.status, 'reserved');
     assert.equal(data?.[0]?.amount_cents, 2790);
+    assert.equal(data?.[0]?.stale_external_subscription_id, null, 'nothing to cancel for a brand-new row');
 
     const { data: row } = await service!
       .from('subscriptions')
@@ -139,6 +140,11 @@ describe('reserve_billing_checkout_slot RPC (Postgres, integration)', { skip: !c
     assert.equal(error, null);
     assert.equal(data?.[0]?.status, 'reserved');
     assert.equal(data?.[0]?.amount_cents, 2790, 'reuses the price already locked in, does not re-price');
+    assert.equal(
+      data?.[0]?.stale_external_subscription_id,
+      'stale-external-id',
+      'the abandoned id is handed back so the caller can cancel it at Asaas',
+    );
 
     const { data: row } = await service!
       .from('subscriptions')
