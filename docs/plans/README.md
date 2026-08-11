@@ -56,6 +56,7 @@ executed. Never invent a baseline.
 | [`archive/SPRINT_D_PLAN.md`](archive/SPRINT_D_PLAN.md) | Implemented — archived | D1–D5 shipped (ADR-037…047). Kept for the reasoning, not as pending work. |
 | [`archive/AUDIT_SET-44_privacidade.md`](archive/AUDIT_SET-44_privacidade.md) | Implemented — archived | Privacy-page data inventory for SET-44 (PR #19, commit `85bfde5`). Kept for the reasoning. Spawned two open tech-debt issues: SET-71 (billing_events payload minimization) and SET-72 (PII log-scrubbing audit). |
 | [`archive/AUDIT_SET-72_pii_log_scrubbing.md`](archive/AUDIT_SET-72_pii_log_scrubbing.md) | Implemented — archived | No active PII leak found, but raw-error logging was a latent risk in `leads`/`auth`/the five `safe-*-call.ts` wrappers/the Asaas webhook route. Fixed via `toSafeLogError` (ADR-084); SET-71 (billing_events retention) remains open, unrelated. |
+| [`archive/AUDIT_SET-71_billing_events_payload.md`](archive/AUDIT_SET-71_billing_events_payload.md) | Implemented — archived | `billing_events.payload` minimized to only the fields already extracted/trusted, dropping the raw `.passthrough()` webhook body (ADR-085). Retention/purge timing intentionally left to SET-46, still open. |
 
 `archive/` holds plans that are finished or superseded. Nothing is deleted:
 the reasoning behind a decision is worth more than the plan that carried it.

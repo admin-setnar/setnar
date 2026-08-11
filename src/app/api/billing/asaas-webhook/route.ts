@@ -66,7 +66,20 @@ export async function POST(request: Request) {
       asaasCustomerId,
       externalReference,
       nextDueDate,
-      payload: parsed.data,
+      // Minimizado (ADR-085): só os campos que a própria matching logic acima
+      // já extrai e confia — nunca o corpo cru do webhook, que usa
+      // `.passthrough()` em todo nível e pode carregar campos não previstos
+      // pelo schema, incluindo dados do customer.
+      payload: {
+        id,
+        event,
+        paymentId: payment?.id ?? null,
+        checkoutId: checkout?.id ?? null,
+        asaasSubscriptionId,
+        asaasCustomerId,
+        externalReference,
+        nextDueDate,
+      },
     });
 
     if (result.status === 'unmatched') {
