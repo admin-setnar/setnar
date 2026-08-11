@@ -26,9 +26,18 @@ import { Input } from '@/shared/ui/input';
  * never distinguish the two cases either (Supabase's own `error` is null for
  * both an existing and a non-existent e-mail), so there is no behavioural
  * difference this copy could accidentally leak.
+ *
+ * `initialFailureCode` (SET-40) seeds this same alert when the page itself
+ * was reached via a failed `/auth/callback` redirect (wrong device, expired,
+ * or already-used link) — the form doesn't need to know why, only that
+ * `reset_link_expired` is the one code the page ever hands it.
  */
-export function ForgotPasswordForm() {
-  const [failureCode, setFailureCode] = useState<AuthErrorCode | null>(null);
+export function ForgotPasswordForm({
+  initialFailureCode = null,
+}: {
+  initialFailureCode?: AuthErrorCode | null;
+}) {
+  const [failureCode, setFailureCode] = useState<AuthErrorCode | null>(initialFailureCode);
   const [sent, setSent] = useState(false);
 
   const {
