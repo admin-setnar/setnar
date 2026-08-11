@@ -64,7 +64,7 @@ export const setnarTenant: Tenant = {
       headline: 'Sua página de vendas profissional,',
       headlineAccent: 'pronta hoje.',
       subheadline:
-        'O Setnar cria a página comercial dos produtos que você representa — com o seu nome, o seu contato e o seu QR Code. Você compartilha o link e o interessado fala direto com você.',
+        'O Setnar cria a página comercial dos produtos que você representa — com o seu nome, o seu contato e o seu QR Code. Você compartilha o link e acompanha visitas, cliques no WhatsApp e leads em um só lugar.',
       primaryAction: 'Começar gratuitamente',
       secondaryAction: 'Entrar',
       reassurance: [
@@ -94,9 +94,9 @@ export const setnarTenant: Tenant = {
         },
         {
           icon: 'inbox',
-          title: 'Fale direto com quem se interessou',
+          title: 'Veja o resultado',
           description:
-            'Quem clica no seu WhatsApp já cai numa conversa com você. Quem prefere o formulário, fica registrado com segurança, sem se perder.',
+            'Visitas, cliques no WhatsApp e leads aparecem contados no seu painel.',
         },
       ],
     },
@@ -145,7 +145,7 @@ export const setnarTenant: Tenant = {
       title: 'Um plano único, sem letra miúda',
       description:
         'Nada de níveis ou recursos escondidos atrás de um plano mais caro — todo representante tem acesso a tudo.',
-      priceQualifier: 'Preço fixo para os 30 primeiros clientes. O preço padrão ainda será definido.',
+      priceQualifier: 'Preço de Fundador garantido enquanto sua assinatura permanecer ativa.',
       trialNote: 'Primeiros 30 dias grátis, sem cartão de crédito.',
     },
 

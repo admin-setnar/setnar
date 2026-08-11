@@ -34,7 +34,7 @@ export function Pricing({ id, content }: { id: string; content: PricingContent }
         padding="lg"
         className="mx-auto mt-14 max-w-sm text-center sm:mt-16"
       >
-        <Text variant="eyebrow">Plano único</Text>
+        <Text variant="eyebrow">Plano Fundador</Text>
         <Text as="p" variant="heading" className="mt-3 text-4xl">
           {LAUNCH_PRICE_LABEL}
         </Text>
