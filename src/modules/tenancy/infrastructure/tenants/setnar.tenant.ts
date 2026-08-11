@@ -145,7 +145,7 @@ export const setnarTenant: Tenant = {
       title: 'Um plano único, sem letra miúda',
       description:
         'Nada de níveis ou recursos escondidos atrás de um plano mais caro — todo representante tem acesso a tudo.',
-      priceQualifier: 'Preço fixo para os 30 primeiros clientes. O preço padrão ainda será definido.',
+      priceQualifier: 'Condição exclusiva para os primeiros 30 clientes.',
       trialNote: 'Primeiros 30 dias grátis, sem cartão de crédito.',
     },
 
