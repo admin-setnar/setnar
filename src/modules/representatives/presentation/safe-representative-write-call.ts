@@ -1,4 +1,5 @@
 import { isNextControlFlowError } from '@/shared/lib/next-control-flow-error';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 
 /**
  * Wraps a Representative write Server Action's body so an unexpected
@@ -38,7 +39,10 @@ export async function safeRepresentativeWriteCall<T extends { readonly status: s
     if (isNextControlFlowError(error)) {
       throw error;
     }
-    console.error('safeRepresentativeWriteCall: unexpected exception in a Representative write Server Action', error);
+    console.error(
+      'safeRepresentativeWriteCall: unexpected exception in a Representative write Server Action',
+      toSafeLogError(error),
+    );
     return { status: 'error' };
   }
 }

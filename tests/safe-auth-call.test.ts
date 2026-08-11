@@ -31,7 +31,7 @@ describe('safeAuthCall', () => {
       });
       assert.deepEqual(result, { status: 'error', code: 'unknown' });
       assert.equal(consoleError.mock.callCount(), 1);
-      assert.equal(consoleError.mock.calls[0]!.arguments[1], boom);
+      assert.deepEqual(consoleError.mock.calls[0]!.arguments[1], { message: boom.message });
     } finally {
       consoleError.mock.restore();
     }
@@ -56,7 +56,7 @@ describe('safeAuthCall', () => {
       });
       assert.equal(useCaseWasReached, false, 'the use case must never run once the first step throws');
       assert.deepEqual(result, { status: 'error', code: 'unknown' });
-      assert.equal(consoleError.mock.calls[0]!.arguments[1], configError);
+      assert.deepEqual(consoleError.mock.calls[0]!.arguments[1], { message: configError.message });
     } finally {
       consoleError.mock.restore();
     }

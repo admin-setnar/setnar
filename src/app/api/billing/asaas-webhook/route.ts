@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { getBillingWebhookGateway } from '@/modules/billing/infrastructure/billing-webhook-gateway-factory';
 import { asaasWebhookSchema } from '@/modules/billing/presentation/schemas/asaas-webhook.schema';
 import { verifyAsaasWebhookToken } from '@/modules/billing/presentation/verify-asaas-webhook-token';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 
 /**
  * POST /api/billing/asaas-webhook — SET-29/30. Recebe eventos financeiros do
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('asaas-webhook: unexpected exception applying event', error);
+    console.error('asaas-webhook: unexpected exception applying event', toSafeLogError(error));
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 }

@@ -1,5 +1,6 @@
 import { failure, type AuthFailure } from '@/modules/auth/domain/auth';
 import { isNextControlFlowError } from '@/shared/lib/next-control-flow-error';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 
 /**
  * Wraps an auth Server Action's body so an unexpected exception — most
@@ -28,7 +29,7 @@ export async function safeAuthCall<T>(call: () => Promise<T>): Promise<T | AuthF
     if (isNextControlFlowError(error)) {
       throw error;
     }
-    console.error('safeAuthCall: unexpected exception in an auth Server Action', error);
+    console.error('safeAuthCall: unexpected exception in an auth Server Action', toSafeLogError(error));
     return failure('unknown');
   }
 }

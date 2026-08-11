@@ -54,6 +54,8 @@ executed. Never invent a baseline.
 | [`COMMERCIAL_PAGE_CONTENT_PLAN.md`](COMMERCIAL_PAGE_CONTENT_PLAN.md) | Proposed — partially implemented, **open decisions** | CP3 and CP9 shipped; CP9 is an unapproved prototype. The iGreen brand-usage question (CP1) is unresolved. |
 | [`BILLING_DECISIONS_PLAN.md`](BILLING_DECISIONS_PLAN.md) | Approved | All four billing decisions closed: gateway (Asaas), price (R$27.90/mo grandfathered for the first 30 customers), payment methods (card only at launch), and dunning/cancellation policy (suspend after Asaas exhausts retries, cancel at period end). §6 records extensibility requirements for SET-26/27/28/29 (payment methods and pricing must not be hardcoded) so future Pix/pricing additions are additive, not a rewrite. |
 | [`archive/SPRINT_D_PLAN.md`](archive/SPRINT_D_PLAN.md) | Implemented — archived | D1–D5 shipped (ADR-037…047). Kept for the reasoning, not as pending work. |
+| [`archive/AUDIT_SET-44_privacidade.md`](archive/AUDIT_SET-44_privacidade.md) | Implemented — archived | Privacy-page data inventory for SET-44 (PR #19, commit `85bfde5`). Kept for the reasoning. Spawned two open tech-debt issues: SET-71 (billing_events payload minimization) and SET-72 (PII log-scrubbing audit). |
+| [`archive/AUDIT_SET-72_pii_log_scrubbing.md`](archive/AUDIT_SET-72_pii_log_scrubbing.md) | Implemented — archived | No active PII leak found, but raw-error logging was a latent risk in `leads`/`auth`/the five `safe-*-call.ts` wrappers/the Asaas webhook route. Fixed via `toSafeLogError` (ADR-084); SET-71 (billing_events retention) remains open, unrelated. |
 
 `archive/` holds plans that are finished or superseded. Nothing is deleted:
 the reasoning behind a decision is worth more than the plan that carried it.

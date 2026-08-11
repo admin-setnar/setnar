@@ -1,8 +1,14 @@
+Status: Implemented — archived
+Authority: Non-normative
+Code baseline: 85bfde5 (fix(compliance): alinha política de privacidade ao tratamento real de dados [SET-44])
+Last reviewed: 2026-08-11
+Superseded by: n/a
+
 # Auditoria SET-44 — Política de Privacidade vs. tratamento real de dados
 
-**Issue**: [SET-44](https://linear.app/setnar/issue/SET-44/corrigir-politica-de-privacidade-para-o-tratamento-real-de-dados)
-**Status**: aguardando aprovação do fundador antes de editar `src/app/privacidade/page.tsx`
+**Issue**: [SET-44](https://linear.app/setnar/issue/SET-44/corrigir-politica-de-privacidade-para-o-tratamento-real-de-dados) — **Done**, PR [#19](https://github.com/admin-setnar/setnar/pull/19) mergeada em `main` (commit `85bfde5`)
 **Escopo desta auditoria**: inventariar o que o software realmente trata hoje e comparar com o texto publicado. **Não decide** bases legais, entidade controladora ou prazos de retenção — isso é SET-46 (retenção) e revisão jurídica (SET-45).
+**Lacunas técnicas encontradas** viraram issues vinculadas: [SET-71](https://linear.app/setnar/issue/SET-71/minimizardefinir-retencao-do-payload-cru-em-billing-events) e [SET-72](https://linear.app/setnar/issue/SET-72/auditar-logs-de-erro-por-vazamento-de-pii-repasse-de-erro-cru-do), ambas ainda em Backlog.
 
 ## Como ler este documento
 
