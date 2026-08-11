@@ -1433,35 +1433,45 @@ da leitura pública, contra dados reais). Não re-executado à mão neste ciclo
 PL/pgSQL não capturado por essas suítes aparecer, volte a rodar este roteiro
 manualmente.
 
+## Email Templates — link de redefinição de senha usa token_hash (SET-40/ADR-081)
+
+**Authentication → Email Templates → Reset Password**, no painel do
+Supabase. Passo manual obrigatório — não existe `config.toml` neste repo,
+então nada além deste documento garante que o template bate com o que
+`app/auth/callback/route.ts` sabe interpretar.
+
+Por padrão esse template usa `{{ .ConfirmationURL }}`, que embute o `code`
+do fluxo PKCE — exatamente o link que só funciona no mesmo
+navegador/dispositivo que pediu a redefinição (ver limitação histórica
+abaixo). Troque o `href` do link do template para:
+
+```
+{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=recovery&next=/redefinir-senha
+```
+
+Com isso, `app/auth/callback/route.ts` recebe `token_hash`+`type=recovery`
+e valida via `verifyOtp()` — uma checagem puramente server-side contra a
+API do Supabase, sem depender de nenhum estado local do navegador que
+pediu o link. `app/auth/callback/route.ts` mantém o branch antigo
+(`code`/`exchangeCodeForSession()`) como fallback, então nada quebra
+enquanto o template não for trocado — mas o cross-device só passa a
+funcionar depois dessa troca no painel.
+
 ## Verificação manual obrigatória — redefinição de senha ponta a ponta
 
 Nenhuma automação neste repositório exercita este fluxo contra um Supabase
 real (ver `README.md` principal, "Not yet verified against a real Supabase
-project"). Depois de aplicar as três migrations, desligar Confirm email e
-configurar URL Configuration acima, rode este roteiro manualmente contra
-uma conta de teste real antes de considerar o fluxo pronto.
+project"). Depois de aplicar as três migrations, desligar Confirm email,
+configurar URL Configuration (seção 3 acima) e o Email Template
+(seção anterior), rode este roteiro manualmente contra uma conta de teste
+real antes de considerar o fluxo pronto.
 
-**Limitação conhecida, aceita por ora, não corrigida neste documento —
-leia antes de testar.** O fluxo usa PKCE (`flowType: "pkce"`, padrão do
-`@supabase/ssr` instalado) via `exchangeCodeForSession()`
-(`app/auth/callback/route.ts`). A própria documentação da Supabase é
-explícita sobre a implicação disso: *"The code verifier is created and
-stored locally when the Auth flow is first initiated (...) the code
-exchange must be initiated on the same browser and device where the flow
-was started"*
-([PKCE flow — Supabase Docs](https://supabase.com/docs/guides/auth/sessions/pkce-flow)).
-Na prática: **o link do e-mail só funciona se aberto no mesmo
-navegador/dispositivo** que enviou o formulário "Esqueci minha senha" — abrir
-num celular depois de pedir no desktop, ou num app de e-mail com navegador
-embutido diferente, falha por design desta implementação, não por
-configuração errada. `app/auth/callback/route.ts` hoje trata essa falha
-exatamente como um link expirado ou já usado — redireciona silenciosamente
-para `/esqueci-senha`, sem diferenciar as duas causas e sem nenhum sinal de
-erro visível. Corrigir isso de verdade (trocar para o fluxo `token_hash` +
-`verifyOtp()` que a própria Supabase recomenda para evitar este problema)
-exige mudança de código e está fora do escopo deste documento — **sempre
-teste no mesmo navegador/dispositivo**, ou um teste válido vai parecer
-falho.
+**Histórico (corrigido no SET-40/ADR-081):** antes desta correção, o fluxo
+usava só PKCE (`exchangeCodeForSession()`), que exige abrir o link no mesmo
+navegador/dispositivo que pediu a redefinição — abrir num celular depois de
+pedir no desktop falhava silenciosamente, redirecionando para
+`/esqueci-senha` sem nenhum sinal de erro. O passo 3 abaixo agora testa
+exatamente o cenário que antes falhava.
 
 **Roteiro:**
 
@@ -1470,17 +1480,20 @@ falho.
    ("Se este e-mail tiver uma conta, enviamos um link…") — sem confirmar
    nem negar a existência da conta (ADR-022).
 2. Abrir o e-mail recebido. **Observar o link antes de clicar:** deve
-   apontar para `<host>/auth/callback?next=/redefinir-senha&code=...` —
-   *não* para a raiz do site (`/` ou `/?code=...` sem `/auth/callback`).
-   Se o link cair na raiz, a URL Configuration (seção 3 acima) não está
-   batendo com o host que serviu o formulário — confira a allow-list antes
-   de prosseguir, não é um problema deste roteiro.
-3. Clicar no link **no mesmo navegador e dispositivo** usado no passo 1 (ver
-   limitação conhecida acima).
-   **Observar:** deve redirecionar para `/redefinir-senha` — se cair de
-   volta em `/esqueci-senha` silenciosamente, o `exchangeCodeForSession()`
-   falhou (link expirado, já usado, ou o mesmo problema de navegador
-   descrito acima).
+   apontar para `<host>/auth/callback?next=/redefinir-senha&token_hash=...&type=recovery`
+   (depois da troca do Email Template acima) — *não* para a raiz do site
+   (`/` ou `/?code=...` sem `/auth/callback`). Se o link cair na raiz, a
+   URL Configuration (seção 3 acima) não está batendo com o host que
+   serviu o formulário — confira a allow-list antes de prosseguir, não é
+   um problema deste roteiro.
+3. Clicar no link **num navegador/dispositivo diferente** do usado no
+   passo 1 (ex.: pedir no desktop, abrir no celular). **Observar:** deve
+   redirecionar para `/redefinir-senha` normalmente — este é o cenário que
+   falhava antes do SET-40. Se cair de volta em `/esqueci-senha` com o
+   aviso "Este link expirou ou já foi usado", confirme primeiro que o Email
+   Template foi mesmo trocado (seção anterior); sem essa troca, o e-mail
+   ainda sai no formato PKCE antigo e o cross-device continua falhando por
+   design.
 4. Em `/redefinir-senha`, antes de submeter nada, **confirmar que uma
    sessão foi estabelecida** — inspecionar os cookies do navegador (deve
    haver um cookie de sessão do Supabase) e confirmar que a página não
@@ -1491,12 +1504,13 @@ falho.
 6. Fazer logout e tentar entrar em `/entrar` com a **senha nova**.
    **Observar:** login bem-sucedido, confirmando que `updateUser()` de fato
    persistiu a troca.
-7. Reabrir o **mesmo link do e-mail** do passo 2 uma segunda vez, ainda no
-   mesmo navegador. **Observar:** o formulário de nova senha deve mostrar o
-   erro específico `reset_link_expired` (*"peça um novo link"*) — não o
-   `unknown` genérico. Isso prova que `updatePassword()` está checando a
-   sessão antes de chamar `updateUser()` (ADR-022), não apenas confiando
-   num token já consumido.
+7. Reabrir o **mesmo link do e-mail** do passo 2 uma segunda vez, em
+   qualquer navegador. **Observar:** deve cair em `/esqueci-senha` com o
+   aviso "Este link expirou ou já foi usado" (`reset_link_expired`) — não o
+   `unknown` genérico, e não um formulário silenciosamente vazio. Isso
+   prova tanto que `verifyOtp()` rejeita token já usado (GoTrue trata
+   recovery como single-use) quanto que `app/auth/callback/route.ts` agora
+   sinaliza a falha em vez de escondê-la (SET-40).
 
 ## SET-10 — Validação de migrations, RLS e grants em banco descartável
 

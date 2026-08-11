@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 
+import type { AuthErrorCode } from '@/modules/auth/domain/auth';
 import { ForgotPasswordForm } from '@/modules/auth/presentation/forgot-password-form';
 import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
 import { Container } from '@/shared/layout/container';
@@ -18,9 +19,22 @@ export const metadata: Metadata = {
  * Standalone `/esqueci-senha` route — step 1 of the reset flow (see the
  * README's password-reset ADR). Linked from `SignInForm`.
  */
-export default async function ForgotPasswordPage() {
+export default async function ForgotPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
   const tenant = await resolveTenant((await headers()).get('host'));
   const { marketing, brand } = tenant;
+
+  // `app/auth/callback/route.ts` (SET-40) redirects here with
+  // `?error=reset_link_expired` when the e-mail link couldn't be used —
+  // wrong device, expired, or already used. Allow-listed to that one
+  // literal value on purpose: this is a query string sent over e-mail, so
+  // it's exactly as attacker-reachable as any other entry point, and
+  // nothing here should reflect arbitrary text back into the page.
+  const { error } = await searchParams;
+  const initialFailureCode: AuthErrorCode | null = error === 'reset_link_expired' ? error : null;
 
   return (
     <>
@@ -36,7 +50,7 @@ export default async function ForgotPasswordPage() {
           </Text>
 
           <Card variant="raised" padding="lg" className="mt-8">
-            <ForgotPasswordForm />
+            <ForgotPasswordForm initialFailureCode={initialFailureCode} />
           </Card>
         </Container>
       </main>
