@@ -101,7 +101,52 @@ export default async function PrivacyPage() {
                     para bloquear tentativas repetidas de acesso indevido à sua conta,
                     guardamos temporariamente um hash (não o valor original) do e-mail e
                     do endereço IP usados em cada tentativa de login malsucedida.
-                    Retenção: 15 minutos, depois apagado automaticamente.
+                  </Text>
+                </li>
+                <li>
+                  <Text as="span" variant="body">
+                    <strong className="text-content">
+                      Telefone e cidade do seu perfil profissional:
+                    </strong>{' '}
+                    se você é representante, esses dados são usados para exibir sua
+                    página comercial pública e permitir que clientes entrem em contato.
+                    Ficam públicos assim que sua página é publicada.
+                  </Text>
+                </li>
+                <li>
+                  <Text as="span" variant="body">
+                    <strong className="text-content">
+                      Dados enviados por visitantes no formulário de contato (leads):
+                    </strong>{' '}
+                    quando alguém preenche o formulário na sua página comercial,
+                    guardamos o nome, telefone, e-mail e cidade informados, para que
+                    você possa atendê-lo.
+                  </Text>
+                </li>
+                <li>
+                  <Text as="span" variant="body">
+                    <strong className="text-content">Dados de navegação (analytics):</strong>{' '}
+                    registramos visitas e cliques no botão de WhatsApp da sua página
+                    comercial, junto com um hash irreversível do endereço IP (não o IP
+                    em si) e a página de origem do acesso, para gerar métricas de uso.
+                  </Text>
+                </li>
+                <li>
+                  <Text as="span" variant="body">
+                    <strong className="text-content">Dados de pagamento (billing):</strong>{' '}
+                    se você é representante e assina um plano pago, enviamos ao Asaas —
+                    nosso operador de pagamentos — seu nome, CPF/CNPJ, e-mail, telefone
+                    e endereço, para processar a cobrança. Esses dados ficam
+                    armazenados no Asaas, não no nosso banco: nós guardamos apenas o
+                    status da sua assinatura e os eventos que o Asaas nos envia sobre
+                    ela.
+                  </Text>
+                </li>
+                <li>
+                  <Text as="span" variant="body">
+                    <strong className="text-content">Feedback qualitativo:</strong>{' '}
+                    quando você responde a uma pesquisa rápida dentro do produto,
+                    guardamos sua resposta associada à sua conta.
                   </Text>
                 </li>
               </ul>
@@ -112,12 +157,15 @@ export default async function PrivacyPage() {
                 3. Com quem compartilhamos
               </Text>
               <Text as="p" variant="body" className="mt-3">
-                Usamos o Supabase como operador de dados para autenticação e
-                armazenamento — ele processa os dados acima em nosso nome, sob
-                instruções nossas. O projeto está hospedado na região de São Paulo, no
-                Brasil: não há transferência internacional de dados pessoais. Não
-                vendemos nem compartilhamos seus dados com terceiros para fins de
-                marketing.
+                Usamos o Supabase como operador de dados para autenticação, banco de
+                dados e parte da hospedagem, e a Vercel para hospedar a aplicação —
+                ambos processam os dados acima em nosso nome, sob instruções nossas. O
+                projeto está hospedado na região de São Paulo, no Brasil. Se você é
+                representante e assina um plano pago, usamos o Asaas como operador de
+                pagamentos: ele recebe diretamente seu CPF/CNPJ, e-mail, telefone e
+                endereço para processar a cobrança. Não há transferência internacional
+                de dados pessoais nestes tratamentos. Não vendemos nem compartilhamos
+                seus dados com terceiros para fins de marketing.
               </Text>
             </section>
 
@@ -128,7 +176,12 @@ export default async function PrivacyPage() {
               <Text as="p" variant="body" className="mt-3">
                 Os dados da sua conta (nome, e-mail, registro de aceite) são mantidos
                 enquanto a conta existir. O registro técnico de tentativas de login é
-                apagado automaticamente após 15 minutos.
+                apagado automaticamente em até 1 dia — a janela de bloqueio por
+                tentativas repetidas dura só 15 minutos, mas o registro em si leva mais
+                tempo para ser removido. Para os dados enviados por visitantes
+                (leads), os dados de navegação (analytics) e os eventos de pagamento
+                recebidos do Asaas, ainda não temos um prazo de retenção aprovado —
+                isso está em definição.
               </Text>
             </section>
 
