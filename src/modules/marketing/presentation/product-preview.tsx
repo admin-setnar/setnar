@@ -18,9 +18,9 @@ import { LogoSymbol } from '@/shared/brand/logo';
  * Accessibility: the whole preview is decorative and hidden from assistive
  * technology, with one sentence of real text describing it for screen readers.
  * Content note: figures are illustrative placeholders. Nothing here states or
- * implies earnings or results. Product names shown (Conexão Green, Conexão
- * Solar) are real catalog products (`representatives/domain/product-content`),
- * not fabricated. Shows the three counters `/app/paginas` actually renders
+ * implies earnings or results. Row labels are generic ("Página 1"/"Página 2"),
+ * not real catalog product names — this mockup is tenant-agnostic and must
+ * not imply any specific product exists. Shows the three counters `/app/paginas` actually renders
  * per Product (visits, WhatsApp clicks, leads) — it does NOT depict a
  * per-lead list with name/origin: no such view exists for the representative
  * (`docs/PRODUCT.md`: Lead Management remains "future vision — no interface
@@ -53,8 +53,8 @@ export function ProductPreview({ className }: { className?: string }) {
             </div>
 
             <div className="space-y-3">
-              <ProductRow name="Conexão Green" seed={0} visits="128" clicks="34" leads="9" />
-              <ProductRow name="Conexão Solar" seed={1} visits="76" clicks="21" leads="4" />
+              <ProductRow name="Página 1" seed={0} visits="128" clicks="34" leads="9" />
+              <ProductRow name="Página 2" seed={1} visits="76" clicks="21" leads="4" />
             </div>
           </div>
         </div>
