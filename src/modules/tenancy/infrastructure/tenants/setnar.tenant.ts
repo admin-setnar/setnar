@@ -96,7 +96,7 @@ export const setnarTenant: Tenant = {
           icon: 'inbox',
           title: 'Veja o resultado',
           description:
-            'Visitas, cliques no WhatsApp e leads aparecem contados no seu painel, com filtro de 7 ou 30 dias.',
+            'Visitas, cliques no WhatsApp e leads aparecem contados no seu painel.',
         },
       ],
     },
