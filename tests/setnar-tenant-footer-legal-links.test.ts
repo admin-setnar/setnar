@@ -32,13 +32,18 @@ describe('setnarTenant footer legal links (SET-38)', () => {
     assert.equal(link.placeholder, undefined);
   });
 
-  it('genuinely unbuilt footer destinations stay placeholders — this fix must not spill over into them', () => {
+  it('"Preços" points at the real #precos section and is not a placeholder (SET-39)', () => {
     const productGroup = setnarTenant.marketing.footer.groups.find((group) => group.title === 'Produto');
-    const companyGroup = setnarTenant.marketing.footer.groups.find((group) => group.title === 'Empresa');
     const precos = productGroup?.links.find((entry) => entry.label === 'Preços');
+
+    assert.equal(precos?.href, '#precos');
+    assert.equal(precos?.placeholder, undefined);
+  });
+
+  it('genuinely unbuilt footer destinations stay placeholders — this fix must not spill over into them', () => {
+    const companyGroup = setnarTenant.marketing.footer.groups.find((group) => group.title === 'Empresa');
     const sobre = companyGroup?.links.find((entry) => entry.label === 'Sobre');
 
-    assert.equal(precos?.placeholder, true);
     assert.equal(sobre?.placeholder, true);
     for (const social of setnarTenant.marketing.footer.social) {
       assert.equal(social.placeholder, true);

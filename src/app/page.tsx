@@ -4,6 +4,7 @@ import { Benefits } from '@/modules/marketing/presentation/benefits';
 import { FinalCta } from '@/modules/marketing/presentation/final-cta';
 import { Hero } from '@/modules/marketing/presentation/hero';
 import { HowItWorks } from '@/modules/marketing/presentation/how-it-works';
+import { Pricing } from '@/modules/marketing/presentation/pricing';
 import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
 import { buildStructuredData } from '@/config/seo';
 import { SECTION_IDS } from '@/config/site';
@@ -36,6 +37,7 @@ export default async function HomePage() {
         <Hero content={marketing.hero} />
         <HowItWorks id={SECTION_IDS.howItWorks} content={marketing.howItWorks} />
         <Benefits id={SECTION_IDS.benefits} content={marketing.benefits} />
+        <Pricing id={SECTION_IDS.pricing} content={marketing.pricing} />
         <FinalCta id={SECTION_IDS.cta} content={marketing.callToAction} />
       </main>
 
