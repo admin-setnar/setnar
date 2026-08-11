@@ -378,7 +378,8 @@ The single authoritative answer to "what does the product do?" Three categories 
 - QR Code rendered in the browser from the page's public address, with **download**, **copy link**, manual-copy fallback and retry after a generation error. There is **no persisted QR Code** and no content-level regeneration.
 - Public address by subdomain, one page per (representative × product). There is no public hub page listing a representative's products.
 - Lead capture, with an IP rate limit and attribution to the originating page.
-- Recording of page visits and WhatsApp clicks, with referrer and a hashed IP. **Recorded only — see the next category.**
+- Recording of page visits and WhatsApp clicks, with referrer and a hashed IP.
+- Basic analytics shown to the representative in `/app/paginas`: visits, WhatsApp clicks and leads, counted per Product over a 7- or 30-day window (SET-37/ADR-082, `QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer, device or city, and no conversion rate** — that remains Advanced Analytics, Future vision.
 - Subscription checked through the same `is_subscription_active` rule both when a Commercial Page is published and when it is served.
 - `/app/paginas` reads that same Subscription and profile-completeness decision: it blocks publication, offers an actionable path to `/app/conta`, suppresses public links/QR Codes for inaccessible pages, and never labels an inaccessible stored `published` row as “Publicado.”
 
@@ -388,7 +389,6 @@ The single authoritative answer to "what does the product do?" Three categories 
 
 Decided or under way, **not yet usable**:
 
-- Displaying visit and click statistics to the representative (`QR_ANALYTICS_PLAN.md`, AN6). Data is being collected and shown to nobody.
 - Manual Subscription activation/reactivation (`SPRINT_E_PLAN.md`, E3).
 - Analytics event retention/purge (AN7).
 - Richer per-product page content beyond the single proof of concept (`COMMERCIAL_PAGE_CONTENT_PLAN.md`, CP4–CP8).

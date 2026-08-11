@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import type { AnalyticsPeriodDays, ProductAnalyticsSummary } from '@/modules/analytics/domain/analytics-metrics-repository';
 import type { FirstPublicationResponse } from '@/modules/feedback/domain/feedback';
 import {
   VALUE_PERCEPTION_DETAIL_LABEL,
@@ -75,6 +76,8 @@ export function RepresentativeHub({
   subscriptionActive,
   showFirstPublicationFeedback = false,
   showValuePerceptionFeedback = false,
+  analyticsByProduct,
+  periodDays,
 }: {
   representative: Representative;
   catalog: readonly RepresentativeCatalogEntry[];
@@ -89,8 +92,13 @@ export function RepresentativeHub({
    * never overlap on screen.
    */
   showValuePerceptionFeedback?: boolean;
+  /** SET-37 — AN6. One entry per Product with at least one event/lead in `periodDays`; a Product missing here had none. */
+  analyticsByProduct: readonly ProductAnalyticsSummary[];
+  /** SET-37 — the window `analyticsByProduct` was computed over; drives the active state of the period toggle below. */
+  periodDays: AnalyticsPeriodDays;
 }) {
   const profileComplete = isRepresentativeProfileComplete(representative);
+  const analyticsByProductId = new Map(analyticsByProduct.map((summary) => [summary.productId, summary]));
 
   return (
     <div className="space-y-6">
@@ -137,6 +145,32 @@ export function RepresentativeHub({
         </div>
       ) : null}
 
+      {catalog.length > 0 ? (
+        <div className="flex items-center gap-3">
+          <Text as="span" variant="caption">Estatísticas dos últimos</Text>
+          <Link
+            href="/app/paginas?periodo=7"
+            className={
+              periodDays === 7
+                ? 'text-sm font-semibold text-content underline underline-offset-4'
+                : 'text-sm text-content-subtle underline underline-offset-4'
+            }
+          >
+            7 dias
+          </Link>
+          <Link
+            href="/app/paginas?periodo=30"
+            className={
+              periodDays === 30
+                ? 'text-sm font-semibold text-content underline underline-offset-4'
+                : 'text-sm text-content-subtle underline underline-offset-4'
+            }
+          >
+            30 dias
+          </Link>
+        </div>
+      ) : null}
+
       <div className="space-y-3">
         {catalog.length === 0 ? (
           <Card variant="outlined" padding="lg" className="space-y-2">
@@ -147,6 +181,12 @@ export function RepresentativeHub({
         {catalog.map((entry) => {
           const viewState = getActivationViewState(entry.state, subscriptionActive, profileComplete);
           const pageUrl = buildCommercialPageUrl(representative, entry.product);
+          const analytics = analyticsByProductId.get(entry.product.id) ?? {
+            productId: entry.product.id,
+            visits: 0,
+            whatsappClicks: 0,
+            leads: 0,
+          };
 
           return (
           <div key={entry.product.id} className="space-y-2">
@@ -155,6 +195,8 @@ export function RepresentativeHub({
               state={entry.state}
               subscriptionActive={subscriptionActive}
               profileComplete={profileComplete}
+              analytics={analytics}
+              periodDays={periodDays}
             />
             {viewState.isPubliclyAvailable ? (
               <>

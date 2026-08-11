@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+import type { AnalyticsPeriodDays, ProductAnalyticsSummary } from '@/modules/analytics/domain/analytics-metrics-repository';
 import type { CatalogActivationState } from '@/modules/representatives/domain/representative-catalog-repository';
 import type { RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { getActivationViewState } from '@/modules/representatives/presentation/activation-view-state';
@@ -45,11 +46,21 @@ export function ProductActivationCard({
   state,
   subscriptionActive,
   profileComplete,
+  analytics,
+  periodDays,
 }: {
   product: RepresentativeProduct;
   state: CatalogActivationState;
   subscriptionActive: boolean;
   profileComplete: boolean;
+  /**
+   * SET-37 — AN6. Counts a best-effort read of what was actually recorded:
+   * never implies a message was sent, a sale, or a financial conversion
+   * (same caution ADR-065 documents for the write side). Zeroed by the
+   * caller when the Product has no events/leads in `periodDays`.
+   */
+  analytics: ProductAnalyticsSummary;
+  periodDays: AnalyticsPeriodDays;
 }) {
   const [pending, setPending] = useState(false);
   // Tagged by which action produced it, not inferred from the failure's own
@@ -103,6 +114,18 @@ export function ProductActivationCard({
         </Text>
         <Badge variant={viewState.badge.variant}>{viewState.badge.label}</Badge>
       </div>
+
+      {/* SET-37: same visibility condition as "Ver prévia" below — a Product
+          with no activation row has no Commercial Page for these numbers to
+          describe. Counts recorded activity only; never a message sent, a
+          sale, or a financial conversion. */}
+      {state !== 'not_activated' ? (
+        <Text as="p" variant="caption">
+          Últimos {periodDays} dias: {analytics.visits} {analytics.visits === 1 ? 'visita' : 'visitas'} · {analytics.whatsappClicks}{' '}
+          {analytics.whatsappClicks === 1 ? 'clique' : 'cliques'} no WhatsApp · {analytics.leads}{' '}
+          {analytics.leads === 1 ? 'lead' : 'leads'}
+        </Text>
+      ) : null}
 
       {errorCopy ? <FormAlert tone="error" {...errorCopy} /> : null}
       {viewState.subscriptionBlocked ? (
