@@ -1,4 +1,5 @@
 import type {
+  OwnCommercialPageActivation,
   Representative,
   RepresentativeActivation,
   RepresentativeProduct,
@@ -18,6 +19,7 @@ type ActivationStatus = 'draft' | 'published' | 'unpublished';
  */
 interface FixtureRepresentativeRow {
   readonly id: string;
+  readonly profileId: string;
   readonly slug: string;
   readonly displayName: string;
   readonly authorizationId: string;
@@ -60,6 +62,7 @@ const DEFAULT_ROWS: readonly FixtureRow[] = [
   {
     representative: {
       id: 'rep-joao-silva',
+      profileId: 'profile-joao-silva',
       slug: 'joao-silva',
       displayName: 'João Silva',
       authorizationId: 'IGREEN-001',
@@ -77,6 +80,7 @@ const DEFAULT_ROWS: readonly FixtureRow[] = [
   {
     representative: {
       id: 'rep-maria-suspensa',
+      profileId: 'profile-maria-suspensa',
       slug: 'maria-suspensa',
       displayName: 'Maria Suspensa',
       authorizationId: 'IGREEN-002',
@@ -108,6 +112,16 @@ export class InMemoryRepresentativeRepository implements RepresentativeRepositor
     if (!activation) return null;
 
     return { representative: toRepresentative(row.representative), product: activation.product };
+  }
+
+  async findOwnActivation(profileId: string, productSlug: string): Promise<OwnCommercialPageActivation | null> {
+    const row = this.rows.find((r) => r.representative.profileId === profileId);
+    if (!row) return null;
+
+    const activation = row.activations.find((a) => a.product.slug === productSlug);
+    if (!activation) return null;
+
+    return { representative: toRepresentative(row.representative), product: activation.product, status: activation.status };
   }
 }
 

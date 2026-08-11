@@ -3,6 +3,7 @@ import 'server-only';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type {
+  OwnCommercialPageActivation,
   Representative,
   RepresentativeActivation,
   RepresentativeProduct,
@@ -106,5 +107,60 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
     };
 
     return { representative, product };
+  }
+
+  async findOwnActivation(profileId: string, productSlug: string): Promise<OwnCommercialPageActivation | null> {
+    // No `.eq('status', ...)` — `product_activations_select_own`
+    // (`supabase/migrations/20260805000000_fix_rls_policy_cycle.sql:180-184`)
+    // already scopes this to the caller's own representative, in every
+    // status. `.eq('representative.profile_id', profileId)` is this
+    // adapter's own defense-in-depth statement of intent, same posture as
+    // `findPublishedActivation`'s `.eq(...)` calls above and
+    // `SupabaseRepresentativeAccountRepository.findByProfileId`'s own filter
+    // — RLS is the real boundary, not this clause.
+    const { data, error } = await this.supabase
+      .from('product_activations')
+      .select(
+        `
+        status,
+        representative:representatives!inner (
+          id, slug, display_name, authorization_id, phone, city, avatar_url, status
+        ),
+        product:products!inner ( id, slug, name, company:companies!inner ( slug ) )
+      `,
+      )
+      .eq('representative.profile_id', profileId)
+      .eq('product.slug', productSlug)
+      .maybeSingle<ProductActivationRow>();
+
+    if (error || !data) return null;
+
+    const { representative: representativeRow, product: productRow } = data;
+    if (!representativeRow || !productRow || !productRow.company) return null;
+
+    const representative: Representative = {
+      id: representativeRow.id,
+      slug: representativeRow.slug,
+      name: representativeRow.display_name,
+      authorizationId: representativeRow.authorization_id,
+      phone: representativeRow.phone,
+      city: representativeRow.city,
+      avatarUrl: representativeRow.avatar_url,
+    };
+
+    const product: RepresentativeProduct = {
+      id: productRow.id,
+      slug: productRow.slug,
+      name: productRow.name,
+      companySlug: productRow.company.slug,
+    };
+
+    // Defense-in-depth narrowing, not a duplicate of the CHECK constraint
+    // (`product_activations` — `20260731000000:234`): this does not trust
+    // that `data.status` still matches the vocabulary this code expects if
+    // the constraint ever changes underneath it.
+    if (data.status !== 'draft' && data.status !== 'published' && data.status !== 'unpublished') return null;
+
+    return { representative, product, status: data.status };
   }
 }

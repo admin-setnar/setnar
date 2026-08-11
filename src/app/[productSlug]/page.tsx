@@ -7,20 +7,10 @@ import {
   getAnalyticsGateway,
   reportAnalyticsFailure,
 } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
-import { LeadForm } from '@/modules/leads/presentation/lead-form';
-import { resolveCompanyVertical } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
-import { CONEXAO_CLUB_TABS } from '@/modules/representatives/domain/product-content/conexao-club';
-import { AuthorizedRepresentativeIdentificationBlock } from '@/modules/representatives/presentation/authorized-representative-identification-block';
+import { CommercialPageContent } from '@/modules/representatives/presentation/commercial-page-content';
 import { resolveCommercialPageMetadata } from '@/modules/representatives/presentation/commercial-page-metadata';
-import { ComplianceNotice } from '@/modules/representatives/presentation/compliance-notice';
-import { ProductContentTabs } from '@/modules/representatives/presentation/product-content-tabs';
 import { resolveCommercialPageActivation } from '@/modules/representatives/presentation/resolve-commercial-page-activation';
-import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
-import { BrandTokensStyle } from '@/modules/tenancy/presentation/brand-tokens';
-import { Container } from '@/shared/layout/container';
 import { getClientIp } from '@/shared/lib/get-client-ip';
-import { Card } from '@/shared/ui/card';
-import { Text } from '@/shared/ui/typography';
 
 /**
  * A Representative's public Commercial Page — `<slug>.setnar.com/<productSlug>`
@@ -86,7 +76,6 @@ export default async function ProductPage({
   }
 
   const { representative, product } = activation;
-  const companyVertical = resolveCompanyVertical(product.companySlug);
 
   // AN3 (docs/QR_ANALYTICS_PLAN.md §4) — best-effort visit tracking.
   // `after()` runs this once the response has already been sent, so a slow
@@ -110,45 +99,5 @@ export default async function ProductPage({
     }
   });
 
-  return (
-    <main id="conteudo" data-vertical={companyVertical?.vertical} className="pt-16 pb-20">
-      {companyVertical ? (
-        <BrandTokensStyle tokens={companyVertical.tokens} scope={companyVertical.vertical} />
-      ) : null}
-      <Container width="narrow">
-        <Text variant="eyebrow">{product.name}</Text>
-        <Text as="h1" variant="heading" className="mt-2">
-          {product.name}
-        </Text>
-
-        <div className="mt-8">
-          <AuthorizedRepresentativeIdentificationBlock representative={representative} />
-        </div>
-
-        <div className="mt-6">
-          <WhatsappCta representative={representative} product={product} />
-        </div>
-
-        {product.slug === 'conexao-club' ? (
-          <div className="mt-8">
-            <ProductContentTabs tabs={CONEXAO_CLUB_TABS} />
-          </div>
-        ) : null}
-
-        <Card variant="outlined" padding="lg" className="mt-8">
-          <Text as="h2" variant="title">
-            Prefere que a gente te chame?
-          </Text>
-          <Text as="p" variant="caption" className="mt-1">
-            Deixe seus dados que entramos em contato, sem compromisso.
-          </Text>
-          <div className="mt-4">
-            <LeadForm productSlug={productSlug} />
-          </div>
-        </Card>
-
-        <ComplianceNotice productSlug={productSlug} />
-      </Container>
-    </main>
-  );
+  return <CommercialPageContent representative={representative} product={product} productSlug={productSlug} />;
 }

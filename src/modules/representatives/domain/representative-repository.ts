@@ -1,4 +1,4 @@
-import type { RepresentativeActivation } from '@/modules/representatives/domain/representative';
+import type { OwnCommercialPageActivation, RepresentativeActivation } from '@/modules/representatives/domain/representative';
 
 /**
  * Port. The domain states what it needs; infrastructure decides where
@@ -22,4 +22,24 @@ export interface RepresentativeRepository {
     representativeSlug: string,
     productSlug: string,
   ): Promise<RepresentativeActivation | null>;
+
+  /**
+   * SET-36: resolves the (Representative, Product) pair for the signed-in
+   * caller's own private preview, regardless of the Product Activation's
+   * `status` — `draft` and `unpublished` included, not just `published`.
+   * `null` when the caller has no Representative row, the Product doesn't
+   * exist, or there is no Product Activation of any status linking the two
+   * (the `'not_activated'` case `CatalogActivationState` names).
+   *
+   * `profileId` is the caller's own `auth.uid()` (from `getCurrentUser()`),
+   * same convention as `RepresentativeAccountRepository.findByProfileId` —
+   * scoping by identity, never by a representative/product id supplied by
+   * the caller. Unlike `findPublishedActivation`, this never re-checks
+   * `representative.status !== 'active'`: that check exists there to keep a
+   * suspended Representative's page out of PUBLIC view, not to hide a
+   * Representative's own row from themselves — same reasoning
+   * `SupabaseRepresentativeAccountRepository.findByProfileId` already gives
+   * for not filtering by status.
+   */
+  findOwnActivation(profileId: string, productSlug: string): Promise<OwnCommercialPageActivation | null>;
 }

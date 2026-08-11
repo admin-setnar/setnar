@@ -52,3 +52,16 @@ export interface RepresentativeActivation {
   readonly representative: Representative;
   readonly product: RepresentativeProduct;
 }
+
+/**
+ * SET-36: same pair as `RepresentativeActivation`, plus the raw
+ * `product_activations.status` — irrelevant for the public path (always
+ * `'published'` there, by construction of the query that produces it) but
+ * required by the private preview to show the owner which state they are
+ * looking at (`'draft'`/`'published'`/`'unpublished'` — never
+ * `'not_activated'`, which `CatalogActivationState` uses for "no row at
+ * all", a case `findOwnActivation` already reports as `null` instead).
+ */
+export interface OwnCommercialPageActivation extends RepresentativeActivation {
+  readonly status: 'draft' | 'published' | 'unpublished';
+}

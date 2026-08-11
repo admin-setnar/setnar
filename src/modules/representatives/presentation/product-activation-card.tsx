@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 import type { CatalogActivationState } from '@/modules/representatives/domain/representative-catalog-repository';
@@ -136,6 +137,16 @@ export function ProductActivationCard({
         {state === 'published' ? (
           <Button size="sm" variant="secondary" loading={pending} onClick={() => void handleSetStatus('unpublished')}>
             Despublicar
+          </Button>
+        ) : null}
+
+        {/* SET-36: available for every activated state, published included —
+            a representative may want to double-check the live page too, not
+            only a draft. Never shown for `not_activated`: there is nothing
+            for `findOwnActivation` to resolve yet. */}
+        {state !== 'not_activated' ? (
+          <Button asChild size="sm" variant="ghost">
+            <Link href={`/pre-visualizacao/${product.slug}`}>Ver prévia</Link>
           </Button>
         ) : null}
       </div>

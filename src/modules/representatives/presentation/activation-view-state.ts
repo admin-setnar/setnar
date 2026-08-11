@@ -11,7 +11,8 @@ export interface ActivationViewState {
   readonly profileBlocked: boolean;
 }
 
-const STATE_BADGE: Record<CatalogActivationState, ActivationViewState['badge']> = {
+/** Exported for SET-36's preview banner, which needs the same label/tone vocabulary without the rest of the view-state decision. */
+export const STATE_BADGE: Record<CatalogActivationState, ActivationViewState['badge']> = {
   not_activated: { label: 'Não ativado', variant: 'neutral' },
   draft: { label: 'Rascunho', variant: 'warning' },
   published: { label: 'Publicado', variant: 'success' },

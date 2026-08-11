@@ -23,8 +23,18 @@ type SubmitState = 'idle' | 'success' | 'error';
  * exactly (see the ADR in README.md for why those four and not others).
  * Posts to `app/api/leads/route.ts`, never inserts into `leads` directly —
  * that table has no INSERT policy on purpose.
+ *
+ * `disabled` (SET-36): the private preview renders this same form so the
+ * owner sees an equivalent page, but `/api/leads` resolves the destination
+ * Representative from the request's own `Host` header
+ * (`resolveRepresentativeActivation`, published-only) — the preview is
+ * served from SETNAR's own domain, not the Representative's subdomain, so a
+ * real submission from there would always 404. Disabling every field and
+ * the submit button (rather than hiding the form) keeps the preview visually
+ * equivalent to the real page while making it structurally impossible to
+ * trigger that confusing failure.
  */
-export function LeadForm({ productSlug }: { productSlug: string }) {
+export function LeadForm({ productSlug, disabled = false }: { productSlug: string; disabled?: boolean }) {
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
 
   const {
@@ -106,7 +116,7 @@ export function LeadForm({ productSlug }: { productSlug: string }) {
             placeholder="Seu nome"
             aria-describedby={describedBy}
             invalid={invalid}
-            disabled={isSubmitting}
+            disabled={disabled || isSubmitting}
             {...register('nome')}
           />
         )}
@@ -122,7 +132,7 @@ export function LeadForm({ productSlug }: { productSlug: string }) {
             placeholder="(11) 98888-7777"
             aria-describedby={describedBy}
             invalid={invalid}
-            disabled={isSubmitting}
+            disabled={disabled || isSubmitting}
             {...telefoneField}
             onChange={(event) => {
               event.target.value = maskBRPhone(event.target.value);
@@ -140,7 +150,7 @@ export function LeadForm({ productSlug }: { productSlug: string }) {
             placeholder="Ex: Curitiba/PR"
             aria-describedby={describedBy}
             invalid={invalid}
-            disabled={isSubmitting}
+            disabled={disabled || isSubmitting}
             {...register('cidade')}
           />
         )}
@@ -156,15 +166,20 @@ export function LeadForm({ productSlug }: { productSlug: string }) {
             placeholder="seu@email.com"
             aria-describedby={describedBy}
             invalid={invalid}
-            disabled={isSubmitting}
+            disabled={disabled || isSubmitting}
             {...register('email')}
           />
         )}
       </FormField>
 
-      <Button type="submit" size="lg" fullWidth loading={isSubmitting}>
+      <Button type="submit" size="lg" fullWidth loading={isSubmitting} disabled={disabled}>
         Quero saber mais
       </Button>
+      {disabled ? (
+        <p className="text-center text-xs text-content-subtle">
+          Formulário desativado na prévia — publique a página para receber contatos reais.
+        </p>
+      ) : null}
     </form>
   );
 }
