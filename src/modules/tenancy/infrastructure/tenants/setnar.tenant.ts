@@ -64,7 +64,7 @@ export const setnarTenant: Tenant = {
       headline: 'Sua página de vendas profissional,',
       headlineAccent: 'pronta hoje.',
       subheadline:
-        'O Setnar cria a página comercial dos produtos que você representa — com o seu nome, o seu contato e o seu QR Code. Você compartilha o link e o interessado fala direto com você.',
+        'O Setnar cria a página comercial dos produtos que você representa — com o seu nome, o seu contato e o seu QR Code. Você compartilha o link e acompanha visitas, cliques no WhatsApp e leads em um só lugar.',
       primaryAction: 'Começar gratuitamente',
       secondaryAction: 'Entrar',
       reassurance: [
@@ -94,9 +94,9 @@ export const setnarTenant: Tenant = {
         },
         {
           icon: 'inbox',
-          title: 'Fale direto com quem se interessou',
+          title: 'Veja o resultado',
           description:
-            'Quem clica no seu WhatsApp já cai numa conversa com você. Quem prefere o formulário, fica registrado com segurança, sem se perder.',
+            'Visitas, cliques no WhatsApp e leads aparecem contados no seu painel, com filtro de 7 ou 30 dias.',
         },
       ],
     },

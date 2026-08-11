@@ -9,22 +9,24 @@ import { LogoSymbol } from '@/shared/brand/logo';
  * ProductPreview
  *
  * Purpose: show what the product actually produces — a published commercial
- * page with its QR code — instead of a decorative illustration. Built
- * entirely from markup and tokens: no image assets, no layout shift, nothing
- * to download.
+ * page with its QR code and its aggregate visit/click/lead counters (SET-37)
+ * — instead of a decorative illustration. Built entirely from markup and
+ * tokens: no image assets, no layout shift, nothing to download.
  * Accessibility: the whole preview is decorative and hidden from assistive
  * technology, with one sentence of real text describing it for screen readers.
  * Content note: figures are illustrative placeholders. Nothing here states or
- * implies earnings or results. Deliberately does NOT depict a leads
- * list or visit/click counters — no such view exists for the representative
- * yet (SET-37); showing one here would be the exact overpromise SET-39
- * removed from the surrounding copy.
+ * implies earnings or results. Shows the three counters `/app/paginas`
+ * actually renders per Product (visits, WhatsApp clicks, leads) — it does
+ * NOT depict a per-lead list with name/origin: no such view exists for the
+ * representative (`docs/PRODUCT.md`: Lead Management remains "future
+ * vision — no interface to work them").
  */
 export function ProductPreview({ className }: { className?: string }) {
   return (
     <div className={cn('relative', className)}>
       <p className="sr-only">
-        Prévia da interface: uma página comercial publicada, com QR Code.
+        Prévia da interface: uma página comercial publicada, com QR Code e
+        contadores de visitas, cliques e leads.
       </p>
 
       <div
@@ -50,6 +52,11 @@ export function ProductPreview({ className }: { className?: string }) {
               <div className="min-w-0 flex-1 space-y-2">
                 <SkeletonLine className="w-3/4" />
                 <SkeletonLine className="w-1/2 opacity-70" />
+                <div className="flex gap-2 pt-1">
+                  <MetricChip label="Visitas" value="128" />
+                  <MetricChip label="Cliques" value="34" />
+                  <MetricChip label="Leads" value="9" />
+                </div>
               </div>
             </div>
           </div>
@@ -136,4 +143,12 @@ function QrPlaceholder() {
 
 function SkeletonLine({ className }: { className?: string }) {
   return <span className={cn('block h-2 rounded-full bg-line', className)} />;
+}
+
+function MetricChip({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="rounded-sm bg-surface-sunken px-2 py-1 text-[11px] text-content-muted">
+      <span className="font-semibold text-content">{value}</span> {label}
+    </span>
+  );
 }
