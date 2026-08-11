@@ -1512,6 +1512,33 @@ exatamente o cenário que antes falhava.
    recovery como single-use) quanto que `app/auth/callback/route.ts` agora
    sinaliza a falha em vez de escondê-la (SET-40).
 
+## Verificação manual obrigatória — analytics mínimos exibidos ao representante (SET-37/ADR-082)
+
+Sem migration nova neste passo — `analytics_events_select_own` e
+`leads_select_own` já existem (ver `20260810000000`,
+`20260731000000:314-323`). Este roteiro prova a leitura agregada nova
+(`AnalyticsMetricsRepository`), não uma mudança de schema.
+
+1. Com um representante de teste ativo e um produto publicado, anote
+   `visits`/`whatsappClicks`/`leads` atuais em `/app/paginas` (provavelmente
+   zero, se o produto acabou de ser publicado).
+2. Abra a página pública do produto numa aba anônima (gera 1 `visit`),
+   clique no CTA do WhatsApp (gera 1 `whatsapp_click`), volte e submeta o
+   formulário de lead (gera 1 `lead`).
+3. Recarregue `/app/paginas`. **Observar:** o card do produto mostra
+   "Últimos 7 dias: 1 visita · 1 clique no WhatsApp · 1 lead" — os três
+   contadores sobem exatamente 1, nenhum outro produto/card muda.
+4. Clique em "30 dias". **Observar:** os mesmos números aparecem (o evento
+   de agora cai nas duas janelas); a URL muda para `?periodo=30` e o link
+   "30 dias" fica destacado.
+5. Abra `/app/paginas?periodo=algo-invalido` diretamente na barra de
+   endereço. **Observar:** nenhum erro — cai no default de 7 dias
+   silenciosamente (allow-list, mesmo padrão do `?error=` de ADR-081).
+6. **Isolamento**, com uma segunda conta de representante (de outra
+   Company/catálogo, se disponível): confirmar que os números do passo 3
+   não aparecem em lugar nenhum da sessão desse segundo representante —
+   nem mesmo um total agregado.
+
 ## SET-10 — Validação de migrations, RLS e grants em banco descartável
 
 Validação completa executada em **2026-08-07**, contra `setnar-db-test`

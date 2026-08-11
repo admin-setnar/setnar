@@ -253,14 +253,13 @@ Verified against the working tree based on commit `23290c4`, including Sprint E/
 | Visitor | 8.8 | As anonymous events only |
 | Lead | 8.12 | **Capture only.** No Pipeline Status, no working surface |
 | Subscription | 8.14 | Record exists; enforced on publication, public read and representative-facing availability state through the same rule; **activated manually** |
+| Metric Aggregate | 8.9 | Basic read path: visits, WhatsApp clicks and leads, counted per Product over a 7/30-day window, shown to the representative in `/app/paginas` (SET-37/ADR-082, `docs/plans/QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer/device/city, no conversion rate** — that is Advanced Analytics, Stage 2 |
 
 ## Validated or Planned Domain
 
 Decided, tracked in a plan, not yet built.
 
-| Concept | § | Where |
-|---|---|---|
-| Metric Aggregate | 8.9 | Events are recorded; **no aggregation and no read path** (`docs/plans/QR_ANALYTICS_PLAN.md` AN6) |
+**None currently** — the last entry in this table, Metric Aggregate, moved to *Implemented Domain* above (SET-37/ADR-082). AN7 (retention/purge, `docs/plans/QR_ANALYTICS_PLAN.md`) remains raised but non-blocking; it is not a domain concept of its own, so it does not get a row here.
 
 ## Conceptual Future Domain
 

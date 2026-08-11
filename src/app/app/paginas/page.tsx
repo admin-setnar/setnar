@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 
+import type { AnalyticsPeriodDays } from '@/modules/analytics/domain/analytics-metrics-repository';
+import { getAnalyticsMetricsRepository } from '@/modules/analytics/infrastructure/analytics-metrics-repository-factory';
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { resolveFirstPublicationFeedbackEligibility } from '@/modules/feedback/presentation/resolve-first-publication-eligibility';
 import { resolveValuePerceptionFeedbackEligibility } from '@/modules/feedback/presentation/resolve-value-perception-eligibility';
@@ -12,9 +14,20 @@ import { Text } from '@/shared/ui/typography';
 
 export const metadata: Metadata = { title: 'Páginas' };
 
-export default async function PagesPage() {
+export default async function PagesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ periodo?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) return null;
+
+  // SET-37: sent as a query string, so it is exactly as attacker-reachable
+  // as any other entry point — allow-listed to the two literals a caller may
+  // request, mirroring the `?error=` allow-list `/esqueci-senha` already
+  // uses (SET-40). Anything else silently falls back to the 7-day default.
+  const { periodo } = await searchParams;
+  const periodDays: AnalyticsPeriodDays = periodo === '30' ? 30 : 7;
 
   const representative = await (await getRepresentativeAccountRepository()).findByProfileId(user.id);
 
@@ -33,14 +46,17 @@ export default async function PagesPage() {
   }
 
   const catalogRepository = await getRepresentativeCatalogRepository();
-  // The value-perception signals read only needs `representative.id` — it
-  // has no dependency on `catalog`, so it runs in the same batch instead of
-  // waiting on it first (a prior version awaited it only after the
-  // first-publication check, serializing a read that did not need to be).
-  const [catalog, subscriptionActive, valuePerceptionEligible] = await Promise.all([
+  const analyticsRepository = await getAnalyticsMetricsRepository();
+  // The value-perception signals read and the SET-37 analytics summary only
+  // need `representative.id` — neither depends on `catalog`, so both run in
+  // the same batch instead of waiting on it first (a prior version awaited
+  // value-perception only after the first-publication check, serializing a
+  // read that did not need to be).
+  const [catalog, subscriptionActive, valuePerceptionEligible, analyticsByProduct] = await Promise.all([
     catalogRepository.listOwnCatalog(user.id),
     catalogRepository.isSubscriptionActive(representative.id),
     resolveValuePerceptionFeedbackEligibility(representative.id),
+    analyticsRepository.listOwnSummaryByProduct(representative.id, periodDays),
   ]);
 
   // SET-61's own check needs `catalog`, so it cannot join the batch above.
@@ -60,6 +76,8 @@ export default async function PagesPage() {
         subscriptionActive={subscriptionActive}
         showFirstPublicationFeedback={showFirstPublicationFeedback}
         showValuePerceptionFeedback={showValuePerceptionFeedback}
+        analyticsByProduct={analyticsByProduct}
+        periodDays={periodDays}
       />
     </div>
   );

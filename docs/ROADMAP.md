@@ -124,7 +124,7 @@ Stage 1 is complete when, at minimum:
 
 1. Representatives can publish and share their pages without assistance — **met**;
 2. the product can charge, and can measure who paid — **not met** (see *Still open*);
-3. representatives can see that their presence produces results — **not met** (statistics collected, never shown);
+3. representatives can see that their presence produces results — **met** (visits, WhatsApp clicks and leads shown per Product in `/app/paginas`, SET-37/ADR-082);
 4. there is qualitative evidence that they consider it worth paying for — **pending**.
 
 Advancing to Stage 2 with items 2 and 3 open would mean optimizing a hypothesis that was never measured.
@@ -191,12 +191,14 @@ Status verified against the Parte 2 working tree based on commit `df8db50` on 20
 
 ---
 
-### Analytics (Basic) — **collected, not delivered**
+### Analytics (Basic) — **done**
 
 - Visits — recorded
 - WhatsApp clicks — recorded
-- Referrer source — recorded
-- **No read path and no interface. The representative cannot see any of it.** Until that closes, this capability delivers nothing to the user it exists for
+- Referrer source — recorded, not yet surfaced as a breakdown (Stage 2)
+- Leads — recorded (Lead Capture, above)
+- Read path: visits, WhatsApp clicks and leads shown per Product, per 7/30-day window, in `/app/paginas` (SET-37/ADR-082)
+- **No breakdown by referrer, device or city, and no conversion rate.** That is Advanced Analytics, Stage 2 — not this capability
 
 ---
 
