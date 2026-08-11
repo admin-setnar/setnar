@@ -9,7 +9,7 @@ export type StartCheckoutFailure = Exclude<StartCheckoutResult, { status: 'redir
 
 const GENERIC_ERROR_COPY: CheckoutErrorCopy = {
   title: 'Não foi possível concluir agora',
-  description: 'Atualize a página e tente novamente.',
+  description: 'Tente novamente em alguns instantes, ou cheque se as informações estão corretas.',
 };
 
 const REJECTION_MESSAGES: Record<Extract<StartCheckoutResult, { status: 'rejected' }>['reason'], CheckoutErrorCopy> = {
