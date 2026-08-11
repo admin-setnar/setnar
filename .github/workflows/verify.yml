@@ -13,6 +13,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: Preview
     env:
       NEXT_PUBLIC_SITE_URL: https://setnar.com
       NEXT_PUBLIC_DEFAULT_TENANT: setnar

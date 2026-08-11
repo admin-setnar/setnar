@@ -26,17 +26,32 @@ serem lidos por código exercitado no mesmo `npm run verify` (build inclui rotas
 importam). `NEXT_PUBLIC_SITE_URL`/`NEXT_PUBLIC_DEFAULT_TENANT` não são segredos —
 ficam com valor fixo direto no `env:` do job, iguais ao `.env.example`.
 
+**Por que `environment: Preview`, e por que Secrets (não Variables).** O repositório já
+tinha dois GitHub Environments (`Preview`/`Production`, sem protection rules — criados
+pela integração do Vercel, confirmado via `gh api .../environments`), ambos vazios no
+momento desta ADR. O job declara `environment: Preview` porque secrets de Environment só
+resolvem para um job que declara o Environment correspondente — sem isso, secrets
+postados em "Preview" ficariam invisíveis para o job, falhando do mesmo jeito porém sem
+razão aparente. `Production` foi descartado de propósito: `.env.example` já instruía
+"Configure em Vercel Production. Em Preview, use só um projeto Supabase descartável...
+nunca aponte testes para dados de produção" — `test:integration` escreve de verdade
+(analytics_events, leads, tentativas do rate limiter), então CI precisa do mesmo
+isolamento que already regia Preview no Vercel. As oito variáveis vão como **Secrets**,
+não Variables — todas são credenciais (chave de service role, segredos do Asaas, salts)
+ou identificam um projeto Supabase específico; Variables ficam em texto plano nos logs.
+
 **Consequência operacional, não fechada por esta ADR.** O workflow, sozinho, não torna
-`test:integration` executável — precisa que alguém com acesso ao repositório configure
-os oito secrets em *Settings → Secrets and variables → Actions*, apontando para um
-projeto Supabase **descartável** (nunca produção — `.env.example` já diz isso) com todas
-as migrations aplicadas, e para credenciais de sandbox do Asaas. Isso é decisão/provisionamento
-de infraestrutura compartilhada, fora do que esta mudança de código faz sozinha; até que
-aconteça, os primeiros runs de `verify` falham em `test:integration` por design do próprio
-script — não é regressão desta ADR, é o script fazendo o que o ADR-017 já pedia. Achado
-relacionado, não corrigido aqui: o branch Supabase `develop` (`smspbjmqhpjcjilzoexr`,
-preview branch ligado ao git branch `develop`) está em `MIGRATIONS_FAILED`; pode ser
-candidato natural ao projeto descartável acima, mas primeiro precisa ficar saudável.
+`test:integration` executável — precisa que alguém com acesso ao repositório popule os
+oito secrets no Environment `Preview` (*Settings → Environments → Preview → Environment
+secrets*), apontando para um projeto Supabase **descartável** (nunca o de produção) com
+todas as migrations aplicadas, e para credenciais **sandbox** do Asaas. Isso é
+decisão/provisionamento de infraestrutura compartilhada, fora do que esta mudança de
+código faz sozinha; até que aconteça, os primeiros runs de `verify` falham em
+`test:integration` por design do próprio script — não é regressão desta ADR, é o script
+fazendo o que o ADR-017 já pedia. Achado relacionado, não corrigido aqui: o branch
+Supabase `develop` (`smspbjmqhpjcjilzoexr`, preview branch ligado ao git branch
+`develop`) está em `MIGRATIONS_FAILED`; pode ser candidato natural ao projeto descartável
+acima, mas primeiro precisa ficar saudável.
 
 **"Status obrigatório" (branch protection) também não é feito por esta ADR.** Exigir o
 check `verify` antes de merge em `develop`/`main` é uma mudança de regra de colaboração
