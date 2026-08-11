@@ -79,9 +79,15 @@ export function QrCodeCard({ url, fileName }: { url: string; fileName: string })
         </div>
       ) : dataUrl ? (
         // eslint-disable-next-line @next/next/no-img-element -- data: URI, not an optimizable remote asset.
-        <img src={dataUrl} alt="QR Code da página pública" width={120} height={120} className="rounded-md" />
+        <img
+          src={dataUrl}
+          alt="QR Code da página pública"
+          width={240}
+          height={240}
+          className="h-auto w-full max-w-[160px] rounded-md"
+        />
       ) : (
-        <div className="h-[120px] w-[120px] animate-pulse rounded-md bg-surface-sunken" aria-hidden="true" />
+        <div className="aspect-square w-full max-w-[160px] animate-pulse rounded-md bg-surface-sunken" aria-hidden="true" />
       )}
 
       <div className="flex w-full gap-2">
