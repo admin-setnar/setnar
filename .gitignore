@@ -34,3 +34,6 @@ coverage/
 !.vscode
 
 supabase/.temp/
+
+# Config local de MCP servers do Claude Code (pode variar por máquina/usuário).
+.mcp.json
