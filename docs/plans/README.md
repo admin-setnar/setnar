@@ -49,7 +49,7 @@ executed. Never invent a baseline.
 
 | Plan | Status | Summary |
 |---|---|---|
-| [`QR_ANALYTICS_PLAN.md`](QR_ANALYTICS_PLAN.md) | Approved — partially implemented | QR1 + AN1–AN5 shipped (ADR-049…054). **AN6 (showing statistics) and AN7 (retention) are not built** — analytics is write-only today. |
+| [`QR_ANALYTICS_PLAN.md`](QR_ANALYTICS_PLAN.md) | Approved — partially implemented | QR1 + AN1–AN5 shipped (ADR-049…054). **AN6 (showing statistics) is not built** — analytics is write-only today. AN7 (retention) is now **decided** (`DATA_RETENTION_DECISIONS_PLAN.md`: 12 months) but not yet built — see SET-73. |
 | [`SPRINT_E_PLAN.md`](SPRINT_E_PLAN.md) | Approved — partially implemented | E1, E2 and E4 shipped (ADR-063/064). E3, E5 and E6 open. Subscription is enforced on publication/public read, and the hub reflects public availability; activation remains manual. |
 | [`COMMERCIAL_PAGE_CONTENT_PLAN.md`](COMMERCIAL_PAGE_CONTENT_PLAN.md) | Proposed — partially implemented, **open decisions** | CP3 and CP9 shipped; CP9 is an unapproved prototype. The iGreen brand-usage question (CP1) is unresolved. |
 | [`BILLING_DECISIONS_PLAN.md`](BILLING_DECISIONS_PLAN.md) | Approved | All four billing decisions closed: gateway (Asaas), price (R$27.90/mo grandfathered for the first 30 customers), payment methods (card only at launch), and dunning/cancellation policy (suspend after Asaas exhausts retries, cancel at period end). §6 records extensibility requirements for SET-26/27/28/29 (payment methods and pricing must not be hardcoded) so future Pix/pricing additions are additive, not a rewrite. |
@@ -57,6 +57,7 @@ executed. Never invent a baseline.
 | [`archive/AUDIT_SET-44_privacidade.md`](archive/AUDIT_SET-44_privacidade.md) | Implemented — archived | Privacy-page data inventory for SET-44 (PR #19, commit `85bfde5`). Kept for the reasoning. Spawned two open tech-debt issues: SET-71 (billing_events payload minimization) and SET-72 (PII log-scrubbing audit). |
 | [`archive/AUDIT_SET-72_pii_log_scrubbing.md`](archive/AUDIT_SET-72_pii_log_scrubbing.md) | Implemented — archived | No active PII leak found, but raw-error logging was a latent risk in `leads`/`auth`/the five `safe-*-call.ts` wrappers/the Asaas webhook route. Fixed via `toSafeLogError` (ADR-084); SET-71 (billing_events retention) remains open, unrelated. |
 | [`archive/AUDIT_SET-71_billing_events_payload.md`](archive/AUDIT_SET-71_billing_events_payload.md) | Implemented — archived | `billing_events.payload` minimized to only the fields already extracted/trusted, dropping the raw `.passthrough()` webhook body (ADR-085). Retention/purge timing intentionally left to SET-46, still open. |
+| [`DATA_RETENTION_DECISIONS_PLAN.md`](DATA_RETENTION_DECISIONS_PLAN.md) | Approved | Pedro decided retention periods per category (SET-46): `leads` 24mo, `analytics_events` 12mo (AN7), `feedback_responses`/`subscriptions` tied to account lifecycle, `billing_events`/`billing_reconciliation_log` undefined (no PII to minimize by time). The automated purge job itself is out of scope here — SET-73, still open. |
 
 `archive/` holds plans that are finished or superseded. Nothing is deleted:
 the reasoning behind a decision is worth more than the plan that carried it.

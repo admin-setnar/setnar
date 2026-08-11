@@ -453,7 +453,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Behaviors:** Register, update Branding, suspend/reactivate, invite a Representative.
 **Invariants:** A Company must have at least one piece of identifying Branding before it can authorize any Representative. A Company cannot be deleted while it has Representatives with published Commercial Pages.
 **Creation rules:** A Company is created independently of any Representative — it must exist before the first Representative can be affiliated with it.
-**Deletion rules:** Deletion (deactivation) cascades to unpublishing all Commercial Pages under it, but does not delete historical Analytics or Lead data (audit/history is preserved).
+**Deletion rules:** Deletion (deactivation) cascades to unpublishing all Commercial Pages under it, but does not delete historical Analytics or Lead data (audit/history is preserved) — independent of the time-based retention window in `docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`, which still applies regardless of Company/Representative status.
 **Example:** iGreen Energy.
 **Future evolution:** In Stage 5 (Enterprise), Company gains White Label configuration and multi-User administrative structures without changing its core identity or relationships.
 
@@ -468,7 +468,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Behaviors:** Complete/update Profile, activate/deactivate a Product, publish/unpublish a Commercial Page, create a Campaign, update a Lead's Pipeline Status.
 **Invariants:** A Representative cannot exist without a Company. A Representative cannot activate a Product that does not belong to their Company's Catalog.
 **Creation rules:** Created through a self-service registration flow scoped to a specific Company (per PRODUCT.md's "self-service and automatic activation").
-**Deletion rules:** Deactivating a Representative unpublishes their Commercial Pages but preserves their historical Leads and Analytics for the Company's record-keeping. Independent of that retention, the Representative retains the right to export their own historical Leads, Analytics, and Commercial Page content in a portable form — per PRODUCT_CONSTITUTION.md Core Belief 3 ("a professional who leaves must be able to take their history and credibility with them").
+**Deletion rules:** Deactivating a Representative unpublishes their Commercial Pages but preserves their historical Leads and Analytics for the Company's record-keeping — subject to the same time-based retention window as any other Representative's (`docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`), not an indefinite promise. Independent of that retention, the Representative retains the right to export their own historical Leads, Analytics, and Commercial Page content in a portable form — per PRODUCT_CONSTITUTION.md Core Belief 3 ("a professional who leaves must be able to take their history and credibility with them").
 **Example:** A licensed iGreen representative.
 **Future evolution:** In Stage 5, a Representative may be assigned a Role beyond the default (e.g., Team Manager), without changing the entity's core shape.
 
@@ -785,7 +785,7 @@ Domain Services represent business processes that do not belong naturally to a s
 | **LeadLost** | A Lead's Pipeline Status becomes "Lost" | Represents a closed, unsuccessful opportunity | Ends active tracking of that Lead | Sales Operations |
 | **SubscriptionActivated** | A Representative's (or Company's) payment is confirmed | Grants/restores platform capability | Allows Commercial Page publication | Billing, Commercial Presence |
 | **SubscriptionSuspended** | Payment lapses | Restricts platform capability without deleting data | Triggers Subscription Enforcement Service to unpublish Pages | Billing, Commercial Presence |
-| **SubscriptionCanceled** | The customer or SETNAR ends the Subscription | Terminates the commercial relationship | Unpublishes Pages; data retained per retention policy | Billing |
+| **SubscriptionCanceled** | The customer or SETNAR ends the Subscription | Terminates the commercial relationship | Unpublishes Pages; data retained per retention policy (`docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`: kept for the account's lifecycle) | Billing |
 | **RoleAssigned** | A Company administrator assigns a Role to a User | Grants a bundle of Permissions | Changes what Actions the User may perform within the Company | Identity & Access, Administration |
 | **ContentSuggested** *(Stage 4)* | The AI Assistance Context produces a suggestion | Reduces content-authoring effort | Awaits Representative/Company approval before affecting any live entity | AI Assistance |
 
@@ -973,7 +973,7 @@ Billing Context             Subscription Enforcement       Commercial Presence
 | Representative — Campaign | 1 to many | Representative-driven marketing initiatives | Representative owns | Campaign cannot outlive its Representative |
 | Campaign — Commercial Page | many to 1 | Campaigns funnel traffic to a Page | Reference only | Campaign becomes invalid if its target Page is deleted (not merely unpublished) |
 | Company — Material | 1 to many | Company-approved marketing assets | Company owns | Material usage by Representatives is read-only reference |
-| Representative — Lead | 1 to many | Prospects generated through the Representative's presence | Representative owns | Lead cannot outlive its Representative (history retained per retention policy) |
+| Representative — Lead | 1 to many | Prospects generated through the Representative's presence | Representative owns | Lead cannot outlive its Representative (history retained per retention policy — `docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`: 24 months from last update, independent of the Representative's own status) |
 | Lead — Activity | 1 to many | Working history of a prospect | Lead owns | Activity cannot outlive its Lead |
 | Representative/Company — Subscription | 1 to 1 (active at a time) | The paying relationship with SETNAR | Representative/Company owns | Commercial Page publication depends on this Status |
 | Company — Role | 1 to many | Company-defined authorization levels | Company owns | Role cannot outlive its Company |

@@ -174,14 +174,17 @@ export default async function PrivacyPage() {
                 4. Por quanto tempo guardamos
               </Text>
               <Text as="p" variant="body" className="mt-3">
-                Os dados da sua conta (nome, e-mail, registro de aceite) são mantidos
+                Os dados da sua conta (nome, e-mail, registro de aceite), sua resposta a
+                pesquisas de feedback e o histórico da sua assinatura são mantidos
                 enquanto a conta existir. O registro técnico de tentativas de login é
                 apagado automaticamente em até 1 dia — a janela de bloqueio por
                 tentativas repetidas dura só 15 minutos, mas o registro em si leva mais
-                tempo para ser removido. Para os dados enviados por visitantes
-                (leads), os dados de navegação (analytics) e os eventos de pagamento
-                recebidos do Asaas, ainda não temos um prazo de retenção aprovado —
-                isso está em definição.
+                tempo para ser removido. Os dados enviados por visitantes no formulário
+                de contato (leads) são mantidos por até 24 meses após o último registro;
+                os dados de navegação (analytics) por até 12 meses. Esses dois prazos já
+                são a política aprovada, mas a rotina automática que os aplica ainda está
+                sendo implementada — até lá, você pode pedir a exclusão a qualquer momento
+                pelo canal da seção 5.
               </Text>
             </section>
 
