@@ -52,6 +52,17 @@ export interface BenefitsContent extends SectionHeading {
   readonly items: readonly BenefitContent[];
 }
 
+/**
+ * The one plan's price isn't stored here — it comes from
+ * `LAUNCH_PRICE_LABEL` (billing domain), the same constant the
+ * authenticated checkout button already renders, so there is one source of
+ * truth for the number itself.
+ */
+export interface PricingContent extends SectionHeading {
+  readonly priceQualifier: string;
+  readonly trialNote: string;
+}
+
 export interface CallToActionContent {
   readonly title: string;
   readonly description: string;
@@ -84,6 +95,7 @@ export interface MarketingContent {
   readonly hero: HeroContent;
   readonly howItWorks: HowItWorksContent;
   readonly benefits: BenefitsContent;
+  readonly pricing: PricingContent;
   readonly callToAction: CallToActionContent;
   readonly footer: FooterContent;
 }

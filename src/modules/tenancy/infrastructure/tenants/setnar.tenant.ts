@@ -56,7 +56,7 @@ export const setnarTenant: Tenant = {
     navigation: [
       { label: 'Recursos', href: '#recursos' },
       { label: 'Como funciona', href: '#como-funciona' },
-      { label: 'Preços', href: '#precos', placeholder: true },
+      { label: 'Preços', href: '#precos' },
     ],
 
     hero: {
@@ -64,7 +64,7 @@ export const setnarTenant: Tenant = {
       headline: 'Sua página de vendas profissional,',
       headlineAccent: 'pronta hoje.',
       subheadline:
-        'O Setnar cria a página comercial dos produtos que você representa — com o seu nome, o seu contato e o seu QR Code. Você compartilha o link e recebe os contatos organizados em um só lugar.',
+        'O Setnar cria a página comercial dos produtos que você representa — com o seu nome, o seu contato e o seu QR Code. Você compartilha o link e o interessado fala direto com você.',
       primaryAction: 'Começar gratuitamente',
       secondaryAction: 'Entrar',
       reassurance: [
@@ -94,9 +94,9 @@ export const setnarTenant: Tenant = {
         },
         {
           icon: 'inbox',
-          title: 'Receba seus leads organizados',
+          title: 'Fale direto com quem se interessou',
           description:
-            'Cada contato chega identificado com a página de origem e fica registrado no seu painel. Nada se perde no meio das conversas.',
+            'Quem clica no seu WhatsApp já cai numa conversa com você. Quem prefere o formulário, fica registrado com segurança, sem se perder.',
         },
       ],
     },
@@ -114,10 +114,10 @@ export const setnarTenant: Tenant = {
             'Da criação da conta à página publicada em uma única sessão. Sem briefing, sem espera por terceiros.',
         },
         {
-          icon: 'organize',
-          title: 'Organização',
+          icon: 'chat',
+          title: 'Contato direto',
           description:
-            'Cada contato registrado com origem e data, em uma lista que você consegue acompanhar de verdade.',
+            'Sem intermediário: quem se interessa fala com você, não com um formulário genérico de empresa.',
         },
         {
           icon: 'centralize',
@@ -140,6 +140,15 @@ export const setnarTenant: Tenant = {
       ],
     },
 
+    pricing: {
+      eyebrow: 'Preços',
+      title: 'Um plano único, sem letra miúda',
+      description:
+        'Nada de níveis ou recursos escondidos atrás de um plano mais caro — todo representante tem acesso a tudo.',
+      priceQualifier: 'Preço fixo para os 30 primeiros clientes. O preço padrão ainda será definido.',
+      trialNote: 'Primeiros 30 dias grátis, sem cartão de crédito.',
+    },
+
     callToAction: {
       title: 'Comece agora com a sua primeira página',
       description:
@@ -157,7 +166,7 @@ export const setnarTenant: Tenant = {
           links: [
             { label: 'Recursos', href: '#recursos' },
             { label: 'Como funciona', href: '#como-funciona' },
-            { label: 'Preços', href: '#precos', placeholder: true },
+            { label: 'Preços', href: '#precos' },
           ],
         },
         {

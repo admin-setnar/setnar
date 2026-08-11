@@ -10,6 +10,7 @@ export const ICON_KEYS = [
   'inbox',
   'speed',
   'organize',
+  'chat',
   'centralize',
   'automate',
   'ease',
