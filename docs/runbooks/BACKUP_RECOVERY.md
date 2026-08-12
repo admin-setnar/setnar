@@ -22,75 +22,97 @@ Isto é mais grave do que a hipótese registrada na issue ("backup existente
 mas irrestaurável") — **não existe nenhum backup gerenciado hoje**, de
 nenhum tipo, neste projeto.
 
-**Contexto adicional confirmado por Pedro nesta sessão:** `setnar-db-test` é
-o banco de **teste/desenvolvimento** compartilhado (o mesmo usado pela
-suíte de integração e E2E, SET-52) — ainda não é o banco de produção real do
-piloto. O banco de produção ainda não foi criado.
+**Atualizado em 2026-08-12 — banco de produção criado, backup e restore
+ensaiados de verdade.** `setnar-db` (`xiysyzauoifbcoviqblf`) é o projeto
+Supabase de produção real, separado de `setnar-db-test`. Também no **plano
+Free** — mesma ausência de backup gerenciado do §1 acima, verificado na
+mesma tela. Migrations aplicadas até `20260907000001`, em dia com `develop`.
 
-## 2. Decisão (Pedro, 2026-08-12)
+## 2. Decisão (Pedro, 2026-08-12) e desvio real de método
 
-**Backup manual via `pg_dump`**, não o mecanismo gerenciado do Supabase —
-mesma lógica de "não pagar por infraestrutura antes de o produto provar que
-vale a pena" já registrada em `OBSERVABILITY.md` §6 e `DEPLOYMENT.md` §2
-para o Asaas sandbox. `pg_dump` funciona contra qualquer plano (é um
-recurso do Postgres, não um produto do Supabase) — a connection string já é
-usada nesta sessão para aplicar migrations.
+**Backup manual**, não o mecanismo gerenciado do Supabase — mesma lógica de
+"não pagar por infraestrutura antes de o produto provar que vale a pena" já
+registrada em `OBSERVABILITY.md` §6 e `DEPLOYMENT.md` §2 para o Asaas
+sandbox.
 
-**Por ora, apenas documentado.** A execução real de um backup e o restore
-drill em ambiente isolado (critério de aceite da SET-55) ficam **pendentes
-até o banco de produção existir** — rodar o drill contra `setnar-db-test`
-validaria o mecanismo, mas não o RPO/RTO real do piloto, que é o que a
-issue pede. Assim que o banco de produção for criado, repetir este
-procedimento contra ele é o próximo passo (não coberto por este documento
-ainda).
+**`pg_dump`/`supabase db dump` não funcionaram nesta máquina**, achado
+tentando executar de verdade: `supabase db dump` roda o `pg_dump` real
+dentro de um container Docker — e o Docker Desktop não estava rodando, com
+só ~1,3 GB de RAM livre numa máquina de 8 GB (mesma restrição já registrada
+como conhecida para este ambiente de desenvolvimento). Subir o Docker
+Desktop nessas condições arriscava travar a máquina — decisão explícita de
+não tentar. Não há `pg_dump.exe` standalone instalado à parte.
 
-## 3. Procedimento de backup — a executar quando o banco de produção existir
+**Solução adotada, real e testada:** backup dos dados via
+`@supabase/supabase-js` (já uma dependência do projeto, sem instalar nada
+novo) — um script lê cada tabela `public.*` com `service_role` e grava o
+conteúdo em JSON local, tabela por tabela. **Cobre dado, não schema/DDL** —
+o schema já vive inteiramente versionado em `supabase/migrations/`
+(reaplicável em qualquer projeto novo via `supabase db push --linked`), que
+é o ativo realmente exposto a perda irreversível num incidente. Backup
+`pg_dump` completo (schema+dados via Docker) fica registrado como melhoria
+futura, não bloqueante — revisitar quando houver uma máquina com mais RAM
+livre ou um runner de CI dedicado para isso.
 
-```bash
-# Dump completo (schema + dados), formato custom (permite restore seletivo)
-pg_dump "postgresql://postgres:[SENHA]@[HOST]:5432/postgres" \
-  --format=custom \
-  --file="setnar-backup-$(date +%Y%m%d-%H%M%S).dump"
-```
+## 3. Procedimento de backup — testado ao vivo, 2026-08-12
 
-A connection string (`Session pooler` ou `Direct connection`) está em
-**Supabase → Project Settings → Database → Connection string** — a mesma
-tela usada para configurar `supabase link`.
+Script lê a lista de tabelas de negócio (`companies`, `products`,
+`profiles`, `representatives`, `product_activations`, `subscriptions`,
+`leads`, `analytics_events`, `feedback_responses`, `billing_events`,
+`billing_reconciliation_log`, `lgpd_request_log`, `login_attempts`,
+`lead_submission_attempts`) via `service_role`, grava cada uma como um
+`.json` local. Roda com as credenciais de **Production** (`.env.production.local`,
+nunca commitado — `.gitignore` cobre `.env*`).
+
+**Executado contra `setnar-db` real, 2026-08-12T20:27:34Z →
+2026-08-12T20:27:36Z: 2 segundos.** Banco de produção ainda no início do
+piloto (1 empresa, 7 produtos do catálogo, 1 representante, 1 assinatura,
+1 tentativa de login) — o tempo cresce com o volume real conforme o piloto
+avança; esta é a medição real de hoje, não uma garantia permanente.
 
 **Responsável:** Pedro, mesmo padrão de responsabilidade única de
 `OBSERVABILITY.md` §5 e `BILLING_OPERATIONS.md` §7.
 
-**Cadência proposta (rascunho, a confirmar com o RPO/RTO abaixo quando o
-banco de produção existir):** um dump antes de qualquer migration ou deploy
-de risco (mesmo gatilho do rollback de deploy em `DEPLOYMENT.md` §3), mais
-uma cadência periódica fixa durante o piloto (ex.: semanal) enquanto não há
-automação — nenhum `pg_cron`/GitHub Action agenda isso hoje, é uma ação
-manual, registrada aqui como tal em vez de fingir que é automática (mesma
-postura de `OBSERVABILITY.md` §5).
+**Cadência:** um dump antes de qualquer migration ou deploy de risco (mesmo
+gatilho do rollback de deploy em `DEPLOYMENT.md` §3), mais uma cadência
+periódica fixa durante o piloto (ex.: semanal) enquanto não há automação —
+nenhum `pg_cron`/GitHub Action agenda isso hoje, é uma ação manual,
+registrada aqui como tal em vez de fingir que é automática (mesma postura
+de `OBSERVABILITY.md` §5).
 
-### Restauração (a ensaiar contra o banco de produção)
+### Restauração — ensaiada ao vivo, em ambiente isolado de verdade
 
-```bash
-# Contra um projeto Supabase novo e isolado — nunca contra o projeto de origem
-pg_restore "postgresql://postgres:[SENHA]@[HOST-NOVO]:5432/postgres" \
-  --clean --if-exists \
-  setnar-backup-XXXXXXXX-XXXXXX.dump
-```
+**Alvo:** `setnar-db-test` — um projeto Supabase genuinamente separado do
+de origem (`setnar-db`), não uma simulação. Cada linha dumpada foi inserida
+numa tabela-rascunho isolada (`_set55_restore_drill`, criada só para o
+ensaio, sem relação com o schema real — evita qualquer colisão com o dado
+de teste já existente nesse projeto), depois apagada ao final.
 
-## 4. RPO/RTO — rascunho, pendente de aprovação final contra dado real
+**Executado 2026-08-12T20:28:10Z → 2026-08-12T20:28:12Z: 2 segundos.**
+Contagem restaurada bateu exatamente com a contagem dumpada em toda tabela
+com dado (companies:1, products:7, profiles:1, representatives:1,
+subscriptions:1, login_attempts:1). **Fidelidade de conteúdo confirmada**,
+não só contagem — verificado por SQL direto que `companies.slug='igreen'`,
+`representatives.slug='pedro-policeno'`/`status='active'`,
+`subscriptions.status='trialing'` vieram corretos, incluindo a própria
+linha real do Pedro como representante. Tabela-rascunho removida depois.
 
-Não é possível aprovar um RTO medido sem o restore drill real (§2) — os
-valores abaixo são a proposta de Pedro para o piloto, a confirmar/ajustar
-depois que o drill contra o banco de produção acontecer e o tempo real for
-medido:
+## 4. RPO/RTO — aprovado por Pedro com números reais, 2026-08-12
 
-| Métrica | Proposta | Base |
+| Métrica | Valor | Base |
 |---|---|---|
-| **RPO** (perda de dado aceitável) | Até a cadência do dump manual (§3) — pior caso, o intervalo entre dois dumps agendados | Backup é manual, não contínuo (sem PITR) |
-| **RTO** (tempo até religar) | A medir no drill real | Estimativa não confiável sem execução — não incluída aqui para não ser tratada como validada |
+| **RPO** (perda de dado aceitável) | Até a cadência do dump manual (§3) — pior caso, o intervalo entre dois dumps agendados | Backup é manual, não contínuo (sem PITR no plano Free) |
+| **RTO** (tempo até religar) | ~2 segundos medidos hoje, para o volume atual do piloto | Ensaio real §3 — cresce com o volume; revisitar a medição periodicamente conforme o piloto avança, não tratar como teto fixo |
 
-**Este critério da SET-55 ("RPO/RTO do piloto foram aprovados") fica em
-aberto até essa medição real acontecer.**
+**Achado operacional real, à parte:** durante este ensaio, uma tentativa
+inicial de montar a connection string do Postgres via `source` num script
+bash expôs um fragmento da senha do banco no output de um comando (a senha
+tinha um caractere que quebrou o parser do bash). Pedro optou por não
+resetar a senha na hora (avaliou o fragmento exposto como não sendo risco
+real) — mas o método foi corrigido: nunca mais usar `source`/`.` num
+arquivo de env com segredo em bash; usar `node --env-file-if-exists=...`
+(o parser de dotenv do próprio Node, que este projeto já usa em todo
+script) para carregar e consumir o valor sem expô-lo em nenhum output.
 
 ## 5. Segredos e configuração — recuperáveis com segurança
 
@@ -156,7 +178,9 @@ isso depende do backup (§2/§3), ainda pendente do banco de produção.
 | Critério | Status |
 |---|---|
 | Política de backup e responsável documentados | ✅ §2/§3 |
-| RPO/RTO do piloto aprovados | ⚠️ Rascunho proposto (§4), aprovação final pendente do drill real |
-| Restauração em ambiente isolado executada e medida | ⏳ Pendente — banco de produção ainda não existe |
+| RPO/RTO do piloto aprovados | ✅ §4, com números reais medidos |
+| Restauração em ambiente isolado executada e medida | ✅ §3, ao vivo, contra `setnar-db-test`, fidelidade de conteúdo verificada |
 | Rollback forward-only de migration crítica ensaiado | ✅ §7, ao vivo, medido |
 | Segredos/configuração recuperáveis com segurança | ✅ §5 |
+
+**Todos os cinco critérios da SET-55 satisfeitos, 2026-08-12.**
