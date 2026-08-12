@@ -109,7 +109,11 @@ function getKindPanel(state: SubscriptionViewState): KindPanel {
         banner: {
           tone: 'error',
           title: 'Não conseguimos confirmar seu pagamento',
-          description: 'As tentativas automáticas de cobrança falharam. Tente novamente para reativar sua assinatura.',
+          // SET-58: antes só dizia "reative sua assinatura" — não deixava
+          // claro que a página pública já ficou indisponível nesse meio
+          // tempo, mesmo padrão que 'inactive'/'trial_expired' já usam.
+          description:
+            'As tentativas automáticas de cobrança falharam e sua página pública ficou indisponível. Tente novamente para reativar sua assinatura.',
         },
         showCheckoutForm: true,
         confirmedActive: false,
