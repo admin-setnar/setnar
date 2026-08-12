@@ -6,7 +6,6 @@ import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
 import { Container } from '@/shared/layout/container';
 import { Footer } from '@/shared/layout/footer';
 import { Navbar } from '@/shared/layout/navbar';
-import { FormAlert } from '@/shared/ui/form-alert';
 import { Text } from '@/shared/ui/typography';
 
 export const metadata: Metadata = { title: 'Política de privacidade' };
@@ -16,8 +15,9 @@ export const metadata: Metadata = { title: 'Política de privacidade' };
  *
  * Describes what is actually collected as of this sprint — no more, no less
  * — including the hashed login-attempt log the rate limiter writes, which
- * exists precisely because this page is being published. Draft, pending
- * legal review before real public sign-up opens (see README, A6).
+ * exists precisely because this page is being published. Published as the
+ * MVP/pilot version approved without formal legal counsel (SET-45); a formal
+ * review is tracked separately for before commercial scale-up (SET-74).
  */
 export default async function PrivacyPage() {
   const tenant = await resolveTenant((await headers()).get('host'));
@@ -36,13 +36,10 @@ export default async function PrivacyPage() {
           <Text as="p" variant="caption" className="mt-2">
             {version ? `Versão ${version}` : 'Versão indisponível no momento'}
           </Text>
-
-          <FormAlert
-            tone="error"
-            title="Rascunho pendente de revisão jurídica"
-            description="Este texto foi redigido para descrever com precisão quais dados são coletados hoje. Antes de abrir o cadastro ao público, ele precisa passar por revisão jurídica formal."
-            className="mt-6"
-          />
+          <Text as="p" variant="caption" className="mt-1">
+            Documento válido para a fase piloto do {brand.name}, redigido para descrever com
+            precisão quais dados são coletados hoje.
+          </Text>
 
           <div className="mt-8 space-y-8">
             <section>
@@ -180,11 +177,10 @@ export default async function PrivacyPage() {
                 apagado automaticamente em até 1 dia — a janela de bloqueio por
                 tentativas repetidas dura só 15 minutos, mas o registro em si leva mais
                 tempo para ser removido. Os dados enviados por visitantes no formulário
-                de contato (leads) são mantidos por até 24 meses após o último registro;
-                os dados de navegação (analytics) por até 12 meses. Esses dois prazos já
-                são a política aprovada, mas a rotina automática que os aplica ainda está
-                sendo implementada — até lá, você pode pedir a exclusão a qualquer momento
-                pelo canal da seção 5.
+                de contato (leads) são mantidos por até 24 meses após o registro, e os
+                dados de navegação (analytics) por até 12 meses; passado esse prazo,
+                uma rotina automática diária os apaga. Você também pode pedir a exclusão
+                a qualquer momento pelo canal da seção 5.
               </Text>
             </section>
 

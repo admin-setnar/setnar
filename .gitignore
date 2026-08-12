@@ -29,6 +29,12 @@ Thumbs.db
 *.log
 coverage/
 
+# Saídas do Playwright (SET-52) — trace/screenshot/vídeo de falha e o
+# relatório HTML, gerados a cada `npm run test:e2e` local.
+test-results/
+playwright-report/
+blob-report/
+
 # Editor settings are shared on purpose: they keep the CSS linter and the
 # TypeScript version consistent for everyone on the project.
 !.vscode
