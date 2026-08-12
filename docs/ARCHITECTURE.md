@@ -427,6 +427,7 @@ They only receive the authenticated user.
 Every `/app/*` route is protected server-side by `src/app/app/layout.tsx`; middleware refreshes sessions but is not the authorization boundary. The shared layout owns only session resolution, responsive navigation and the page frame. Route-specific data stays with its consumer:
 
 - `/app/paginas` loads onboarding, catalog, activations, publication links and QR Codes;
+- `/app/contatos` reads the Representative's immutable Lead projection through a request-scoped authenticated client and existing owner RLS; it is not a CRM write surface;
 - `/app/conta` loads the Representative profile and current access e-mail;
 - `/app` redirects to `/app/paginas` and owns no duplicated overview.
 

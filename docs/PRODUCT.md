@@ -369,7 +369,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 - Account creation, sign-in, sign-out, and password recovery (request link and set a new password).
 - Representative onboarding: creating the representative's own record, with public name prefilled from the account, mandatory commercial phone, authorization identifier and public address (slug).
 - Editing own profile: display name, authorization identifier, phone, city. **These four fields are the whole of it.**
-- Authenticated App Shell with `/app/paginas` for page management, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance or Materials destination exists.
+- Authenticated App Shell with `/app/paginas` for page management, `/app/contatos` for the read-only inbox of captured contacts, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance or Materials destination exists.
 - Reading the products of the authorizing organization's catalog. The catalog is seeded by migration; there is no interface to manage it.
 - Product activation and deactivation by the representative.
 - Publication of a commercial page per activated product, subject to four ordered preconditions: active representative, active SETNAR Subscription, name filled in, phone filled in. Only the first failure is reported.
@@ -378,6 +378,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 - QR Code rendered in the browser from the page's public address, with **download**, **copy link**, manual-copy fallback and retry after a generation error. There is **no persisted QR Code** and no content-level regeneration.
 - Public address by subdomain, one page per (representative × product). There is no public hub page listing a representative's products.
 - Lead capture, with an IP rate limit and attribution to the originating page.
+- Read-only contact inbox in `/app/contatos`, owner-scoped by RLS, with Product/date attribution and user-initiated WhatsApp/e-mail actions. There is no status, note, edit, assignment, search or automation.
 - Recording of page visits and WhatsApp clicks, with referrer and a hashed IP.
 - Basic analytics shown to the representative in `/app/paginas`: visits, WhatsApp clicks and leads, counted per Product over a 7- or 30-day window (SET-37/ADR-082, `QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer, device or city, and no conversion rate** — that remains Advanced Analytics, Future vision.
 - Subscription checked through the same `is_subscription_active` rule both when a Commercial Page is published and when it is served.
@@ -475,7 +476,7 @@ permanently, independent of when it ships.
 **Sales** — turning generated interest into a tracked opportunity.
 
 - CRM — *future vision*
-- Lead Management — *future vision* (leads are **captured** today; there is no interface to work them)
+- Lead Management — *future vision* (leads are captured and their contact data is available in a minimal read-only inbox; lifecycle/status/notes and other CRM work do not exist)
 - Sales Pipeline — *future vision*
 
 **Artificial Intelligence** — reducing the representative's manual effort. Per PRODUCT_CONSTITUTION.md Core Belief 4, it may only ever assist the professional, never speak or decide as them.
