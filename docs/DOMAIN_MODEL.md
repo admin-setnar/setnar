@@ -251,7 +251,7 @@ Verified against the working tree based on commit `23290c4`, including Sprint E/
 | Commercial Page | 8.6 | One per (Representative × Product); resolves by subdomain |
 | QR Code | 8.7 | Rendered client-side from the resolved address; not persisted |
 | Visitor | 8.8 | As anonymous events only |
-| Lead | 8.12 | **Capture only.** No Pipeline Status, no working surface |
+| Lead | 8.12 | Capture plus a minimal owner-only, read-only contact inbox. No Pipeline Status, Activity, notes or mutation |
 | Subscription | 8.14 | Record exists; enforced on publication, public read and representative-facing availability state through the same rule; **activated manually** |
 | Metric Aggregate | 8.9 | Basic read path: visits, WhatsApp clicks and leads, counted per Product over a 7/30-day window, shown to the representative in `/app/paginas` (SET-37/ADR-082, `docs/plans/QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer/device/city, no conversion rate** — that is Advanced Analytics, Stage 2 |
 
@@ -273,7 +273,7 @@ Decided, tracked in a plan, not yet built.
 | Pipeline Status, Conversion | 3, 14.2 | Conceptual |
 | Role, Permission | 8.15, 8.16 | Conceptual — authorization today is table-level isolation, not a role model |
 | Marketing Enablement Context | 7.7 | Conceptual |
-| Sales Operations Context (CRM) | 7.8 | Conceptual |
+| Sales Operations Context (CRM) | 7.8 | Lead capture and read-only contact delivery exist; lifecycle, Pipeline Status, Activity and CRM behavior remain Conceptual |
 | AI Assistance Context | 7.9 | Conceptual |
 | Administration Context | 7.11 | Conceptual |
 | Multi-organization operations, White Label | 18 | Conceptual |
@@ -339,7 +339,7 @@ Generic Domains solve problems that are not unique to SETNAR's business and coul
 
 Each Bounded Context corresponds to a business capability area and maps directly to a System Module named in ARCHITECTURE.md, keeping the same name so architecture and domain vocabulary never diverge.
 
-> **Status (§ 3.1).** Twelve contexts are described; **four exist as code modules today** (Identity & Access, Company/Representative management, Commercial Presence, Compliance), three exist partially (Analytics as collection, Billing as a record, Catalog Management as seeded data), and five are Conceptual (Marketing Enablement, Sales Operations, AI Assistance, Administration, and the enterprise portion of Company Management). A context described here is a boundary reserved in the vocabulary, not a module to create.
+> **Status (§ 3.1).** Twelve contexts are described; **four exist as code modules today** (Identity & Access, Company/Representative management, Commercial Presence, Compliance), four exist partially (Analytics, Billing, Catalog Management, and Sales Operations only as Lead capture plus read-only delivery), and four are Conceptual (Marketing Enablement, AI Assistance, Administration, and the enterprise portion of Company Management). A context described here is a boundary reserved in the vocabulary, not a module to create.
 
 ## 7.1 Identity & Access Context
 **Purpose:** Know who is acting and what they are permitted to do.

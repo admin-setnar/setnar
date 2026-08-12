@@ -10,6 +10,7 @@ function source(path: string): string {
 const layout = source('src/app/app/layout.tsx');
 const rootPage = source('src/app/app/page.tsx');
 const pages = source('src/app/app/paginas/page.tsx');
+const contacts = source('src/app/app/contatos/page.tsx');
 const account = source('src/app/app/conta/page.tsx');
 const navigation = source('src/app/app/app-navigation.tsx');
 const actions = source('src/modules/representatives/presentation/actions.ts');
@@ -24,8 +25,9 @@ describe('authenticated App Shell contract', () => {
     assert.match(rootPage, /redirect\('\/app\/paginas'\)/);
   });
 
-  it('exposes only live Pages and Account destinations with active-state semantics', () => {
+  it('exposes only live Pages, Contacts and Account destinations with active-state semantics', () => {
     assert.match(navigation, /href: '\/app\/paginas'/);
+    assert.match(navigation, /href: '\/app\/contatos'/);
     assert.match(navigation, /href: '\/app\/conta'/);
     assert.match(navigation, /aria-current=\{active \? 'page'/);
     assert.doesNotMatch(navigation, /desempenho|materiais|preview/i);
@@ -34,6 +36,7 @@ describe('authenticated App Shell contract', () => {
   it('keeps route-specific data outside the shared layout', () => {
     assert.doesNotMatch(layout, /RepresentativeAccountRepository|RepresentativeCatalogRepository/);
     assert.match(pages, /getRepresentativeCatalogRepository/);
+    assert.match(contacts, /getLeadInboxRepository/);
     assert.match(account, /getRepresentativeAccountRepository/);
   });
 

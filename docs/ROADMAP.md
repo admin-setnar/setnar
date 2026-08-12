@@ -206,7 +206,8 @@ Status verified against the Parte 2 working tree based on commit `df8db50` on 20
 
 - App Shell, responsive navigation, account and pages routes — done
 - Products, links, QR Codes — done in `/app/paginas`
-- **Basic statistics — not implemented**
+- Read-only delivery of captured contacts — done in `/app/contatos` (SET-77/ADR-087); this does not activate CRM lifecycle
+- Basic statistics — done in `/app/paginas` (SET-37/ADR-082)
 
 ---
 
@@ -309,7 +310,7 @@ Representatives can measure the performance of a specific marketing effort and a
 
 ## Out of scope
 
-CRM and lead working (Stage 3); any automation (Stage 4).
+CRM lifecycle and lead working state — status, notes, tasks, pipeline, assignment or mutation — remain Stage 3; any automation remains Stage 4. The Stage 1 read-only delivery of already captured contact data is explicitly not CRM (SET-77/ADR-087).
 
 ---
 
