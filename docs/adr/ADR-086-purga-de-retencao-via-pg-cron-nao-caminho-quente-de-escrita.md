@@ -42,21 +42,20 @@ mesma decisão aplicada ao schema como ele existe hoje.
 **Verificação.** `tests/retention-purge.integration.test.ts` — insere uma linha antiga e uma
 recente em cada tabela via `service_role` (que ignora RLS, mesmo padrão de todo teste de
 integração deste projeto), chama a função, confirma que só a recente sobrevive, e confirma
-separadamente que `anon` não tem `EXECUTE`. **Não pôde ser exercitado contra um projeto real
-nesta sessão**: o projeto Supabase configurado em `.env.local`
-(`smspbjmqhpjcjilzoexr`) é o mesmo que ADR-083 já registrou como `MIGRATIONS_FAILED` —
-está sem sincronizar com `supabase/migrations/` há várias migrations (nem a
-`20260903000000` da SET-71 chegou lá). O teste degrada graciosamente para essa realidade
-(pula com uma mensagem clara em vez de falhar) em vez de assumir um ambiente que não existe —
-mesma postura que `requirePair` já usa para fixture ausente. Isso não é regressão desta ADR,
-é a mesma lacuna de infraestrutura que ADR-083 já deixou registrada, agora também visível
-neste teste.
+separadamente que `anon` não tem `EXECUTE`. Escrito degradando graciosamente (pula, não
+falha) caso o ambiente configurado não tenha a migration aplicada ainda — mesma postura que
+`requirePair` já usa para fixture ausente — porque, no momento em que foi escrito, o projeto
+Supabase configurado (`smspbjmqhpjcjilzoexr`) estava no estado `MIGRATIONS_FAILED` que
+ADR-083 já havia registrado. **Pedro corrigiu esse estado e aplicou as migrations pendentes
+em 2026-08-11**, na mesma sessão; com a migration real no ar, `npm run test` roda a suíte
+inteira sem pular nada (577/577, 0 falhas) e confirma end-to-end: `cron.job` mostra
+`purge-expired-retention-data` agendado e `active`, e `get_advisors` (categoria security) não
+lista `purge_expired_retention_data` entre as funções alcançáveis por `anon`/`authenticated`
+— confirmando que o `revoke`/`grant` deste arquivo teve o efeito pretendido no banco real, não
+só no SQL escrito.
 
-**Fora de escopo, deliberadamente não decidido aqui.** Aplicar esta migration ao projeto
-Supabase real — depende de alguém com acesso corrigir o estado `MIGRATIONS_FAILED` primeiro
-(mesma consequência operacional que ADR-083 já registrou, não fechada por esta ADR também).
-Anonimizar em vez de apagar, ou qualquer mudança nos prazos — já decidido pela SET-46, esta
-ADR só implementa.
+**Fora de escopo, deliberadamente não decidido aqui.** Anonimizar em vez de apagar, ou
+qualquer mudança nos prazos — já decidido pela SET-46, esta ADR só implementa.
 
 **Reversal cost.** Baixo — `cron.unschedule('purge-expired-retention-data')` desliga o job
 sem tocar nas tabelas; a função em si não muda nenhum schema, só apaga linhas dentro do

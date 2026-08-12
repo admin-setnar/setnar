@@ -24,7 +24,7 @@
 > | AN2/AN4 — funções de escrita | **Implementado e consolidado** | ADR-051/052/065, `20260811000000` + `20260817000000` |
 > | AN3/AN5 — chamadas do app | **Implementado com fronteira backend confiável** | ADR-053/054/065 |
 > | AN6 — exibir estatísticas no hub | **Não implementado** | não há caminho de leitura: `AnalyticsGateway` só expõe escrita |
-> | AN7 — retenção/purga dos eventos | **Implementado** (12 meses, decidido em SET-46) | ADR-086, `20260904000000_add_retention_purge_job.sql` — via `pg_cron`, não aplicado ainda ao projeto Supabase real (ADR-083: `MIGRATIONS_FAILED`) |
+> | AN7 — retenção/purga dos eventos | **Implementado e no ar** (12 meses, decidido em SET-46) | ADR-086, `20260904000000_add_retention_purge_job.sql` — via `pg_cron`, job `purge-expired-retention-data` confirmado agendado e `active` |
 >
 > **Consequência que precisa estar clara para qualquer leitor, humano ou IA:**
 > o produto **registra** visitas e cliques, mas **não os mostra a ninguém**.
