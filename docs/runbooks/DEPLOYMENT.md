@@ -53,14 +53,31 @@ quais variáveis são gerenciadas por ela — pode incluir uma variável que o
 código depende de verdade, coincidentemente com o mesmo nome/propósito de
 uma configurada manualmente.
 
-**Confirmado por Pedro:** as credenciais do Asaas (`ASAAS_API_KEY`/
-`ASAAS_BASE_URL`) em Production e Preview são **todas sandbox** hoje — não
-produção real. Isso é esperado na fase de validação, mas é um **item de
-pré-lançamento**: antes de cobrar de verdade os primeiros representantes do
-piloto (SET-49/SET-6, 30 vagas a R$27,90), essas duas variáveis em
-**Production** precisam virar as credenciais reais do Asaas. Preview pode
-continuar em sandbox indefinidamente (Pedro confirmou que compartilhar
-sandbox entre os dois ambientes não é um problema).
+**Atualizado em 2026-08-12 — credenciais reais do Asaas configuradas em
+Production.** As três variáveis (`ASAAS_API_KEY`, `ASAAS_BASE_URL`,
+`ASAAS_WEBHOOK_TOKEN`) foram trocadas pelas credenciais da conta Asaas real
+(não mais sandbox), seguidas do redeploy obrigatório (env var só vale para
+deployments novos — mesma lição do incidente do §2 acima). Confirmado
+diretamente no painel do Asaas real (`www.asaas.com`, conta separada da
+sandbox): existe um webhook "Plano Fundador" `Ativado`, apontando para
+`https://setnar.com/api/billing/asaas-webhook` (URL correta), **0 eventos
+penalizados** — mas isso só significa "nenhuma tentativa ainda", não "token
+confirmado batendo": o teste definitivo é o primeiro evento real de
+pagamento chegando com sucesso (`200`), ainda não observado. Preview
+continua em sandbox indefinidamente (Pedro confirmou que compartilhar
+sandbox entre os dois ambientes não é um problema) — só Production usa a
+conta real agora.
+
+**Achado à parte, na conta sandbox (não afeta produção real):** a conta
+Asaas Sandbox tinha seu próprio webhook, também nomeado "Plano fundador -
+teste", também apontando para `https://setnar.com/api/billing/asaas-webhook`
+— penalizado com `401` (token configurado na Vercel não batia mais com o
+token daquele webhook sandbox). Sem impacto em cliente real: o evento
+penalizado específico não correspondia a nenhuma `subscription`/`lead` do
+banco de produção (checado por SQL), indicando um teste feito direto no
+painel do Asaas, não pelo fluxo real do produto. Webhook sandbox
+regenerado; como Production agora usa a conta Asaas real, esse webhook
+sandbox deixou de ser relevante para o tráfego real do site.
 
 ## 3. Ensaio de rollback e smoke pós-deploy — real, em produção
 
