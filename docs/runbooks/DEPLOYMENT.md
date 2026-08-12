@@ -61,12 +61,14 @@ deployments novos — mesma lição do incidente do §2 acima). Confirmado
 diretamente no painel do Asaas real (`www.asaas.com`, conta separada da
 sandbox): existe um webhook "Plano Fundador" `Ativado`, apontando para
 `https://setnar.com/api/billing/asaas-webhook` (URL correta), **0 eventos
-penalizados** — mas isso só significa "nenhuma tentativa ainda", não "token
-confirmado batendo": o teste definitivo é o primeiro evento real de
-pagamento chegando com sucesso (`200`), ainda não observado. Preview
-continua em sandbox indefinidamente (Pedro confirmou que compartilhar
-sandbox entre os dois ambientes não é um problema) — só Production usa a
-conta real agora.
+penalizados**. Preview continua em sandbox indefinidamente (Pedro confirmou
+que compartilhar sandbox entre os dois ambientes não é um problema) — só
+Production usa a conta real agora.
+
+**Teste definitivo confirmado por Pedro, 2026-08-12:** primeiro evento real
+de pagamento entregue ao webhook em produção respondeu `200`. Token,
+URL e credenciais da conta Asaas real batendo de ponta a ponta — item de
+pré-lançamento fechado.
 
 **Achado à parte, na conta sandbox (não afeta produção real):** a conta
 Asaas Sandbox tinha seu próprio webhook, também nomeado "Plano fundador -
