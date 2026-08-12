@@ -36,3 +36,43 @@ jobs:
       - run: npm ci
 
       - run: npm run verify
+
+  e2e:
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: Preview
+    env:
+      NEXT_PUBLIC_SITE_URL: https://setnar.com
+      NEXT_PUBLIC_DEFAULT_TENANT: setnar
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      LOGIN_ATTEMPT_SALT: ${{ secrets.LOGIN_ATTEMPT_SALT }}
+      ANALYTICS_IP_SALT: ${{ secrets.ANALYTICS_IP_SALT }}
+      ASAAS_API_KEY: ${{ secrets.ASAAS_API_KEY }}
+      ASAAS_BASE_URL: ${{ secrets.ASAAS_BASE_URL }}
+      ASAAS_WEBHOOK_TOKEN: ${{ secrets.ASAAS_WEBHOOK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - run: npm ci
+
+      # SET-52 — só Chromium (os dois projects, Desktop Chrome/Mobile Chrome,
+      # usam o motor Chromium); `--with-deps` instala as bibliotecas de SO
+      # que o runner do GitHub Actions não tem por padrão.
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

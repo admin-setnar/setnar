@@ -57,6 +57,20 @@ Supabase project configured; `npm run test:integration`
 what wasn't exercised, when the three Supabase env vars are missing — see
 [`docs/adr/ADR-017-the-test-script-now-loads-envlocal-with-nodes.md`](docs/adr/ADR-017-the-test-script-now-loads-envlocal-with-nodes.md).
 
+`npm run test:e2e` (SET-52, Playwright) is separate from `verify` — it
+drives a real browser through the critical path (signup → onboarding →
+publish → public page → lead → WhatsApp click → checkout) against a real
+local `next dev` and the same Supabase project as the integration suite. It
+needs the same env vars as `npm run test:integration`, plus browsers
+installed once via `npx playwright install --with-deps chromium`. Runs in CI
+as its own job (`.github/workflows/verify.yml`, `e2e`), after `verify`
+passes. See the doc comments in `playwright.config.ts` and
+`tests/e2e/critical-path.spec.ts` for what it does and does not cover
+(the negative-path entitlement/webhook guarantees stay at the integration
+layer, not here), and why the checkout step verifies the local reservation
+instead of the actual redirect to Asaas (unreachable from `localhost`,
+`resolveCallbackBaseUrl` needs a real public `Host`).
+
 > **Measure performance against a production build, in an incognito window.**
 > `npm run dev` serves unminified React with HMR and source maps; a Lighthouse
 > run against it reports blocking time and minification savings that don't
