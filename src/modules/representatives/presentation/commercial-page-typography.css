@@ -1,0 +1,20 @@
+/**
+ * Commercial Pages use the reference templates' own type pairing (Manrope
+ * for headings, Inter for body) instead of the app-wide Plus Jakarta Sans —
+ * scoped to `.commercial-page` so the rest of the product is untouched.
+ * `templates/commercial-pages/ConexaoGreen/style.css` is the source: Manrope
+ * covers h1/h2/h3/.display plus a few non-heading elements that carry the
+ * same weight (logo, WhatsApp buttons, FAQ summaries, step numbers) — mirror
+ * that set here via `.commercial-heading-font` rather than reusing `h1-h3`
+ * selectors for markup that isn't semantically a heading.
+ */
+.commercial-page {
+  font-family: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+}
+
+.commercial-page h1,
+.commercial-page h2,
+.commercial-page h3,
+.commercial-page .commercial-heading-font {
+  font-family: 'Manrope Variable', ui-sans-serif, system-ui, sans-serif;
+}

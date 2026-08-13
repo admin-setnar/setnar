@@ -1,3 +1,10 @@
+// Self-hosted like the app-wide Plus Jakarta Sans (`src/app/layout.tsx`) —
+// no third-party font request — but scoped to Commercial Pages only, see
+// `commercial-page-typography.css`.
+import '@fontsource-variable/manrope';
+import '@fontsource-variable/inter';
+import '@/modules/representatives/presentation/commercial-page-typography.css';
+
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { resolveCompanyVertical } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
@@ -41,7 +48,7 @@ export function CommercialPageContent({
   }
 
   return (
-    <main id="conteudo" data-vertical={companyVertical?.vertical} className="bg-surface text-content">
+    <main id="conteudo" data-vertical={companyVertical?.vertical} className="commercial-page bg-surface text-content">
       {companyVertical ? (
         <BrandTokensStyle tokens={companyVertical.tokens} scope={companyVertical.vertical} />
       ) : null}

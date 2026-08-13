@@ -21,7 +21,7 @@ export function CommercialHeader({ representative, product }: { representative: 
           <div className="flex min-w-0 items-center gap-3">
             <span aria-hidden="true" className="h-3.5 w-3.5 shrink-0 rounded-full bg-[rgb(var(--commercial-sun))] shadow-[0_0_0_5px_rgb(var(--commercial-sun)/0.18)]" />
             <div className="min-w-0">
-              <p className="truncate text-lg font-extrabold leading-tight text-[rgb(var(--palette-900))]">{product.name}</p>
+              <p className="commercial-heading-font truncate text-lg font-extrabold leading-tight text-[rgb(var(--palette-900))]">{product.name}</p>
               <p className="mt-0.5 hidden truncate text-xs text-content-muted sm:block">{representative.name} · Licenciado Autorizado iGreen Energy · ID {representative.authorizationId}</p>
             </div>
           </div>
@@ -38,7 +38,7 @@ export function CommercialHero({ template, representative, product }: { template
       <Container className="max-w-[1120px]">
         <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
           <div>
-            <Text variant="eyebrow" className="inline-flex rounded-full bg-brand-subtle px-3.5 py-2 text-brand">{template.eyebrow}</Text>
+            <span className="inline-flex rounded-full bg-brand-subtle px-3.5 py-1.5 text-sm font-bold normal-case tracking-normal text-brand">{template.eyebrow}</span>
             <Text as="h1" variant="display" className="mt-4 max-w-[680px] text-[clamp(2.1rem,4.5vw,3.1rem)] font-extrabold leading-[1.16] tracking-[-0.035em] text-[rgb(var(--palette-900))]">{template.headline}</Text>
             <Text as="p" variant="subtitle" className="mt-5 max-w-2xl text-[1.08rem] leading-[1.65] text-content-muted">{template.subheadline}</Text>
             <div className="mt-7 max-w-sm"><WhatsappCta representative={representative} product={product} /></div>
@@ -75,7 +75,7 @@ export function StepsSection({ template }: { template: CommercialPageTemplate })
       <Container className="max-w-[1120px]">
         <div className="mx-auto max-w-2xl text-center"><Text as="h2" variant="heading" className={sectionHeading}>{template.howItWorksTitle}</Text><Text as="p" variant="subtitle" className="mt-3 text-base leading-relaxed">{template.howItWorksIntro}</Text></div>
         <ol className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {template.steps.map((step, index) => <li key={step.title}><Card padding="md" className={`${commercialCard} h-full`}><span aria-hidden="true" className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-contrast">{index + 1}</span><Text as="h3" variant="title" className="mt-4 text-lg font-bold text-[rgb(var(--palette-900))]">{step.title}</Text><Text as="p" variant="body" className="mt-2 text-[15px] leading-relaxed">{step.description}</Text></Card></li>)}
+          {template.steps.map((step, index) => <li key={step.title}><Card padding="md" className={`${commercialCard} h-full`}><span aria-hidden="true" className="commercial-heading-font inline-flex h-9 w-9 items-center justify-center rounded-full bg-brand text-sm font-bold text-brand-contrast">{index + 1}</span><Text as="h3" variant="title" className="mt-4 text-lg font-bold text-[rgb(var(--palette-900))]">{step.title}</Text><Text as="p" variant="body" className="mt-2 text-[15px] leading-relaxed">{step.description}</Text></Card></li>)}
         </ol>
       </Container>
     </section>
@@ -96,9 +96,9 @@ export function OfferSection({ template }: { template: CommercialPageTemplate })
 export function FaqSection({ template }: { template: CommercialPageTemplate }) {
   return (
     <section className="bg-surface py-14 sm:py-20">
-      <Container className="max-w-[820px]">
+      <Container className="max-w-[760px]">
         <Text as="h2" variant="heading" className={`${sectionHeading} text-center`}>Perguntas frequentes</Text>
-        <div className="mt-8 space-y-3">{template.faq.map((item) => <details key={item.question} className={`${commercialCard} group px-5 py-4`}><summary className="cursor-pointer list-none font-bold text-[rgb(var(--palette-900))] marker:hidden">{item.question}<span aria-hidden="true" className="float-right ml-4 text-xl text-brand transition-transform group-open:rotate-45">+</span></summary><Text as="p" variant="body" className="mt-3 border-t border-line pt-3 text-[15px]">{item.answer}</Text></details>)}</div>
+        <div className="mt-8 space-y-3">{template.faq.map((item) => <details key={item.question} className={`${commercialCard} group px-5 py-4`}><summary className="commercial-heading-font cursor-pointer list-none font-bold text-[rgb(var(--palette-900))] marker:hidden">{item.question}<span aria-hidden="true" className="float-right ml-4 text-xl text-brand transition-transform group-open:rotate-45">+</span></summary><Text as="p" variant="body" className="mt-3 border-t border-line pt-3 text-[15px]">{item.answer}</Text></details>)}</div>
       </Container>
     </section>
   );

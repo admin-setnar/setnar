@@ -182,7 +182,7 @@ export function LeadForm({
         )}
       </FormField>
 
-      <Button type="submit" size="lg" fullWidth loading={isSubmitting} disabled={disabled} className="rounded-full font-semibold shadow-[0_8px_24px_rgba(20,67,43,0.14)] hover:-translate-y-0.5">
+      <Button type="submit" size="lg" fullWidth loading={isSubmitting} disabled={disabled} className="commercial-heading-font rounded-full font-bold shadow-[0_8px_24px_rgba(20,67,43,0.14)] hover:-translate-y-0.5">
         {submitLabel}
       </Button>
       {disabled ? (
