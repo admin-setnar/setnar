@@ -1,9 +1,11 @@
 Commercial page templates — reference only, not served code
 These are the source-of-truth content/UX spec for each product's
 Commercial Page, handed off as static HTML/CSS/JS with `{{TOKEN}}`
-placeholders (REP_NOME, REP_ID, REP_WHATSAPP, REP_CIDADE, REP_AVATAR,
+placeholders (REP_NOME, REP_ID, REP_WHATSAPP, REP_CIDADE,
 REP_PRIMEIRO_NOME, PRODUTO_SLUG, GA4_ID, LEADS_ENDPOINT, OG_IMAGE,
-PAGE_URL, MSG_CONSULTOR).
+PAGE_URL, MSG_CONSULTOR). REP_AVATAR was dropped from the consultor
+block — out of scope for MVP; do not reintroduce without a product
+decision.
 They are NOT built, served, or imported by the Next.js app — Commercial
 Pages will be rendered dynamically from Supabase instead of this
 static-template pipeline (decision pending a full ADR in the main
