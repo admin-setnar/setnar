@@ -23,11 +23,12 @@
 > |---|---|---|
 > | §3.1 "no distractions" | **Aprovado e superado pelo código** | ADR-056 redefiniu como *CTA único*, não *zero conteúdo*. `DESIGN_SYSTEM.md` foi alinhado. |
 > | §3.2 conteúdo variável: schema vs. código | **Aprovado e superado pelo código** | ADR-056: vive em código (`product-content/`). |
-> | §3.3 paleta/identidade iGreen | **EM ABERTO — decisão mais sensível do documento** | CP1 segue **sem confirmação da iGreen**. CP9 foi implementado como *protótipo interno não aprovado* (ADR-057). Implementar não fechou a decisão. |
+> | §3.3 paleta/identidade iGreen | **VALIDADO EM 13/08/2026** | O Product Owner confirmou autorização e revisão de claims para as sete Commercial Pages controladas da SET-78. |
 > | §3.4 GA4/Meta Pixel | **EM ABERTO** | Depende de infraestrutura de consentimento que não existe. Precisa de ADR se for adotado. |
 > | CP3 (tabs de conteúdo) | **Implementado** | ADR-056, só Conexão Club |
-> | CP9 (visual on-brand) | **Implementado como protótipo não aprovado** | ADR-057 — bloqueado por CP1 |
-> | CP4–CP8, CP10 | **Somente planejados** | nenhum código |
+> | CP9 (visual on-brand) | **Aprovado no escopo da SET-78** | ADR-057 — páginas controladas, autoria SETNAR e disclaimer obrigatório |
+> | CP4–CP8 | **Implementados pela SET-78** | shell compartilhado, conteúdo e widgets por Produto; ADR-088 |
+> | CP10 | **Somente planejado** | nenhum código; GA4/Meta Pixel continuam fora do escopo |
 >
 > Nenhum item marcado "EM ABERTO" autoriza implementação. §3.3 é uma questão
 > de compliance de marca de terceiro, não uma preferência de produto.
@@ -421,6 +422,11 @@ Cada passo é revisável e testável isoladamente, mesmo processo de sempre:
 
 ## CP1 — Confirmar a Política de Uso da Marca da iGreen (§3.3)
 
+**Concluído em 13/08/2026 para o escopo controlado da SET-78.** A validação
+não autoriza materiais livres nem remove a identificação do representante,
+a autoria SETNAR ou o aviso de canal não oficial. O texto abaixo permanece
+como registro da investigação que antecedeu a decisão.
+
 *Não é código.* Antes de qualquer trabalho visual, confirmar com quem
 administra a relação com a iGreen se replicar a paleta/identidade visual
 (`--verde-vivo` etc.) numa Commercial Page gerada por software está dentro
@@ -505,11 +511,9 @@ system atual (`Card` + lista), sem widget interativo nenhum.
 
 ## CP9 — Visual on-brand (paleta iGreen)
 
-**Implementado como protótipo NÃO aprovado — ver [`ADR-057`](../adr/ADR-057-mecanismo-de-tokens-de-marca-por-verticalcompany-aplicado.md).**
-Pedro decidiu prosseguir sem esperar CP1 (decisão de negócio, risco
-assumido conscientemente — ver nota em §3.3 acima). CP1 continua pendente;
-nada aqui deve ser lido como "a iGreen aprovou o visual". Descrição abaixo
-mantida como registro do plano original.
+**Implementado inicialmente como protótipo e aprovado em 13/08/2026 no escopo
+controlado da SET-78 — ver [`ADR-057`](../adr/ADR-057-mecanismo-de-tokens-de-marca-por-verticalcompany-aplicado.md).**
+Descrição abaixo mantida como registro do plano original.
 
 *Depende de CP1 (confirmação de marca) — não prossiga sem isso.* Se
 confirmado: token de marca por vertical/Company, aplicado só nas Commercial

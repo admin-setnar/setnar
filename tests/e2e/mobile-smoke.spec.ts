@@ -54,11 +54,12 @@ test.describe('caminho essencial do MVP (E2E, mobile)', () => {
 
     const publicPage = await context.newPage();
     await publicPage.goto(`http://${fixture.slug}.localhost:3000/${product!.slug}`);
-    await expect(publicPage.getByRole('button', { name: 'Quero saber mais' })).toBeVisible();
+    const leadSubmit = publicPage.locator('#quero-simular').getByRole('button');
+    await expect(leadSubmit).toBeVisible();
 
     await publicPage.getByLabel('Nome').fill('Visitante Mobile E2E');
     await publicPage.getByLabel('Telefone').fill('(21) 96666-5555');
-    await publicPage.getByRole('button', { name: 'Quero saber mais' }).click();
+    await leadSubmit.click();
     await expect(publicPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: 10_000 });
   });
 });

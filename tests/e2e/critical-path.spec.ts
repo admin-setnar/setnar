@@ -101,21 +101,21 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
 
     await test.step('a página pública carrega e registra a visita', async () => {
       await publicPage.goto(`http://${fixture.slug}.localhost:3000/${productSlug}`);
-      await expect(publicPage.getByRole('link', { name: 'Falar no WhatsApp' })).toBeVisible();
-      await expect(publicPage.getByRole('button', { name: 'Quero saber mais' })).toBeVisible();
+      await expect(publicPage.getByRole('link', { name: 'Falar no WhatsApp' }).first()).toBeVisible();
+      await expect(publicPage.locator('#quero-simular').getByRole('button')).toBeVisible();
     });
 
     await test.step('um visitante envia um lead', async () => {
       await publicPage.getByLabel('Nome').fill('Visitante de Teste E2E');
       await publicPage.getByLabel('Telefone').fill('(21) 97777-6666');
-      await publicPage.getByRole('button', { name: 'Quero saber mais' }).click();
+      await publicPage.locator('#quero-simular').getByRole('button').click();
       await expect(publicPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: 10_000 });
     });
 
     await test.step('um visitante clica no WhatsApp — a navegação real para wa.me não é seguida', async () => {
       const [popup] = await Promise.all([
         context.waitForEvent('page'),
-        publicPage.getByRole('link', { name: 'Falar no WhatsApp' }).click(),
+        publicPage.getByRole('link', { name: 'Falar no WhatsApp' }).first().click(),
       ]);
       await popup.close();
     });

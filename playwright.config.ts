@@ -67,7 +67,7 @@ export default defineConfig({
     {
       name: 'Desktop Chrome',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: 'critical-path.spec.ts',
+      testMatch: ['critical-path.spec.ts', 'commercial-pages.spec.ts'],
     },
     {
       name: 'Mobile Chrome',

@@ -44,9 +44,11 @@ function trackWhatsappClick(productSlug: string) {
 export function WhatsappCta({
   representative,
   product,
+  fullWidth = true,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
+  fullWidth?: boolean;
 }) {
   if (!representative.phone) return null;
 
@@ -54,7 +56,7 @@ export function WhatsappCta({
   const href = `https://wa.me/${toWhatsAppDigits(representative.phone)}?text=${encodeURIComponent(message)}`;
 
   return (
-    <Button asChild size="lg" fullWidth>
+    <Button asChild size="lg" fullWidth={fullWidth}>
       <a
         href={href}
         target="_blank"

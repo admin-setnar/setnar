@@ -1,11 +1,8 @@
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { resolveCompanyVertical } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
-import { CONEXAO_CLUB_TABS } from '@/modules/representatives/domain/product-content/conexao-club';
-import { AuthorizedRepresentativeIdentificationBlock } from '@/modules/representatives/presentation/authorized-representative-identification-block';
-import { ComplianceNotice } from '@/modules/representatives/presentation/compliance-notice';
-import { ProductContentTabs } from '@/modules/representatives/presentation/product-content-tabs';
-import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
+import { getCommercialPageTemplate } from '@/modules/representatives/domain/commercial-page-template';
+import { CommercialFooter, CommercialHeader, CommercialHero, FaqSection, FinalCta, IdentificationSection, OfferSection, StepsSection, TrustStrip } from '@/modules/representatives/presentation/commercial-page-sections';
 import { BrandTokensStyle } from '@/modules/tenancy/presentation/brand-tokens';
 import { Container } from '@/shared/layout/container';
 import { Card } from '@/shared/ui/card';
@@ -37,33 +34,23 @@ export function CommercialPageContent({
   leadFormDisabled?: boolean;
 }) {
   const companyVertical = resolveCompanyVertical(product.companySlug);
+  const template = getCommercialPageTemplate(product.slug);
+
+  if (!template) {
+    return null;
+  }
 
   return (
-    <main id="conteudo" data-vertical={companyVertical?.vertical} className="pt-16 pb-20">
+    <main id="conteudo" data-vertical={companyVertical?.vertical}>
       {companyVertical ? (
         <BrandTokensStyle tokens={companyVertical.tokens} scope={companyVertical.vertical} />
       ) : null}
-      <Container width="narrow">
-        <Text variant="eyebrow">{product.name}</Text>
-        <Text as="h1" variant="heading" className="mt-2">
-          {product.name}
-        </Text>
-
-        <div className="mt-8">
-          <AuthorizedRepresentativeIdentificationBlock representative={representative} />
-        </div>
-
-        <div className="mt-6">
-          <WhatsappCta representative={representative} product={product} />
-        </div>
-
-        {product.slug === 'conexao-club' ? (
-          <div className="mt-8">
-            <ProductContentTabs tabs={CONEXAO_CLUB_TABS} />
-          </div>
-        ) : null}
-
-        <Card variant="outlined" padding="lg" className="mt-8">
+      <CommercialHeader representative={representative} product={product} />
+      <CommercialHero template={template} representative={representative} product={product} />
+      <TrustStrip points={template.trustPoints} />
+      <IdentificationSection representative={representative} />
+      <section id="quero-simular" className="pb-14 sm:pb-20">
+        <Container width="narrow"><Card variant="outlined" padding="lg">
           <Text as="h2" variant="title">
             Prefere que a gente te chame?
           </Text>
@@ -71,12 +58,15 @@ export function CommercialPageContent({
             Deixe seus dados que entramos em contato, sem compromisso.
           </Text>
           <div className="mt-4">
-            <LeadForm productSlug={productSlug} disabled={leadFormDisabled} />
+            <LeadForm productSlug={productSlug} disabled={leadFormDisabled} submitLabel={template.leadButton} successDescription={template.thankYouDescription} />
           </div>
-        </Card>
-
-        <ComplianceNotice productSlug={productSlug} />
-      </Container>
+        </Card></Container>
+      </section>
+      <StepsSection template={template} />
+      <OfferSection template={template} />
+      <FaqSection template={template} />
+      <FinalCta template={template} representative={representative} product={product} />
+      <CommercialFooter template={template} representative={representative} productSlug={productSlug} />
     </main>
   );
 }

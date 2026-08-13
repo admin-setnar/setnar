@@ -1,10 +1,11 @@
 ### ADR-057 — Mecanismo de tokens de marca por vertical/Company, aplicado à Commercial Page da iGreen (CP9)
 
-> **PROTÓTIPO NÃO APROVADO.** A Política de Uso da Marca da iGreen
-> (`docs/COMMERCIAL_PAGE_CONTENT_PLAN.md` §3.3/CP1) continua pendente de
-> confirmação. Este ADR registra um mecanismo técnico e um exemplo interno
-> construído para pedir essa aprovação — não é uma decisão de marca fechada.
-> Nada aqui deve ser tratado como "a iGreen aprovou" até CP1 responder "sim".
+> **STATUS ATUAL — APROVADO PARA AS COMMERCIAL PAGES CONTROLADAS (13/08/2026).**
+> O Product Owner confirmou a validação da autorização de marca e dos claims
+> comerciais para os sete templates portados pela SET-78. A autorização não
+> transforma a SETNAR em canal oficial, não libera edição de identidade ou copy
+> pelo representante e não se estende a outros materiais. O texto histórico
+> abaixo registra por que o mecanismo nasceu como protótipo.
 
 **Nota (04/08/2026).** Pedro decidiu prosseguir com CP9 sem aguardar
 confirmação formal de CP1 — decisão de negócio, aceitando o risco descrito
