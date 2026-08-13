@@ -117,6 +117,13 @@
 .page p {
   margin: 0 0 1em;
 }
+/* This selector's specificity (.page + p) beats a single class alone. Any
+   class below that needs its own margin on a <p> (.footerPrivacy,
+   .leadPrivacy, .fieldHint, .leadStatus, .consultorCargo, .consultorLocal,
+   .billAnnual, .billCtaNote) must be written as `.page .theClass` to win —
+   plain `.theClass { margin: ... }` silently loses to this rule and falls
+   back to `0 0 1em`, which is how the footer's centered `max-width:640px;
+   margin:12px auto 0` block ended up flush-left instead of centered. */
 
 .page a {
   color: inherit;
@@ -421,7 +428,7 @@
   border-radius: 100px;
   transition: width 1.4s ease;
 }
-.billAnnual {
+.page .billAnnual {
   margin: 16px 0 0;
   font-size: 0.98rem;
   color: var(--verde-vivo-escuro);
@@ -439,7 +446,7 @@
   font-size: 0.98rem;
   justify-content: center;
 }
-.billCtaNote {
+.page .billCtaNote {
   margin: 10px 0 0;
   font-size: 0.85rem;
   color: var(--cinza-texto);
@@ -882,7 +889,7 @@
   justify-content: center;
   margin-top: 6px;
 }
-.leadPrivacy {
+.page .leadPrivacy {
   font-size: 0.78rem;
   color: #8a968c;
   margin: 0;
@@ -892,7 +899,7 @@
   font-weight: 400;
   color: #9aa69c;
 }
-.fieldHint {
+.page .fieldHint {
   margin: 6px 0 0;
   font-size: 0.8rem;
   color: var(--cinza-texto);
@@ -919,7 +926,7 @@
   height: 1px;
   overflow: hidden;
 }
-.leadStatus {
+.page .leadStatus {
   min-height: 1.2em;
   font-size: 0.85rem;
   font-weight: 700;
@@ -959,7 +966,7 @@
 }
 
 /* Nota de privacidade no rodapé */
-.footerPrivacy {
+.page .footerPrivacy {
   max-width: 640px;
   margin: 12px auto 0;
   font-size: 0.78rem;
@@ -1044,12 +1051,12 @@
   font-size: 1.35rem;
   margin: 0 0 2px;
 }
-.consultorCargo {
+.page .consultorCargo {
   font-size: 0.86rem;
   color: var(--cinza-texto);
   margin: 0;
 }
-.consultorLocal {
+.page .consultorLocal {
   font-size: 0.86rem;
   color: var(--cinza-texto);
   margin: 2px 0 0;
