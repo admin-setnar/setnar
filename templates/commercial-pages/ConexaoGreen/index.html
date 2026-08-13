@@ -78,8 +78,8 @@
     <div class="container hero-grid">
       <div>
         <span class="eyebrow">Sem instalar placa solar</span>
-        <h1>Pague menos na conta de luz, todo mês, sem obra e sem trocar de distribuidora.</h1>
-        <p class="subhead">O desconto vem de créditos de energia renovável. A distribuidora continua sendo a mesma de sempre.</p>
+        <h1>Cansado de ver a conta de luz subir todo mês? Dá pra pagar menos, sem obra e sem trocar de distribuidora.</h1>
+        <p class="subhead">O desconto vem de créditos de energia renovável. Você continua com a mesma distribuidora, a mesma instalação e a mesma rotina de sempre — só a fatura muda.</p>
         <div class="hero-ctas">
           <a class="btn-whats" id="cta-hero" href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20simular%20meu%20desconto%20na%20conta%20de%20luz."
              target="_blank" rel="noopener">
@@ -93,7 +93,7 @@
         <div class="bill-card" id="bill-card">
           <div class="bill-header">
             <span>Estimativa de desconto</span>
-            <span class="badge-desconto" id="bill-badge">5% a 15%</span>
+            <span class="badge-desconto" id="bill-badge">10%</span>
           </div>
 
           <label class="bill-input-label" for="bill-input">Quanto você paga de luz por mês?</label>
@@ -104,11 +104,11 @@
 
           <div class="bill-values">
             <span class="bill-old" id="bill-old">R$ 500</span>
-            <span class="bill-new" id="bill-value">R$ 453 – R$ 484</span>
+            <span class="bill-new" id="bill-value">R$ 469</span>
           </div>
-          <p class="bill-caption">Economia estimada de <strong id="bill-eco">R$ 16 a R$ 47</strong> por mês. O desconto incide sobre o <strong>consumo de energia</strong> — impostos (ICMS, PIS e COFINS), iluminação pública e taxas fixas da distribuidora continuam sendo cobrados e não entram no cálculo.</p>
+          <p class="bill-caption">Economia estimada de <strong id="bill-eco">R$ 31</strong> por mês. O desconto incide sobre o <strong>consumo de energia</strong> — impostos (ICMS, PIS e COFINS), iluminação pública e taxas fixas da distribuidora continuam sendo cobrados e não entram no cálculo.</p>
           <div class="bill-progress"><div class="bill-progress-fill" id="bill-fill"></div></div>
-          <p class="bill-annual">No ano, isso representa entre <strong id="bill-annual-value">R$ 187 e R$ 561</strong>. Estimativa — o valor exato sai na sua simulação e consta no contrato.</p>
+          <p class="bill-annual">No ano, isso representa cerca de <strong id="bill-annual-value">R$ 374</strong>. Estimativa — o valor exato sai na sua simulação e consta no contrato.</p>
 
           <a class="btn-whats bill-cta" id="bill-cta"
              href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20confirmar%20meu%20desconto%20na%20conta%20de%20luz."
@@ -138,7 +138,6 @@
   <section id="consultor">
     <div class="container">
       <div class="consultor-card">
-        {{REP_AVATAR}}
         <div class="consultor-info">
           <span class="consultor-eyebrow">Quem vai te atender</span>
           <h2>{{REP_NOME}}</h2>
@@ -362,15 +361,18 @@
 
 <script>
   // ===== Simulador interativo do desconto na conta de luz =====
-  // ===== Simulador =====
   // O desconto NÃO incide sobre a conta inteira. Conforme o FAQ oficial do
   // Conexão Green, ele se aplica ao consumo de energia — impostos obrigatórios
   // (ICMS, PIS, COFINS), iluminação pública e custo de disponibilidade seguem
   // sendo cobrados. Aplicar o percentual sobre o total da fatura superestimava
   // a economia entre 48% e 104% conforme a faixa da conta.
-  // CONFIRMAR COM A IGREEN: faixa de desconto vigente e composição exata da base.
-  const DESCONTO_MIN = 0.05;
-  const DESCONTO_MAX = 0.15;
+  //
+  // REGRA DE DESCONTO POR FAIXA divulgada pela iGreen: 10% abaixo de R$ 1.000
+  // e 14% a partir de R$ 1.000. A página mantém a linguagem de "estimativa"
+  // porque a economia efetiva depende da composição da fatura analisada.
+  const CORTE_FAIXA = 1000;           // abaixo disso: desconto baixo. Igual ou acima: desconto alto.
+  const DESCONTO_BAIXO = 0.10;        // contas < R$ 1.000
+  const DESCONTO_ALTO  = 0.14;        // contas >= R$ 1.000
   const CARGA_TRIBUTARIA = 0.27;      // ICMS + PIS/COFINS embutidos (aproximação)
   const ILUMINACAO_PUBLICA = 25;      // contribuição municipal, valor típico
   const CUSTO_DISPONIBILIDADE = 35;   // taxa mínima da distribuidora
@@ -380,6 +382,11 @@
     const semImpostos = semIluminacao * (1 - CARGA_TRIBUTARIA);
     return Math.max(semImpostos - CUSTO_DISPONIBILIDADE, 0);
   }
+
+  function descontoAplicavel(valor){
+    return valor < CORTE_FAIXA ? DESCONTO_BAIXO : DESCONTO_ALTO;
+  }
+
   const NUM_WHATS = '{{REP_WHATSAPP}}';
 
   const billInput   = document.getElementById('bill-input');
@@ -388,6 +395,7 @@
   const billFill     = document.getElementById('bill-fill');
   const billAnnual   = document.getElementById('bill-annual-value');
   const billEco      = document.getElementById('bill-eco');
+  const billBadge    = document.getElementById('bill-badge');
   const billCta      = document.getElementById('bill-cta');
   const billCard     = document.getElementById('bill-card');
 
@@ -403,15 +411,15 @@
     let valor = parseFloat(billInput.value);
     if(isNaN(valor) || valor < 0) valor = 0;
 
+    const percentual = descontoAplicavel(valor);
     const base = baseCompensavel(valor);
-    const economiaMin = base * DESCONTO_MIN;
-    const economiaMax = base * DESCONTO_MAX;
-    const contaMin = valor - economiaMax;   // melhor caso para o cliente
-    const contaMax = valor - economiaMin;
+    const economia = base * percentual;
+    const contaNova = valor - economia;
 
+    if(billBadge) billBadge.textContent = `${Math.round(percentual * 100)}%`;
     if(billOld) billOld.textContent = formatBRL(valor);
-    if(billEco) billEco.textContent = `${formatBRL(economiaMin)} a ${formatBRL(economiaMax)}`;
-    if(billAnnual) billAnnual.textContent = `${formatBRL(economiaMin * 12)} e ${formatBRL(economiaMax * 12)}`;
+    if(billEco) billEco.textContent = formatBRL(economia);
+    if(billAnnual) billAnnual.textContent = formatBRL(economia * 12);
 
     const mensagem = `Olá! Minha conta de luz é de ${formatBRL(valor)} por mês. Quero simular meu desconto.`;
     // Verificação de segurança: se esse botão for removido do HTML no futuro,
@@ -420,12 +428,10 @@
       billCta.href = 'https://wa.me/' + NUM_WHATS + '?text=' + encodeURIComponent(mensagem);
     }
 
-    billValueEl.textContent = base > 0
-      ? `${formatBRL(contaMin)} – ${formatBRL(contaMax)}`
-      : formatBRL(valor);
+    billValueEl.textContent = formatBRL(contaNova);
 
-    // A barra continua animando; o valor em si não "conta" mais, porque
-    // agora é uma faixa e não um número único.
+    // A barra é só um elemento visual (sempre anima até 70%); não representa
+    // o percentual real de desconto, que já aparece no badge e nos valores acima.
     if(billFill){
       if(prefersReduced || !animar){
         billFill.style.width = '70%';
