@@ -1,0 +1,65 @@
+/*
+ * Ported verbatim from templates/commercial-pages/ConexaoClub/index.html's
+ * inline <style> block (only Club-specific CSS — the shared base lives in
+ * ../commercial-page-base.module.css). Already fully class-scoped in the
+ * original (no bare tag selectors), so no `.page`-prefixing transform
+ * needed here, unlike the base file.
+ */
+
+.catTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+.catTabs button {
+  border: 1px solid var(--borda);
+  background: var(--fundo);
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-family: 'Inter Variable', 'Inter', sans-serif;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--cinza-texto);
+  cursor: pointer;
+}
+.catTabs button.active {
+  background: var(--verde-vivo);
+  color: #fff;
+  border-color: var(--verde-vivo);
+}
+.catDesc {
+  position: relative;
+  z-index: 1;
+  color: var(--cinza-texto);
+  min-height: 3.2em;
+}
+.categoriasGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+@media (max-width: 860px) {
+  .categoriasGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .categoriasGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.categoriaCard {
+  background: var(--fundo-card);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+}
+.categoriaCard .emoji {
+  font-size: 1.8rem;
+  display: block;
+  margin-bottom: 8px;
+}

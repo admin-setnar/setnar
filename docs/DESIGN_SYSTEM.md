@@ -703,6 +703,13 @@ When a photo does ship, it must remain **optional**: a representative who has no
 
 **"No distractions" means a single, unambiguous call to action — not an absence of content** (ADR-056). Content that helps a visitor understand and trust the offer — explanatory tabs, FAQs, how-it-works, calculators — is legitimate. What is prohibited is *competing* actions, unnecessary navigation, and anything that pulls the visitor away from the one conversation the page exists to start.
 
+The seven seeded Products use independent presentation trees and product-owned
+CSS (ADR-089). Repetition of visual markup is intentional when it preserves the
+approved template's hierarchy, rhythm and responsive behavior; visual
+similarity alone does not require a shared shell. This exception does not relax
+the shared accessibility, identity, compliance or interaction requirements in
+this document, all of which must be verified separately on every Product.
+
 The page exists to convert visitors into conversations.
 
 ---
