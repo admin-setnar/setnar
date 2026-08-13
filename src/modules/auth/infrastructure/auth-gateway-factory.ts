@@ -7,6 +7,7 @@ import type { AuthGateway } from '@/modules/auth/domain/auth-gateway';
 import { SupabaseAuthGateway } from '@/modules/auth/infrastructure/supabase-auth-gateway';
 import { getClientIp } from '@/shared/lib/get-client-ip';
 import { isNextControlFlowError } from '@/shared/lib/next-control-flow-error';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 import { createClient } from '@/shared/lib/supabase/server';
 
 /**
@@ -55,7 +56,7 @@ export async function getCurrentTermsVersion(): Promise<string | null> {
   } catch (err) {
     console.error(
       'getCurrentTermsVersion: createClient() lançou — Supabase provavelmente sem configuração válida. Servindo fallback fail-open ("Versão indisponível no momento").',
-      err,
+      toSafeLogError(err),
     );
     return null;
   }
@@ -66,7 +67,7 @@ export async function getCurrentTermsVersion(): Promise<string | null> {
       if (error) {
         console.error(
           'getCurrentTermsVersion: RPC current_terms_version retornou erro. Servindo fallback fail-open ("Versão indisponível no momento").',
-          error,
+          toSafeLogError(error),
         );
       }
       return null;
@@ -75,7 +76,7 @@ export async function getCurrentTermsVersion(): Promise<string | null> {
   } catch (err) {
     console.error(
       'getCurrentTermsVersion: RPC current_terms_version lançou exceção inesperada. Servindo fallback fail-open ("Versão indisponível no momento").',
-      err,
+      toSafeLogError(err),
     );
     return null;
   }
@@ -138,7 +139,7 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
     if (profileError || !profile) {
       console.error(
         'getCurrentUser: authenticated user has no readable profiles row — treating as unauthenticated.',
-        profileError,
+        toSafeLogError(profileError),
       );
       return null;
     }
@@ -154,7 +155,7 @@ export const getCurrentUser = cache(async (): Promise<AuthenticatedUser | null> 
     if (isNextControlFlowError(err)) {
       throw err;
     }
-    console.error('getCurrentUser: unexpected exception reading the current session.', err);
+    console.error('getCurrentUser: unexpected exception reading the current session.', toSafeLogError(err));
     return null;
   }
 });

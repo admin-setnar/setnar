@@ -251,7 +251,7 @@ Verified against the working tree based on commit `23290c4`, including Sprint E/
 | Commercial Page | 8.6 | One per (Representative × Product); resolves by subdomain |
 | QR Code | 8.7 | Rendered client-side from the resolved address; not persisted |
 | Visitor | 8.8 | As anonymous events only |
-| Lead | 8.12 | **Capture only.** No Pipeline Status, no working surface |
+| Lead | 8.12 | Capture plus a minimal owner-only, read-only contact inbox. No Pipeline Status, Activity, notes or mutation |
 | Subscription | 8.14 | Record exists; enforced on publication, public read and representative-facing availability state through the same rule; **activated manually** |
 | Metric Aggregate | 8.9 | Basic read path: visits, WhatsApp clicks and leads, counted per Product over a 7/30-day window, shown to the representative in `/app/paginas` (SET-37/ADR-082, `docs/plans/QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer/device/city, no conversion rate** — that is Advanced Analytics, Stage 2 |
 
@@ -273,7 +273,7 @@ Decided, tracked in a plan, not yet built.
 | Pipeline Status, Conversion | 3, 14.2 | Conceptual |
 | Role, Permission | 8.15, 8.16 | Conceptual — authorization today is table-level isolation, not a role model |
 | Marketing Enablement Context | 7.7 | Conceptual |
-| Sales Operations Context (CRM) | 7.8 | Conceptual |
+| Sales Operations Context (CRM) | 7.8 | Lead capture and read-only contact delivery exist; lifecycle, Pipeline Status, Activity and CRM behavior remain Conceptual |
 | AI Assistance Context | 7.9 | Conceptual |
 | Administration Context | 7.11 | Conceptual |
 | Multi-organization operations, White Label | 18 | Conceptual |
@@ -339,7 +339,7 @@ Generic Domains solve problems that are not unique to SETNAR's business and coul
 
 Each Bounded Context corresponds to a business capability area and maps directly to a System Module named in ARCHITECTURE.md, keeping the same name so architecture and domain vocabulary never diverge.
 
-> **Status (§ 3.1).** Twelve contexts are described; **four exist as code modules today** (Identity & Access, Company/Representative management, Commercial Presence, Compliance), three exist partially (Analytics as collection, Billing as a record, Catalog Management as seeded data), and five are Conceptual (Marketing Enablement, Sales Operations, AI Assistance, Administration, and the enterprise portion of Company Management). A context described here is a boundary reserved in the vocabulary, not a module to create.
+> **Status (§ 3.1).** Twelve contexts are described; **four exist as code modules today** (Identity & Access, Company/Representative management, Commercial Presence, Compliance), four exist partially (Analytics, Billing, Catalog Management, and Sales Operations only as Lead capture plus read-only delivery), and four are Conceptual (Marketing Enablement, AI Assistance, Administration, and the enterprise portion of Company Management). A context described here is a boundary reserved in the vocabulary, not a module to create.
 
 ## 7.1 Identity & Access Context
 **Purpose:** Know who is acting and what they are permitted to do.
@@ -453,7 +453,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Behaviors:** Register, update Branding, suspend/reactivate, invite a Representative.
 **Invariants:** A Company must have at least one piece of identifying Branding before it can authorize any Representative. A Company cannot be deleted while it has Representatives with published Commercial Pages.
 **Creation rules:** A Company is created independently of any Representative — it must exist before the first Representative can be affiliated with it.
-**Deletion rules:** Deletion (deactivation) cascades to unpublishing all Commercial Pages under it, but does not delete historical Analytics or Lead data (audit/history is preserved).
+**Deletion rules:** Deletion (deactivation) cascades to unpublishing all Commercial Pages under it, but does not delete historical Analytics or Lead data (audit/history is preserved) — independent of the time-based retention window in `docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`, which still applies regardless of Company/Representative status.
 **Example:** iGreen Energy.
 **Future evolution:** In Stage 5 (Enterprise), Company gains White Label configuration and multi-User administrative structures without changing its core identity or relationships.
 
@@ -468,7 +468,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Behaviors:** Complete/update Profile, activate/deactivate a Product, publish/unpublish a Commercial Page, create a Campaign, update a Lead's Pipeline Status.
 **Invariants:** A Representative cannot exist without a Company. A Representative cannot activate a Product that does not belong to their Company's Catalog.
 **Creation rules:** Created through a self-service registration flow scoped to a specific Company (per PRODUCT.md's "self-service and automatic activation").
-**Deletion rules:** Deactivating a Representative unpublishes their Commercial Pages but preserves their historical Leads and Analytics for the Company's record-keeping. Independent of that retention, the Representative retains the right to export their own historical Leads, Analytics, and Commercial Page content in a portable form — per PRODUCT_CONSTITUTION.md Core Belief 3 ("a professional who leaves must be able to take their history and credibility with them").
+**Deletion rules:** Deactivating a Representative unpublishes their Commercial Pages but preserves their historical Leads and Analytics for the Company's record-keeping — subject to the same time-based retention window as any other Representative's (`docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`), not an indefinite promise. Independent of that retention, the Representative retains the right to export their own historical Leads, Analytics, and Commercial Page content in a portable form — per PRODUCT_CONSTITUTION.md Core Belief 3 ("a professional who leaves must be able to take their history and credibility with them").
 **Example:** A licensed iGreen representative.
 **Future evolution:** In Stage 5, a Representative may be assigned a Role beyond the default (e.g., Team Manager), without changing the entity's core shape.
 
@@ -785,7 +785,7 @@ Domain Services represent business processes that do not belong naturally to a s
 | **LeadLost** | A Lead's Pipeline Status becomes "Lost" | Represents a closed, unsuccessful opportunity | Ends active tracking of that Lead | Sales Operations |
 | **SubscriptionActivated** | A Representative's (or Company's) payment is confirmed | Grants/restores platform capability | Allows Commercial Page publication | Billing, Commercial Presence |
 | **SubscriptionSuspended** | Payment lapses | Restricts platform capability without deleting data | Triggers Subscription Enforcement Service to unpublish Pages | Billing, Commercial Presence |
-| **SubscriptionCanceled** | The customer or SETNAR ends the Subscription | Terminates the commercial relationship | Unpublishes Pages; data retained per retention policy | Billing |
+| **SubscriptionCanceled** | The customer or SETNAR ends the Subscription | Terminates the commercial relationship | Unpublishes Pages; data retained per retention policy (`docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`: kept for the account's lifecycle) | Billing |
 | **RoleAssigned** | A Company administrator assigns a Role to a User | Grants a bundle of Permissions | Changes what Actions the User may perform within the Company | Identity & Access, Administration |
 | **ContentSuggested** *(Stage 4)* | The AI Assistance Context produces a suggestion | Reduces content-authoring effort | Awaits Representative/Company approval before affecting any live entity | AI Assistance |
 
@@ -973,7 +973,7 @@ Billing Context             Subscription Enforcement       Commercial Presence
 | Representative — Campaign | 1 to many | Representative-driven marketing initiatives | Representative owns | Campaign cannot outlive its Representative |
 | Campaign — Commercial Page | many to 1 | Campaigns funnel traffic to a Page | Reference only | Campaign becomes invalid if its target Page is deleted (not merely unpublished) |
 | Company — Material | 1 to many | Company-approved marketing assets | Company owns | Material usage by Representatives is read-only reference |
-| Representative — Lead | 1 to many | Prospects generated through the Representative's presence | Representative owns | Lead cannot outlive its Representative (history retained per retention policy) |
+| Representative — Lead | 1 to many | Prospects generated through the Representative's presence | Representative owns | Lead cannot outlive its Representative (history retained per retention policy — `docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`: 24 months from last update, independent of the Representative's own status) |
 | Lead — Activity | 1 to many | Working history of a prospect | Lead owns | Activity cannot outlive its Lead |
 | Representative/Company — Subscription | 1 to 1 (active at a time) | The paying relationship with SETNAR | Representative/Company owns | Commercial Page publication depends on this Status |
 | Company — Role | 1 to many | Company-defined authorization levels | Company owns | Role cannot outlive its Company |

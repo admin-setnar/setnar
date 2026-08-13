@@ -1,5 +1,6 @@
 import type { RegisterRepresentativeResult } from '@/modules/representatives/domain/representative-onboarding-gateway';
 import { isNextControlFlowError } from '@/shared/lib/next-control-flow-error';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 
 /**
  * Wraps the onboarding Server Action's body so an unexpected exception —
@@ -49,7 +50,7 @@ export async function safeOnboardingCall<T extends RegisterRepresentativeResult>
     if (isNextControlFlowError(error)) {
       throw error;
     }
-    console.error('safeOnboardingCall: unexpected exception in an onboarding Server Action', error);
+    console.error('safeOnboardingCall: unexpected exception in an onboarding Server Action', toSafeLogError(error));
     return { status: 'error' };
   }
 }

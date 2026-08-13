@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import type { LeadGateway, SubmitLeadInput, SubmitLeadResult } from '@/modules/leads/domain/lead-gateway';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 
 /**
  * Same `sha256(salt:value)` scheme as `login-rate-limiter.ts`'s `hash()`,
@@ -60,7 +61,7 @@ export class SupabaseLeadGateway implements LeadGateway {
     });
 
     if (error) {
-      console.error('submit_lead RPC failed', error);
+      console.error('submit_lead RPC failed', toSafeLogError(error));
       return 'error';
     }
     return data === true ? 'submitted' : 'rejected';

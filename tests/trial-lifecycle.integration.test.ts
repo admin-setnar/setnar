@@ -173,16 +173,15 @@ describe('trial lifecycle, end to end (SET-67, Postgres integration)', { skip: !
   });
 
   it('linhas de trial nunca contam para as 30 vagas fundadoras', async () => {
-    const countAutomated = async () => {
-      const { count } = await service!
-        .from('subscriptions')
-        .select('id', { count: 'exact', head: true })
-        .not('provider', 'in', '(manual,trial)');
-      return count ?? 0;
-    };
-
-    const before_ = await countAutomated();
-
+    // SET-75: um count antes/depois na tabela inteira competia com qualquer
+    // outra suíte (billing/webhook) criando ou convertendo uma subscription
+    // `active`/`asaas` no mesmo intervalo, rodando em paralelo contra o
+    // mesmo Supabase compartilhado (sem banco descartável por execução) —
+    // achado real em `npm run verify`, 2/2 falhas, sempre verde isolado.
+    // Escopar a contagem aos três `representative_id` que este teste acabou
+    // de criar remove a corrida por construção: nenhuma outra suíte pode
+    // tocar essas linhas específicas, então o resultado nunca depende de
+    // agendamento entre arquivos.
     const trialFixtures = await Promise.all([
       registerFreshRepresentative('Teste Vaga Trial A'),
       registerFreshRepresentative('Teste Vaga Trial B'),
@@ -190,8 +189,13 @@ describe('trial lifecycle, end to end (SET-67, Postgres integration)', { skip: !
     ]);
     assert.equal(trialFixtures.length, 3);
 
-    const after_ = await countAutomated();
-    assert.equal(after_, before_, 'três novos trials não podem mudar a contagem de vagas automatizadas');
+    const repIds = trialFixtures.map((fixture) => fixture.representativeId);
+    const { count } = await service!
+      .from('subscriptions')
+      .select('id', { count: 'exact', head: true })
+      .in('representative_id', repIds)
+      .not('provider', 'in', '(manual,trial)');
+    assert.equal(count ?? 0, 0, 'nenhuma das três linhas de trial recém-criadas conta como vaga automatizada/fundadora');
   });
 
   it('register_representative() chamado de novo pelo mesmo usuário não concede um segundo trial nem estende o atual', async () => {

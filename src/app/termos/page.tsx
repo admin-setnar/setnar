@@ -6,7 +6,6 @@ import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
 import { Container } from '@/shared/layout/container';
 import { Footer } from '@/shared/layout/footer';
 import { Navbar } from '@/shared/layout/navbar';
-import { FormAlert } from '@/shared/ui/form-alert';
 import { Text } from '@/shared/ui/typography';
 
 export const metadata: Metadata = { title: 'Termos de uso' };
@@ -14,10 +13,10 @@ export const metadata: Metadata = { title: 'Termos de uso' };
 /**
  * Terms of use.
  *
- * A draft written to be accurate about what the product actually does today
- * — no aspirational claims about features that do not exist yet. It is not a
- * substitute for legal review before real, public sign-up opens (see the
- * notice on the page and README, A6).
+ * Written to be accurate about what the product actually does today — no
+ * aspirational claims about features that do not exist yet. Published as the
+ * MVP/pilot version approved without formal legal counsel (SET-45); a formal
+ * review is tracked separately for before commercial scale-up (SET-74).
  */
 export default async function TermsPage() {
   const tenant = await resolveTenant((await headers()).get('host'));
@@ -36,13 +35,10 @@ export default async function TermsPage() {
           <Text as="p" variant="caption" className="mt-2">
             {version ? `Versão ${version}` : 'Versão indisponível no momento'}
           </Text>
-
-          <FormAlert
-            tone="error"
-            title="Rascunho pendente de revisão jurídica"
-            description="Este texto foi redigido para descrever com precisão o que o produto faz hoje. Antes de abrir o cadastro ao público, ele precisa passar por revisão jurídica formal."
-            className="mt-6"
-          />
+          <Text as="p" variant="caption" className="mt-1">
+            Documento válido para a fase piloto do {brand.name}, redigido para descrever com
+            precisão o que o produto faz hoje.
+          </Text>
 
           <div className="mt-8 space-y-8">
             <section>

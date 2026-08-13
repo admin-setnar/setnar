@@ -252,21 +252,17 @@ Because the first market is a single organization, the boundary has to be writte
 
 ## Brand authorization — current status
 
-**SETNAR has no formal authorization from iGreen to use the iGreen brand or visual identity publicly.** This is the status as of 2026-08-05 and it must not be softened anywhere.
+**The Product Owner confirmed on 2026-08-13 that the authorization to use the iGreen brand in the seven SETNAR Commercial Pages, and the review of their commercial claims, were validated.** This authorization is scoped to the controlled, platform-generated pages covered by SET-78; it does not turn SETNAR into an official iGreen channel and does not authorize representatives to create or alter advertising material freely.
 
 The distinction that matters, and that has already been blurred once:
 
 | What exists | What it is | What it is **not** |
 |---|---|---|
-| `templates/commercial-pages/` — seven reference pages with iGreen branding | **Reference material**, received as input | Not a licence to publish |
-| Compliance-reviewed copy ported into the product (ADR-055) | Wording aligned with the organization's own requirements | Not blanket brand authorization |
-| iGreen brand tokens in the code (ADR-057) | **An internal, unapproved prototype**, built deliberately as a presentation piece to *request* authorization | Not approved, not cleared to publish |
+| `templates/commercial-pages/` — seven reference pages with iGreen branding | Approved content/UX reference for SET-78 | Not permission to serve or import the static files |
+| Compliance-reviewed copy ported into the product (ADR-055) | Wording aligned with the organization's requirements | Not permission for representatives to edit claims |
+| iGreen brand tokens in the code (ADR-057) | Approved theme mechanism for the controlled Commercial Pages | Not a white-label or official iGreen channel |
 
-**Reference material is not authorization.** Possessing an organization's assets, and even having their compliance wording, says nothing about the right to reproduce their visual identity on software-generated pages under SETNAR's own domain.
-
-iGreen's brand usage policy expressly prohibits licensees from creating advertising material using the iGreen brand. Whether a platform-generated commercial page falls inside or outside that prohibition is a question **only iGreen can answer**, and it has not been asked and answered formally.
-
-Until it is: the prototype must not be published, and no public surface may imply the association is sanctioned. Tracked as CP1 in `docs/plans/COMMERCIAL_PAGE_CONTENT_PLAN.md` § 3.3 — the single most consequential open item in this documentation set.
+The distinction remains mandatory: the validated scope covers pages generated and governed by SETNAR, with fixed compliance, representative identification and SETNAR authorship. It is not blanket permission to reproduce assets elsewhere, remove the “not an official channel” notice, or let representatives alter approved claims.
 
 ---
 
@@ -369,15 +365,15 @@ The single authoritative answer to "what does the product do?" Three categories 
 - Account creation, sign-in, sign-out, and password recovery (request link and set a new password).
 - Representative onboarding: creating the representative's own record, with public name prefilled from the account, mandatory commercial phone, authorization identifier and public address (slug).
 - Editing own profile: display name, authorization identifier, phone, city. **These four fields are the whole of it.**
-- Authenticated App Shell with `/app/paginas` for page management, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance or Materials destination exists.
+- Authenticated App Shell with `/app/paginas` for page management, `/app/contatos` for the read-only inbox of captured contacts, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance or Materials destination exists.
 - Reading the products of the authorizing organization's catalog. The catalog is seeded by migration; there is no interface to manage it.
 - Product activation and deactivation by the representative.
 - Publication of a commercial page per activated product, subject to four ordered preconditions: active representative, active SETNAR Subscription, name filled in, phone filled in. Only the first failure is reported.
-- Public commercial page containing: authorized-representative identification (name, authorization identifier, city, phone), per-product compliance notice, WhatsApp CTA, and a lead capture form. **No representative photo, and no free-text description** — neither exists in the product.
-- Per-product explanatory content on **one** of the seven products (Conexão Club). The other six render without it.
+- Seven professional public Commercial Pages, one per seeded Product, with shared shell, authorized-representative identification, per-product content and compliance, WhatsApp CTA, FAQ, product-specific widget and the common lead form. **No representative photo, and no free-text description** — neither exists in the product.
 - QR Code rendered in the browser from the page's public address, with **download**, **copy link**, manual-copy fallback and retry after a generation error. There is **no persisted QR Code** and no content-level regeneration.
 - Public address by subdomain, one page per (representative × product). There is no public hub page listing a representative's products.
 - Lead capture, with an IP rate limit and attribution to the originating page.
+- Read-only contact inbox in `/app/contatos`, owner-scoped by RLS, with Product/date attribution and user-initiated WhatsApp/e-mail actions. There is no status, note, edit, assignment, search or automation.
 - Recording of page visits and WhatsApp clicks, with referrer and a hashed IP.
 - Basic analytics shown to the representative in `/app/paginas`: visits, WhatsApp clicks and leads, counted per Product over a 7- or 30-day window (SET-37/ADR-082, `QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer, device or city, and no conversion rate** — that remains Advanced Analytics, Future vision.
 - Subscription checked through the same `is_subscription_active` rule both when a Commercial Page is published and when it is served.
@@ -391,7 +387,6 @@ Decided or under way, **not yet usable**:
 
 - Manual Subscription activation/reactivation (`SPRINT_E_PLAN.md`, E3).
 - Analytics event retention/purge (AN7).
-- Richer per-product page content beyond the single proof of concept (`COMMERCIAL_PAGE_CONTENT_PLAN.md`, CP4–CP8).
 
 ### Future vision
 
@@ -475,7 +470,7 @@ permanently, independent of when it ships.
 **Sales** — turning generated interest into a tracked opportunity.
 
 - CRM — *future vision*
-- Lead Management — *future vision* (leads are **captured** today; there is no interface to work them)
+- Lead Management — *future vision* (leads are captured and their contact data is available in a minimal read-only inbox; lifecycle/status/notes and other CRM work do not exist)
 - Sales Pipeline — *future vision*
 
 **Artificial Intelligence** — reducing the representative's manual effort. Per PRODUCT_CONSTITUTION.md Core Belief 4, it may only ever assist the professional, never speak or decide as them.

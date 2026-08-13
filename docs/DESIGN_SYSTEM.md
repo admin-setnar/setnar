@@ -607,7 +607,7 @@ The authenticated surface, where a representative works.
 - Motion is restricted to microinteractions and component transitions.
 - Nothing is sold here. The representative has already decided; this surface helps them execute.
 - Empty states explain what happened, why, and what to do next — this surface is where a new representative is most likely to be lost.
-- The Stage 1 App Shell exposes only **Pages** and **Account**. Desktop uses a compact sidebar; mobile uses an always-visible labeled header navigation. Both carry visible focus and `aria-current`; links to unimplemented capabilities are prohibited.
+- The Stage 1 App Shell exposes only **Pages**, **Contacts** and **Account**. Contacts is the read-only inbox for interest already captured by the representative's pages — not a CRM. Desktop uses a compact sidebar; mobile uses an always-visible labeled header navigation. Both carry visible focus and `aria-current`; links to unimplemented capabilities are prohibited.
 
 ---
 

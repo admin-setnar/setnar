@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { after, before, describe, it, type TestContext } from 'node:test';
+import { after, before, describe, it } from 'node:test';
 
 import { createClient, type PostgrestError, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -18,35 +18,13 @@ const canRunPrivileged = Boolean(SUPABASE_URL && SUPABASE_KEY && SERVICE_ROLE_KE
 const skipReason =
   'Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY and SUPABASE_SERVICE_ROLE_KEY, with all migrations applied, to run this suite.';
 
-function freshIpHash(label: string): string {
-  return `lead-submission-test-${label}-${randomUUID()}`;
-}
-
 type ValidPair = { representativeId: string; productId: string };
+const generatedIpHashes = new Set<string>();
 
-/**
- * `submit_lead` only ever inserts into `leads` for a (representative_id,
- * product_id) pair with a published activation on an active representative
- * — and tests must not invent fixture IDs. Instead of hardcoding IDs from whichever project
- * happens to be configured — fragile across environments, and silently wrong
- * the moment that specific row is ever deleted — this discovers a real pair
- * at run time through the privileged disposable-test client. Tests that need real inserts
- * skip themselves (not fail) when no such pair exists in the configured
- * project, the same "don't fail CI on missing environment" posture `canRun`
- * already uses one level up.
- */
-async function findPublishedActivation(supabase: SupabaseClient): Promise<ValidPair | null> {
-  const { data: activations } = await supabase
-    .from('product_activations')
-    .select('representative_id, product_id, representative:representatives!inner(status)')
-    .eq('status', 'published')
-    .eq('representative.status', 'active')
-    .limit(1);
-  const representativeId = activations?.[0]?.representative_id as string | undefined;
-  const productId = activations?.[0]?.product_id as string | undefined;
-  if (!representativeId || !productId) return null;
-
-  return { representativeId, productId };
+function freshIpHash(label: string): string {
+  const ipHash = `lead-submission-test-${label}-${randomUUID()}`;
+  generatedIpHashes.add(ipHash);
+  return ipHash;
 }
 
 const anon = canRunPublic ? createClient(SUPABASE_URL!, SUPABASE_KEY!) : null;
@@ -55,28 +33,11 @@ const service = canRunPrivileged
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     })
   : null;
-const pairSkipReason =
-  'No published (representative, product) pair found in the configured Supabase project — ' +
-  'create one in the disposable test database (see supabase/README.md) to run the positive-path cases.';
-
-/**
- * Looked up lazily (not at module load) and cached — `node:test`'s file
- * loader (via `tsx`) does not support top-level `await`, and a `describe()`
- * `skip` option is evaluated synchronously when `describe()` runs, before
- * any `before()` hook would resolve — so this cannot be a nested describe's
- * static `skip` either. Each test that needs a real pair awaits this and
- * calls `t.skip()` itself when none exists.
- */
-let pairLookup: Promise<ValidPair | null> | null = null;
-async function requirePair(t: TestContext): Promise<ValidPair | null> {
-  if (!service) return null;
-  pairLookup ??= findPublishedActivation(service);
-  const pair = await pairLookup;
-  if (!pair) {
-    t.skip(pairSkipReason);
-  }
-  return pair;
-}
+let fixtureUserId = '';
+let fixtureRepresentativeId = '';
+let fixtureActivationId = '';
+let fixtureSubscriptionId = '';
+let fixturePair: ValidPair | null = null;
 
 /**
  * Explicit return type, deliberately — destructuring `supabase!.rpc(...)`
@@ -158,6 +119,128 @@ describe('submit_lead authenticated denial (Postgres, integration)', { skip: !ca
 });
 
 describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !canRunPrivileged && skipReason }, () => {
+  before(async () => {
+    const { data: product, error: productError } = await service!
+      .from('products')
+      .select('id, company_id')
+      .limit(1)
+      .single();
+    assert.equal(productError, null);
+
+    const { data: userData, error: userError } = await service!.auth.admin.createUser({
+      email: `lead-submission-fixture-${randomUUID()}@example.invalid`,
+      password: `T3st-${randomUUID()}-Aa`,
+      email_confirm: true,
+    });
+    assert.equal(userError, null);
+    fixtureUserId = userData.user!.id;
+
+    const { data: representative, error: representativeError } = await service!
+      .from('representatives')
+      .insert({
+        profile_id: fixtureUserId,
+        company_id: product!.company_id,
+        slug: `lead-submission-fixture-${randomUUID()}`,
+        display_name: 'Fixture Lead Submission',
+        authorization_id: `test-${randomUUID()}`,
+        phone: '+5511988887777',
+        status: 'active',
+      })
+      .select('id')
+      .single();
+    assert.equal(representativeError, null);
+    fixtureRepresentativeId = representative!.id;
+
+    const { data: subscription, error: subscriptionError } = await service!
+      .from('subscriptions')
+      .insert({ representative_id: fixtureRepresentativeId, status: 'active', provider: 'test' })
+      .select('id')
+      .single();
+    assert.equal(subscriptionError, null);
+    fixtureSubscriptionId = subscription!.id;
+
+    const { data: activation, error: activationError } = await service!
+      .from('product_activations')
+      .insert({
+        representative_id: fixtureRepresentativeId,
+        product_id: product!.id,
+        status: 'published',
+        published_at: new Date().toISOString(),
+      })
+      .select('id')
+      .single();
+    assert.equal(activationError, null);
+    fixtureActivationId = activation!.id;
+    fixturePair = { representativeId: fixtureRepresentativeId, productId: product!.id };
+  });
+
+  after(async () => {
+    const cleanupErrors: string[] = [];
+    const recordError = (label: string, error: { message: string } | null) => {
+      if (error) cleanupErrors.push(`${label}: ${error.message}`);
+    };
+
+    if (fixtureRepresentativeId) {
+      recordError(
+        'leads',
+        (await service!.from('leads').delete().eq('representative_id', fixtureRepresentativeId)).error,
+      );
+    }
+    if (generatedIpHashes.size) {
+      recordError(
+        'lead submission attempts',
+        (await service!.from('lead_submission_attempts').delete().in('ip_hash', [...generatedIpHashes])).error,
+      );
+    }
+    if (fixtureActivationId) {
+      recordError(
+        'product activation',
+        (await service!.from('product_activations').delete().eq('id', fixtureActivationId)).error,
+      );
+    }
+    if (fixtureSubscriptionId) {
+      recordError(
+        'subscription',
+        (await service!.from('subscriptions').delete().eq('id', fixtureSubscriptionId)).error,
+      );
+    }
+    if (fixtureRepresentativeId) {
+      recordError(
+        'representative',
+        (await service!.from('representatives').delete().eq('id', fixtureRepresentativeId)).error,
+      );
+    }
+    if (fixtureUserId) {
+      recordError('auth user', (await service!.auth.admin.deleteUser(fixtureUserId)).error);
+    }
+
+    if (fixtureRepresentativeId) {
+      const { count: remainingLeads, error: remainingLeadsError } = await service!
+        .from('leads')
+        .select('id', { count: 'exact', head: true })
+        .eq('representative_id', fixtureRepresentativeId);
+      recordError('lead cleanup verification', remainingLeadsError);
+      assert.equal(remainingLeads, 0, 'the fixture representative must retain no leads');
+
+      const { count: remainingRepresentative, error: remainingRepresentativeError } = await service!
+        .from('representatives')
+        .select('id', { count: 'exact', head: true })
+        .eq('id', fixtureRepresentativeId);
+      recordError('representative cleanup verification', remainingRepresentativeError);
+      assert.equal(remainingRepresentative, 0, 'the fixture representative must be removed');
+    }
+    if (generatedIpHashes.size) {
+      const { count: remainingAttempts, error: remainingAttemptsError } = await service!
+        .from('lead_submission_attempts')
+        .select('id', { count: 'exact', head: true })
+        .in('ip_hash', [...generatedIpHashes]);
+      recordError('attempt cleanup verification', remainingAttemptsError);
+      assert.equal(remainingAttempts, 0, 'the generated rate-limit buckets must be removed');
+    }
+
+    assert.deepEqual(cleanupErrors, [], 'the disposable lead fixture must be fully removed');
+  });
+
   it('rejects the pre-fix call shape outright: p_max_attempts_ip / p_window_seconds no longer exist', async () => {
     const { error } = await submitLead(service!, {
       p_representative_id: randomUUID(),
@@ -194,9 +277,8 @@ describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !can
     assert.equal(data, false);
   });
 
-  it('enforces the fixed 5-per-hour limit and cannot be raised by the caller: the 6th call from one origin is rejected', async (t) => {
-    const pair = await requirePair(t);
-    if (!pair) return;
+  it('enforces the fixed 5-per-hour limit and cannot be raised by the caller: the 6th call from one origin is rejected', async () => {
+    const pair = fixturePair!;
 
     const ipHash = freshIpHash('rate-limit');
     const results: boolean[] = [];
@@ -225,9 +307,8 @@ describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !can
     );
   });
 
-  it('serializes concurrent calls so at most 5 submissions enter one bucket', async (t) => {
-    const pair = await requirePair(t);
-    if (!pair) return;
+  it('serializes concurrent calls so at most 5 submissions enter one bucket', async () => {
+    const pair = fixturePair!;
 
     const ipHash = freshIpHash('concurrent-rate-limit');
     const results = await Promise.all(
@@ -249,9 +330,8 @@ describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !can
     assert.equal(results.filter((result) => result.data === false).length, 5);
   });
 
-  it('a fresh origin is unaffected by another origin already at its limit', async (t) => {
-    const pair = await requirePair(t);
-    if (!pair) return;
+  it('a fresh origin is unaffected by another origin already at its limit', async () => {
+    const pair = fixturePair!;
 
     const exhaustedIp = freshIpHash('exhausted-origin');
     for (let i = 0; i < 5; i++) {
@@ -283,9 +363,8 @@ describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !can
     assert.equal(data, true, 'a different ip_hash must not be blocked by another origin exhausting its own limit');
   });
 
-  it('a well-formed submission is accepted (happy path)', async (t) => {
-    const pair = await requirePair(t);
-    if (!pair) return;
+  it('a well-formed submission is accepted (happy path)', async () => {
+    const pair = fixturePair!;
 
     const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,
@@ -302,9 +381,8 @@ describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !can
     assert.equal(data, true);
   });
 
-  it('rejects a malformed phone number at the SQL level, even with a valid pair (defense in depth, bypasses leadSubmissionSchema)', async (t) => {
-    const pair = await requirePair(t);
-    if (!pair) return;
+  it('rejects a malformed phone number at the SQL level, even with a valid pair (defense in depth, bypasses leadSubmissionSchema)', async () => {
+    const pair = fixturePair!;
 
     const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,
@@ -321,9 +399,8 @@ describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !can
     assert.equal(data, false);
   });
 
-  it('rejects a malformed email at the SQL level, even with a valid pair', async (t) => {
-    const pair = await requirePair(t);
-    if (!pair) return;
+  it('rejects a malformed email at the SQL level, even with a valid pair', async () => {
+    const pair = fixturePair!;
 
     const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,
@@ -340,9 +417,8 @@ describe('submit_lead trusted backend RPC (Postgres, integration)', { skip: !can
     assert.equal(data, false);
   });
 
-  it('rejects an oversized name at the SQL level, even with a valid pair', async (t) => {
-    const pair = await requirePair(t);
-    if (!pair) return;
+  it('rejects an oversized name at the SQL level, even with a valid pair', async () => {
+    const pair = fixturePair!;
 
     const { data, error } = await submitLead(service!, {
       p_representative_id: pair.representativeId,

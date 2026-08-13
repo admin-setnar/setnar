@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { safeRedirectTarget } from '@/modules/auth/presentation/safe-redirect-target';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 import { createClient } from '@/shared/lib/supabase/server';
 
 /**
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
     }
     console.error(
       'GET /auth/callback: verifyOtp(recovery) failed — link expired, already used, or invalid.',
-      error,
+      toSafeLogError(error),
     );
   } else if (code) {
     // Legacy PKCE path (kept as fallback — see ADR-081): still needed for
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
     console.error(
       'GET /auth/callback: exchangeCodeForSession failed — link expired, already used, or invalid.',
-      error,
+      toSafeLogError(error),
     );
   }
 

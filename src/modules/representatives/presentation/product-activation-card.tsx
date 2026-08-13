@@ -129,12 +129,20 @@ export function ProductActivationCard({
 
       {errorCopy ? <FormAlert tone="error" {...errorCopy} /> : null}
       {viewState.subscriptionBlocked ? (
-        <FormAlert
-          id={`subscription-blocker-${product.id}`}
-          tone="error"
-          title="Regularize sua assinatura SETNAR"
-          description="Ative ou regularize sua assinatura para disponibilizar esta página ao público."
-        />
+        <div className="space-y-2">
+          <FormAlert
+            id={`subscription-blocker-${product.id}`}
+            tone="error"
+            title="Regularize sua assinatura SETNAR"
+            description="Ative ou regularize sua assinatura para disponibilizar esta página ao público."
+          />
+          {/* SET-58: o alerta acima já explica o motivo — falta o caminho
+              direto para agir. Sem isso, o representante precisa saber por
+              conta própria que a assinatura mora em /app/conta. */}
+          <Button asChild size="sm" variant="secondary">
+            <Link href="/app/conta">Regularizar assinatura</Link>
+          </Button>
+        </div>
       ) : null}
 
       <div className="flex gap-2">

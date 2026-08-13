@@ -24,7 +24,7 @@
 > | AN2/AN4 — funções de escrita | **Implementado e consolidado** | ADR-051/052/065, `20260811000000` + `20260817000000` |
 > | AN3/AN5 — chamadas do app | **Implementado com fronteira backend confiável** | ADR-053/054/065 |
 > | AN6 — exibir estatísticas no hub | **Não implementado** | não há caminho de leitura: `AnalyticsGateway` só expõe escrita |
-> | AN7 — retenção/purga dos eventos | **Não implementado** | levantado, não bloqueante |
+> | AN7 — retenção/purga dos eventos | **Implementado e no ar** (12 meses, decidido em SET-46) | ADR-086, `20260904000000_add_retention_purge_job.sql` — via `pg_cron`, job `purge-expired-retention-data` confirmado agendado e `active` |
 >
 > **Consequência que precisa estar clara para qualquer leitor, humano ou IA:**
 > o produto **registra** visitas e cliques, mas **não os mostra a ninguém**.
@@ -518,14 +518,14 @@ paralelo com AN2–AN5, já que só lê.*
 - Renderiza no `ProductActivationCard` ou numa seção própria, conforme §3.7.
 - Sem componente novo de design system.
 
-## AN7 — (levantado, não bloqueante) Retenção/purga dos eventos
+## AN7 — **Decidido e implementado** — Retenção/purga dos eventos
 
-- Uma tabela de eventos crescendo sem limite eventualmente precisa de uma
-  política de purga/retenção — mesma forma da purga de 1 dia já existente
-  em `lead_submission_attempts`/`login_attempts`, mas aqui a tabela é o dado
-  reportável em si, não um artefato de rate-limit, então a janela deve ser
-  bem maior (dias/semanas, não horas). Não decidir agora; registrar para não
-  esquecer antes do Stage 2.
+- Decisão (SET-46, `docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`): 12 meses
+  desde `created_at`, depois apagado. Implementado (SET-73, ADR-086) via
+  `pg_cron` — diferente da purga oportunista de `lead_submission_attempts`/
+  `login_attempts` (escopada à própria chave de rate-limit, dentro do
+  request), porque aqui a varredura é sobre a tabela inteira, sem chave por
+  request; ver ADR-086 para o porquê de não usar o mesmo padrão.
 
 ---
 
@@ -540,7 +540,7 @@ paralelo com AN2–AN5, já que só lê.*
 | AN4 — `record_whatsapp_click` | AN1 | sim (função) | §3.6 |
 | AN5 — wiring do clique | AN4 | sim (app + rota) | §3.3 |
 | AN6 — UI de estatísticas no hub | AN1 | não (só leitura) | §3.7 |
-| AN7 — retenção/purga | AN1 | eventualmente | não bloqueante, só registrado |
+| AN7 — retenção/purga | AN1 | sim (migration + `pg_cron`) | ADR-086, SET-73 |
 
 ---
 
@@ -561,8 +561,8 @@ paralelo com AN2–AN5, já que só lê.*
 **Por último, dependem das funções:**
 - **AN3** (depende de AN2), **AN5** (depende de AN4 e da decisão §3.3).
 
-**Registrado, não agendado:**
-- **AN7** — retenção/purga, revisitar antes do Stage 2.
+**Implementado:**
+- **AN7** — retenção/purga, ver ADR-086 (SET-73).
 
 Cada passo: `npm run verify`, ADR novo em `docs/adr/` (a partir de ADR-049),
 entrada nova na lista numerada do `supabase/README.md` (a partir do passo

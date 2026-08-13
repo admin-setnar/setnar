@@ -34,7 +34,17 @@ type SubmitState = 'idle' | 'success' | 'error';
  * equivalent to the real page while making it structurally impossible to
  * trigger that confusing failure.
  */
-export function LeadForm({ productSlug, disabled = false }: { productSlug: string; disabled?: boolean }) {
+export function LeadForm({
+  productSlug,
+  disabled = false,
+  submitLabel = 'Quero saber mais',
+  successDescription = 'Em breve alguém entra em contato.',
+}: {
+  productSlug: string;
+  disabled?: boolean;
+  submitLabel?: string;
+  successDescription?: string;
+}) {
   const [submitState, setSubmitState] = useState<SubmitState>('idle');
 
   const {
@@ -83,7 +93,7 @@ export function LeadForm({ productSlug, disabled = false }: { productSlug: strin
       <FormAlert
         tone="success"
         title="Recebemos seus dados"
-        description="Em breve alguém entra em contato."
+        description={successDescription}
       />
     );
   }
@@ -172,8 +182,8 @@ export function LeadForm({ productSlug, disabled = false }: { productSlug: strin
         )}
       </FormField>
 
-      <Button type="submit" size="lg" fullWidth loading={isSubmitting} disabled={disabled}>
-        Quero saber mais
+      <Button type="submit" size="lg" fullWidth loading={isSubmitting} disabled={disabled} className="commercial-heading-font rounded-full font-bold shadow-[0_8px_24px_rgba(20,67,43,0.14)] hover:-translate-y-0.5">
+        {submitLabel}
       </Button>
       {disabled ? (
         <p className="text-center text-xs text-content-subtle">

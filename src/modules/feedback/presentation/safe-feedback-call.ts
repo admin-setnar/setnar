@@ -1,4 +1,5 @@
 import { isNextControlFlowError } from '@/shared/lib/next-control-flow-error';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 
 /**
  * Wraps a feedback Server Action's body so an unexpected exception — most
@@ -20,7 +21,7 @@ export async function safeFeedbackCall<T extends { readonly status: string }>(
     if (isNextControlFlowError(error)) {
       throw error;
     }
-    console.error('safeFeedbackCall: unexpected exception in a feedback Server Action', error);
+    console.error('safeFeedbackCall: unexpected exception in a feedback Server Action', toSafeLogError(error));
     return { status: 'error' };
   }
 }

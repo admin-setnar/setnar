@@ -25,7 +25,7 @@ export function ProductContentTabs({ tabs }: { tabs: ProductContentTab[] }) {
   if (tabs.length === 0) return null;
 
   return (
-    <Card variant="outlined" padding="lg">
+    <Card variant="outlined" padding="lg" className="rounded-2xl shadow-[0_8px_24px_rgba(20,67,43,0.08)]">
       <div role="tablist" aria-label="Categorias de benefício" className="flex flex-wrap gap-2">
         {tabs.map((tab) => (
           <button

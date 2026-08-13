@@ -1,11 +1,15 @@
+// Self-hosted like the app-wide Plus Jakarta Sans (`src/app/layout.tsx`) —
+// no third-party font request — but scoped to Commercial Pages only, see
+// `commercial-page-typography.css`.
+import '@fontsource-variable/manrope';
+import '@fontsource-variable/inter';
+import '@/modules/representatives/presentation/commercial-page-typography.css';
+
 import { LeadForm } from '@/modules/leads/presentation/lead-form';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { resolveCompanyVertical } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
-import { CONEXAO_CLUB_TABS } from '@/modules/representatives/domain/product-content/conexao-club';
-import { AuthorizedRepresentativeIdentificationBlock } from '@/modules/representatives/presentation/authorized-representative-identification-block';
-import { ComplianceNotice } from '@/modules/representatives/presentation/compliance-notice';
-import { ProductContentTabs } from '@/modules/representatives/presentation/product-content-tabs';
-import { WhatsappCta } from '@/modules/representatives/presentation/whatsapp-cta';
+import { getCommercialPageTemplate } from '@/modules/representatives/domain/commercial-page-template';
+import { CommercialFooter, CommercialHeader, CommercialHero, FaqSection, FinalCta, IdentificationSection, OfferSection, StepsSection, TrustStrip } from '@/modules/representatives/presentation/commercial-page-sections';
 import { BrandTokensStyle } from '@/modules/tenancy/presentation/brand-tokens';
 import { Container } from '@/shared/layout/container';
 import { Card } from '@/shared/ui/card';
@@ -37,46 +41,42 @@ export function CommercialPageContent({
   leadFormDisabled?: boolean;
 }) {
   const companyVertical = resolveCompanyVertical(product.companySlug);
+  const template = getCommercialPageTemplate(product.slug);
+
+  if (!template) {
+    return null;
+  }
 
   return (
-    <main id="conteudo" data-vertical={companyVertical?.vertical} className="pt-16 pb-20">
+    <main id="conteudo" data-vertical={companyVertical?.vertical} className="commercial-page bg-surface text-content">
       {companyVertical ? (
         <BrandTokensStyle tokens={companyVertical.tokens} scope={companyVertical.vertical} />
       ) : null}
-      <Container width="narrow">
-        <Text variant="eyebrow">{product.name}</Text>
-        <Text as="h1" variant="heading" className="mt-2">
-          {product.name}
-        </Text>
-
-        <div className="mt-8">
-          <AuthorizedRepresentativeIdentificationBlock representative={representative} />
-        </div>
-
-        <div className="mt-6">
-          <WhatsappCta representative={representative} product={product} />
-        </div>
-
-        {product.slug === 'conexao-club' ? (
-          <div className="mt-8">
-            <ProductContentTabs tabs={CONEXAO_CLUB_TABS} />
+      <CommercialHeader representative={representative} product={product} />
+      <CommercialHero template={template} representative={representative} product={product} />
+      <TrustStrip points={template.trustPoints} />
+      <IdentificationSection representative={representative} product={product} />
+      <section id="quero-simular" className="border-y border-line bg-brand-subtle py-14 sm:py-20">
+        <Container className="max-w-[920px]"><Card variant="outlined" padding="lg" className="grid items-center gap-8 rounded-2xl shadow-[0_8px_24px_rgba(20,67,43,0.08)] md:grid-cols-[.85fr_1.15fr] md:p-10">
+          <div>
+            <Text variant="eyebrow" className="text-brand">Contato rápido</Text>
+            <Text as="h2" variant="title" className="mt-2 text-[clamp(1.65rem,3vw,2.15rem)] font-extrabold leading-tight text-[rgb(var(--palette-900))]">
+              Prefere que a gente te chame?
+            </Text>
+            <Text as="p" variant="body" className="mt-3">
+              Deixe seus dados que entramos em contato, sem compromisso.
+            </Text>
           </div>
-        ) : null}
-
-        <Card variant="outlined" padding="lg" className="mt-8">
-          <Text as="h2" variant="title">
-            Prefere que a gente te chame?
-          </Text>
-          <Text as="p" variant="caption" className="mt-1">
-            Deixe seus dados que entramos em contato, sem compromisso.
-          </Text>
-          <div className="mt-4">
-            <LeadForm productSlug={productSlug} disabled={leadFormDisabled} />
+          <div>
+            <LeadForm productSlug={productSlug} disabled={leadFormDisabled} submitLabel={template.leadButton} successDescription={template.thankYouDescription} />
           </div>
-        </Card>
-
-        <ComplianceNotice productSlug={productSlug} />
-      </Container>
+        </Card></Container>
+      </section>
+      <StepsSection template={template} />
+      <OfferSection template={template} />
+      <FaqSection template={template} />
+      <FinalCta template={template} representative={representative} product={product} />
+      <CommercialFooter template={template} representative={representative} productSlug={productSlug} />
     </main>
   );
 }

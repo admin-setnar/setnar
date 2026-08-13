@@ -1,4 +1,5 @@
 import { isNextControlFlowError } from '@/shared/lib/next-control-flow-error';
+import { toSafeLogError } from '@/shared/lib/safe-log-error';
 
 /**
  * Cópia estrutural de `safeRepresentativeWriteCall`
@@ -17,7 +18,7 @@ export async function safeBillingCall<T extends { readonly status: string }>(
     if (isNextControlFlowError(error)) {
       throw error;
     }
-    console.error('safeBillingCall: unexpected exception in a billing Server Action', error);
+    console.error('safeBillingCall: unexpected exception in a billing Server Action', toSafeLogError(error));
     return { status: 'error' };
   }
 }
