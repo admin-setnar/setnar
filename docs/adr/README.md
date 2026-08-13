@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
-This is the index of every ADR in the project: 78 decisions, numbered `ADR-001`
-through `ADR-078`, one file per decision. This folder is the authority on
+This is the index of every ADR in the project: 89 decisions, numbered `ADR-001`
+through `ADR-089`, one file per decision. This folder is the authority on
 **why the code is the way it is** — see `docs/README.md` § *Which document
 wins* on how an ADR relates to the normative documents.
 
@@ -130,6 +130,9 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 084 | `console.error`/`console.warn` nunca loga o objeto de erro cru; só `{ code, message }` (SET-72) | ENGINEERING_GUIDELINES.md | Closes the log-scrubbing question raised by `docs/plans/archive/AUDIT_SET-44_privacidade.md` §1.8; shares the `isNextControlFlowError` import pattern already used by the five `safe-*-call.ts` wrappers | [`ADR-084-console-error-nunca-loga-o-objeto-de-erro-cru-so-code-message.md`](ADR-084-console-error-nunca-loga-o-objeto-de-erro-cru-so-code-message.md) |
 | 085 | `billing_events.payload` minimizado: só os campos já extraídos, nunca o corpo cru do webhook (SET-71) | ARCHITECTURE.md | Closes the payload-minimization question raised by `docs/plans/archive/AUDIT_SET-44_privacidade.md` §1.6; aligns `billing_events` with the decision already taken in `billing_reconciliation_log` (ADR from `20260830000000`); retention/purge timing left to SET-46 | [`ADR-085-billing-events-payload-minimizado-so-campos-ja-extraidos.md`](ADR-085-billing-events-payload-minimizado-so-campos-ja-extraidos.md) |
 | 086 | Purga de retenção via `pg_cron`, não pelo caminho quente de escrita (SET-73) | ARCHITECTURE.md | Implements the periods decided in `docs/plans/DATA_RETENTION_DECISIONS_PLAN.md` (SET-46); closes AN7, open since ADR-065; same "no job infra unless truly needed" posture as `BILLING_DECISIONS_PLAN.md` §1 | [`ADR-086-purga-de-retencao-via-pg-cron-nao-caminho-quente-de-escrita.md`](ADR-086-purga-de-retencao-via-pg-cron-nao-caminho-quente-de-escrita.md) |
+| 087 | Caixa mínima de Contatos é uma leitura de Leads, não um CRM (SET-77) | DOMAIN_MODEL.md / ARCHITECTURE.md | Consumes ADR-034/067/068, ADR-066 and ADR-082 without expanding the Stage 3 CRM scope | [`ADR-087-caixa-minima-de-contatos-e-uma-leitura-de-leads-nao-um-crm.md`](ADR-087-caixa-minima-de-contatos-e-uma-leitura-de-leads-nao-um-crm.md) |
+| 088 | Commercial Pages profissionais compartilham shell tipado e widgets isolados (SET-78) | ARCHITECTURE.md / DESIGN_SYSTEM.md | Superseded by ADR-089 | [`ADR-088-commercial-pages-profissionais-compartilham-shell-tipado-e-widgets-isolados.md`](ADR-088-commercial-pages-profissionais-compartilham-shell-tipado-e-widgets-isolados.md) |
+| 089 | Commercial Pages usam sete árvores de apresentação independentes (SET-78) | ARCHITECTURE.md / DESIGN_SYSTEM.md | Supersedes ADR-088; qualifies ADR-080 | [`ADR-089-commercial-pages-usam-sete-arvores-de-apresentacao-independentes.md`](ADR-089-commercial-pages-usam-sete-arvores-de-apresentacao-independentes.md) |
 
 ## Existing code and migration comments still say `README.md`
 

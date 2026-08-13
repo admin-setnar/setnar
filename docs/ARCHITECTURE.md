@@ -224,6 +224,12 @@ Each module owns its own business rules.
 - **Some real modules are not business domains at all.** `tenancy` (which organization is this request for) and `marketing` (the institutional landing's content) exist in code and correspond to no Bounded Context, because they are not business capabilities — one is request-scoped infrastructure, the other is a surface. They are legitimate and they will not appear in this map.
 - **One real module can carry several contexts.** `representatives` currently holds Representative Management, Product Activation, the Commercial Page presentation, and compliance notices. Splitting it into four modules to satisfy a diagram would fragment code that changes together.
 
+Within the Commercial Page presentation, the seven seeded Products deliberately
+use independent React/CSS subtrees (ADR-089). This is presentation isolation,
+not seven domain modules: Host/slug resolution, Lead security, analytics,
+metadata and compliance remain shared module capabilities. Presentational
+markup may be repeated for template fidelity; business rules may not.
+
 A module boundary is drawn where code changes together, not where the domain vocabulary draws a line. When the two coincide, prefer the same name; when they do not, the code's boundary wins and the difference is recorded here rather than hidden.
 
 ```

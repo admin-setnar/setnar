@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
-import { CommercialPageContent } from '@/modules/representatives/presentation/commercial-page-content';
+import { DispatchCommercialPage } from '@/modules/representatives/presentation/commercial-pages/dispatch-commercial-page';
 import { STATE_BADGE } from '@/modules/representatives/presentation/activation-view-state';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
  * opposite of this issue's "conteúdo e responsividade correspondem à página
  * final" acceptance criterion. This route does its own auth check instead
  * (mirroring `AuthenticatedAppLayout`'s own `redirect`), and renders
- * `CommercialPageContent` — the same component `[productSlug]/page.tsx`
+ * `DispatchCommercialPage` — the same dispatcher `[productSlug]/page.tsx`
  * renders — under nothing but its own thin preview banner.
  *
  * Authorization: `findOwnActivation` resolves by the caller's own
@@ -88,7 +88,7 @@ export default async function CommercialPagePreviewPage({
         </div>
       </div>
 
-      <CommercialPageContent
+      <DispatchCommercialPage
         representative={representative}
         product={product}
         productSlug={productSlug}

@@ -1,0 +1,34 @@
+.tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; position:relative; z-index:1; }
+.tabs button { border:1px solid var(--borda); background:var(--fundo); padding:8px 12px; border-radius:100px; font:600 .8rem 'Inter Variable','Inter',sans-serif; color:var(--cinza-texto); cursor:pointer; }
+.tabs button.active { background:var(--verde-vivo); color:#fff; border-color:var(--verde-vivo); }
+.description { position:relative; z-index:1; color:var(--cinza-texto); min-height:4.4em; font-size:.95rem; }
+.quizQuestion { position:relative; z-index:1; margin-bottom:16px; }
+.quizQuestion p { font-weight:700; color:var(--verde-profundo); margin-bottom:8px; font-size:.95rem; }
+.quizOptions { display:flex; gap:10px; }
+.quizOptions button { flex:1; border:1px solid var(--borda); background:var(--fundo); padding:10px; border-radius:10px; font:700 1rem 'Inter Variable','Inter',sans-serif; color:var(--cinza-texto); cursor:pointer; }
+.quizOptions button.yes { background:var(--verde-vivo); color:#fff; border-color:var(--verde-vivo); }
+.quizOptions button.no { background:#f3e7e7; color:#b33a3a; border-color:#d96b6b; }
+.quizResult { position:relative; z-index:1; padding:14px; border-radius:10px; margin:16px 0; font-weight:700; text-align:center; }
+.quizResult.ok { background:var(--faixa-sage); color:var(--verde-vivo-escuro); }
+.quizResult.no { background:#f3e7e7; color:#b33a3a; }
+.planCard { background:var(--fundo-card); border:1px solid var(--borda); border-radius:var(--radius); box-shadow:var(--sombra); padding:28px; }
+.planToggle { display:flex; flex-wrap:wrap; gap:8px; background:var(--faixa-sage); border-radius:var(--radius); padding:4px; margin-bottom:20px; }
+.planToggle button { flex:1 1 130px; border:0; background:none; padding:10px 12px; border-radius:12px; font:700 .92rem 'Manrope Variable','Manrope',sans-serif; color:var(--verde-profundo); cursor:pointer; }
+.planToggle button.active { background:var(--verde-vivo); color:#fff; }
+.planList { list-style:none; margin:0 0 20px; padding:0; }
+.planList li { display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; color:var(--cinza-texto); }
+.planList li span:first-child { color:var(--verde-vivo-escuro); font-weight:700; }
+.addons { font-size:.85rem; color:var(--cinza-texto); border-top:1px solid var(--borda); padding-top:14px; margin-top:4px; }
+.telecomToggle { max-width:420px; margin:0 auto 32px; }
+.plansGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+.planTile { background:var(--fundo-card); border:1px solid var(--borda); border-radius:var(--radius); padding:22px 18px; text-align:center; display:flex; flex-direction:column; }
+.featured { border:2px solid var(--verde-vivo); box-shadow:var(--sombra); position:relative; }
+.planTile h3 { margin-bottom:4px; }
+.planTag { font-size:.72rem; font-weight:800; color:#3a2900; background:var(--amarelo-sol); padding:3px 10px; border-radius:100px; align-self:center; margin-bottom:10px; }
+.planGb { font:800 2rem 'Manrope Variable','Manrope',sans-serif; color:var(--verde-profundo); margin:6px 0 2px; }
+.planGb small { font-size:1rem; font-weight:700; color:var(--cinza-texto); }
+.planPrice { font-weight:700; color:var(--verde-vivo-escuro); margin-bottom:14px; font-size:1.05rem; }
+.planPrice small { font-weight:500; color:var(--cinza-texto); font-size:.8rem; display:block; }
+.planTile a { margin-top:auto; font-size:.85rem; padding:10px 14px; }
+@media (max-width:980px){.plansGrid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.plansGrid{grid-template-columns:1fr}}

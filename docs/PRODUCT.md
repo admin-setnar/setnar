@@ -369,7 +369,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 - Reading the products of the authorizing organization's catalog. The catalog is seeded by migration; there is no interface to manage it.
 - Product activation and deactivation by the representative.
 - Publication of a commercial page per activated product, subject to four ordered preconditions: active representative, active SETNAR Subscription, name filled in, phone filled in. Only the first failure is reported.
-- Seven professional public Commercial Pages, one per seeded Product, with shared shell, authorized-representative identification, per-product content and compliance, WhatsApp CTA, FAQ, product-specific widget and the common lead form. **No representative photo, and no free-text description** — neither exists in the product.
+- Seven professional public Commercial Pages, one per seeded Product, currently delivered by the shared-shell implementation of ADR-088, with authorized-representative identification, per-product content and compliance, WhatsApp CTA, FAQ, product-specific widget and the common lead form. **No representative photo, and no free-text description** — neither exists in the product. The approved replacement by seven independent presentation trees (ADR-089) is in development and is not described here as shipped.
 - QR Code rendered in the browser from the page's public address, with **download**, **copy link**, manual-copy fallback and retry after a generation error. There is **no persisted QR Code** and no content-level regeneration.
 - Public address by subdomain, one page per (representative × product). There is no public hub page listing a representative's products.
 - Lead capture, with an IP rate limit and attribution to the originating page.
@@ -385,6 +385,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 
 Decided or under way, **not yet usable**:
 
+- Replacement of the shared Commercial Page shell by seven independent product presentation trees, preserving one secure Lead path and the same product tree in public and preview routes (SET-78/ADR-089).
 - Manual Subscription activation/reactivation (`SPRINT_E_PLAN.md`, E3).
 - Analytics event retention/purge (AN7).
 

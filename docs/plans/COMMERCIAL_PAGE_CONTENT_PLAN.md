@@ -7,11 +7,11 @@
 > o conteúdo rico que `templates/commercial-pages/` já tem pronto como
 > referência, nunca conectado a runtime nenhum
 
-**Status:** Proposed — parcialmente implementado, com decisões em aberto
+**Status:** Approved — implementação reaberta pela SET-78 conforme ADR-089
 **Authority:** Non-normative (ver `docs/plans/README.md`)
 **Code baseline:** Not identified na redação original. Estado verificado contra
-`23290c4` (branch `develop`) em 2026-08-05.
-**Last reviewed:** 2026-08-05
+`fa618ed` (branch `set-78-commercial-pages-templates`) em 2026-08-13.
+**Last reviewed:** 2026-08-13
 **Superseded by:** —
 
 > **Este plano NÃO é uma especificação final.** Ele contém decisões que
@@ -27,11 +27,19 @@
 > | §3.4 GA4/Meta Pixel | **EM ABERTO** | Depende de infraestrutura de consentimento que não existe. Precisa de ADR se for adotado. |
 > | CP3 (tabs de conteúdo) | **Implementado** | ADR-056, só Conexão Club |
 > | CP9 (visual on-brand) | **Aprovado no escopo da SET-78** | ADR-057 — páginas controladas, autoria SETNAR e disclaimer obrigatório |
-> | CP4–CP8 | **Implementados pela SET-78** | shell compartilhado, conteúdo e widgets por Produto; ADR-088 |
+> | CP4–CP8 | **Reabertos pela SET-78** | A entrega em shell compartilhado permanece como baseline, mas será substituída por sete árvores de apresentação independentes conforme ADR-089. |
 > | CP10 | **Somente planejado** | nenhum código; GA4/Meta Pixel continuam fora do escopo |
 >
 > Nenhum item marcado "EM ABERTO" autoriza implementação. §3.3 é uma questão
 > de compliance de marca de terceiro, não uma preferência de produto.
+
+> **Decisão posterior do Product Owner (2026-08-13).** A abstração de shell da
+> ADR-088 foi rejeitada após revisão do resultado visual. A SET-78 foi reaberta
+> para portar cada referência como árvore React/CSS própria, inclusive quando
+> isso repetir markup e estilos. Só infraestrutura sem conhecimento de layout
+> permanece compartilhada: resolução, submissão segura de Leads, analytics,
+> metadata, compliance e tipos de domínio. A rota pública e o preview devem
+> selecionar a mesma árvore por Produto. A ADR-089 é a decisão vigente.
 
 Mesmo contrato do `docs/QR_ANALYTICS_PLAN.md`/`docs/SPRINT_D_PLAN.md`: este
 documento **investiga e levanta decisões, não fecha nenhuma sozinho**. Onde

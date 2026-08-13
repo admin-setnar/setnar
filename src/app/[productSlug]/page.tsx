@@ -7,7 +7,7 @@ import {
   getAnalyticsGateway,
   reportAnalyticsFailure,
 } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
-import { CommercialPageContent } from '@/modules/representatives/presentation/commercial-page-content';
+import { DispatchCommercialPage } from '@/modules/representatives/presentation/commercial-pages/dispatch-commercial-page';
 import { resolveCommercialPageMetadata } from '@/modules/representatives/presentation/commercial-page-metadata';
 import { resolveCommercialPageActivation } from '@/modules/representatives/presentation/resolve-commercial-page-activation';
 import { getClientIp } from '@/shared/lib/get-client-ip';
@@ -99,5 +99,5 @@ export default async function ProductPage({
     }
   });
 
-  return <CommercialPageContent representative={representative} product={product} productSlug={productSlug} />;
+  return <DispatchCommercialPage representative={representative} product={product} productSlug={productSlug} />;
 }
