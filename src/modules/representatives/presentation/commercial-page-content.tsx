@@ -41,23 +41,26 @@ export function CommercialPageContent({
   }
 
   return (
-    <main id="conteudo" data-vertical={companyVertical?.vertical}>
+    <main id="conteudo" data-vertical={companyVertical?.vertical} className="bg-surface text-content">
       {companyVertical ? (
         <BrandTokensStyle tokens={companyVertical.tokens} scope={companyVertical.vertical} />
       ) : null}
       <CommercialHeader representative={representative} product={product} />
       <CommercialHero template={template} representative={representative} product={product} />
       <TrustStrip points={template.trustPoints} />
-      <IdentificationSection representative={representative} />
-      <section id="quero-simular" className="pb-14 sm:pb-20">
-        <Container width="narrow"><Card variant="outlined" padding="lg">
-          <Text as="h2" variant="title">
-            Prefere que a gente te chame?
-          </Text>
-          <Text as="p" variant="caption" className="mt-1">
-            Deixe seus dados que entramos em contato, sem compromisso.
-          </Text>
-          <div className="mt-4">
+      <IdentificationSection representative={representative} product={product} />
+      <section id="quero-simular" className="border-y border-line bg-brand-subtle py-14 sm:py-20">
+        <Container className="max-w-[920px]"><Card variant="outlined" padding="lg" className="grid items-center gap-8 rounded-2xl shadow-[0_8px_24px_rgba(20,67,43,0.08)] md:grid-cols-[.85fr_1.15fr] md:p-10">
+          <div>
+            <Text variant="eyebrow" className="text-brand">Contato rápido</Text>
+            <Text as="h2" variant="title" className="mt-2 text-[clamp(1.65rem,3vw,2.15rem)] font-extrabold leading-tight text-[rgb(var(--palette-900))]">
+              Prefere que a gente te chame?
+            </Text>
+            <Text as="p" variant="body" className="mt-3">
+              Deixe seus dados que entramos em contato, sem compromisso.
+            </Text>
+          </div>
+          <div>
             <LeadForm productSlug={productSlug} disabled={leadFormDisabled} submitLabel={template.leadButton} successDescription={template.thankYouDescription} />
           </div>
         </Card></Container>

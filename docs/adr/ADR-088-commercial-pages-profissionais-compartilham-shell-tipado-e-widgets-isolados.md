@@ -34,6 +34,14 @@ migration. A metadata e a imagem Open Graph dinâmicas do ADR-071 permanecem
 inalteradas. `/privacidade` continua canônica, e o rodapé mantém autoria SETNAR,
 identificação do representante e aviso de canal não oficial.
 
+A fidelidade visual também pertence ao shell compartilhado: o escopo iGreen
+redefine tokens semânticos de superfície, conteúdo, borda, ação e foco, além dos
+tons de paleta. Assim, componentes reutilizados não herdam azul ou branco do App
+Shell SETNAR. Espaçamento, raios, sombras, faixas, cards e CTAs são portados para
+React/Tailwind a partir dos templates, que permanecem somente como referência.
+O verde escuro substitui o verde vivo em botões com texto branco para preservar
+contraste WCAG AA; o verde vivo continua como acento.
+
 A autorização de marca e a revisão dos claims foram confirmadas pelo Product
 Owner em 13/08/2026 para este escopo controlado. Isso não autoriza edição livre
 por representantes nem transforma a SETNAR em canal oficial da iGreen.
@@ -46,6 +54,8 @@ por representantes nem transforma a SETNAR em canal oficial da iGreen.
 - JavaScript fica restrito aos widgets e ao formulário; seções editoriais são
   renderizadas no servidor.
 - Os sete conteúdos são revisáveis por diff e não dependem de banco ou editor.
+- O E2E verifica os tokens e as cores computadas no navegador em desktop e
+  mobile, prevenindo regressão para a identidade do App Shell.
 - O custo aceito é um registro de conteúdo extenso, preferível a sete árvores de
   JSX/CSS independentes.
 

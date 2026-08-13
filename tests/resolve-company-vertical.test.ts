@@ -7,13 +7,8 @@ import {
 } from '@/modules/representatives/domain/company-brand/resolve-company-vertical';
 import { IGREEN_TOKENS } from '@/modules/representatives/domain/company-brand/igreen';
 
-/**
- * CP9 prototype (NOT approved by iGreen — README ADR-057,
- * docs/COMMERCIAL_PAGE_CONTENT_PLAN.md §3.3/CP1). The real risk this
- * function guards against is exactly the one DOMAIN_MODEL.md §8.1 warns
- * about: assuming a single Company. These tests exist to keep that
- * assumption from creeping back in as an `if (true)`-style shortcut.
- */
+/** Brand scope is resolved by Company; no Commercial Page may inherit the
+ * SETNAR shell palette through a hard-coded fallback. */
 
 describe('resolveCompanyVertical', () => {
   it('resolves the igreen vertical, with its tokens, for the igreen Company slug', () => {
@@ -30,5 +25,13 @@ describe('resolveCompanyVertical', () => {
 
   it('keeps COMPANY_BRAND_TOKENS.igreen wired to IGREEN_TOKENS', () => {
     assert.equal(COMPANY_BRAND_TOKENS.igreen, IGREEN_TOKENS);
+  });
+
+  it('overrides semantic surfaces and actions so the SETNAR palette cannot leak in', () => {
+    assert.equal(IGREEN_TOKENS['--surface'], '245 250 246');
+    assert.equal(IGREEN_TOKENS['--surface-sunken'], '225 247 234');
+    assert.equal(IGREEN_TOKENS['--brand'], '0 137 63');
+    assert.equal(IGREEN_TOKENS['--ring'], '0 137 63');
+    assert.equal(IGREEN_TOKENS['--commercial-sun'], '242 167 11');
   });
 });

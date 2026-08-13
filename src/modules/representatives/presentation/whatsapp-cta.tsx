@@ -45,10 +45,12 @@ export function WhatsappCta({
   representative,
   product,
   fullWidth = true,
+  tone = 'green',
 }: {
   representative: Representative;
   product: RepresentativeProduct;
   fullWidth?: boolean;
+  tone?: 'green' | 'yellow';
 }) {
   if (!representative.phone) return null;
 
@@ -56,7 +58,14 @@ export function WhatsappCta({
   const href = `https://wa.me/${toWhatsAppDigits(representative.phone)}?text=${encodeURIComponent(message)}`;
 
   return (
-    <Button asChild size="lg" fullWidth={fullWidth}>
+    <Button
+      asChild
+      size="lg"
+      fullWidth={fullWidth}
+      className={tone === 'yellow'
+        ? 'rounded-full bg-[rgb(var(--commercial-sun))] font-semibold text-[rgb(var(--palette-900))] shadow-[0_8px_24px_rgba(20,67,43,0.16)] hover:-translate-y-0.5 hover:bg-[rgb(var(--commercial-sun-hover))]'
+        : 'rounded-full font-semibold shadow-[0_8px_24px_rgba(20,67,43,0.14)] hover:-translate-y-0.5'}
+    >
       <a
         href={href}
         target="_blank"

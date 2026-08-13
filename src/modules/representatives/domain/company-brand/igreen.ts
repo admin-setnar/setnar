@@ -1,36 +1,37 @@
 import type { BrandTokens } from '@/modules/tenancy/domain/tenant';
 
 /**
- * PROTÓTIPO NÃO APROVADO — a Política de Uso da Marca da iGreen ainda não
- * confirmou que replicar sua paleta/identidade visual por software é
- * permitido (README ADR-057; ver docs/COMMERCIAL_PAGE_CONTENT_PLAN.md
- * §3.3/CP1). Nada que consome isto deve ser tratado como decisão de marca
- * fechada — só um exemplo interno para pedir aprovação à iGreen.
- *
- * Valores das 3 cores de marca dos 7 templates originais
- * (`templates/commercial-pages/*\/style.css`, idênticos byte-a-byte nos 7),
- * convertidos de hex para os canais RGB que `BrandTokensStyle` espera:
- * `--verde-profundo` #07311D, `--verde-vivo-escuro` #00893F,
- * `--verde-vivo` #00B359, `--borda` #CFEEDA, `--fundo` #F5FAF6.
- *
- * `--palette-500` (verde-vivo) é só acento — nunca fundo de texto. Branco
- * sobre `--verde-vivo` mede 2.77:1 (falha WCAG AA, que exige 4.5:1 para
- * texto normal); é assim nos próprios templates da iGreen, não uma
- * regressão introduzida aqui. `--palette-900` é o valor usado onde
- * `globals.css` deriva `--brand`/`--content`, por ter folga de contraste
- * confortável (14.32:1 e 14.97:1 respectivamente).
- *
- * `--palette-700` fica deliberadamente de fora: os 3 tons da iGreen não
- * produzem um 4º valor intermediário, e inventar um sem aprovação seria
- * exatamente o tipo de decisão de marca este protótipo não pode fechar
- * sozinho. `--ring` (que deriva de `--palette-700` em `globals.css`)
- * continua herdando o valor do SETNAR por cascata normal de custom
- * property dentro de `[data-vertical="igreen"]`.
+ * Identidade visual das Commercial Pages iGreen aprovada na SET-78.
+ * Os valores vêm dos sete templates de referência em
+ * `templates/commercial-pages/`; além da paleta base, os tokens semânticos
+ * são redefinidos para impedir que cores do shell SETNAR vazem para a página.
+ * O verde escuro continua sendo usado em botões com texto branco para manter
+ * contraste AA; o verde vivo permanece como acento visual.
  */
 export const IGREEN_TOKENS: BrandTokens = {
   '--palette-900': '7 49 29',
   '--palette-800': '0 137 63',
+  '--palette-700': '0 112 52',
   '--palette-500': '0 179 89',
   '--palette-200': '207 238 218',
   '--palette-50': '245 250 246',
+  '--surface': '245 250 246',
+  '--surface-raised': '255 255 255',
+  '--surface-sunken': '225 247 234',
+  '--surface-inverted': '7 49 29',
+  '--content': '30 36 32',
+  '--content-muted': '75 85 78',
+  '--content-subtle': '90 105 94',
+  '--content-inverted': '255 255 255',
+  '--border': '207 238 218',
+  '--border-strong': '0 137 63',
+  '--brand': '0 137 63',
+  '--brand-hover': '7 49 29',
+  '--brand-active': '7 49 29',
+  '--brand-subtle': '225 247 234',
+  '--brand-contrast': '255 255 255',
+  '--ring': '0 137 63',
+  '--commercial-accent': '0 179 89',
+  '--commercial-sun': '242 167 11',
+  '--commercial-sun-hover': '219 151 0',
 };

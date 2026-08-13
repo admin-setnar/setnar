@@ -22,6 +22,8 @@ const insurancePlans = {
   'Furto e Roubo': ['Furto e roubo', 'RCF (danos a terceiros)', 'Assistência 24h'],
 } as const;
 
+const widgetCard = 'rounded-2xl border-line bg-surface-raised shadow-[0_8px_24px_rgba(20,67,43,0.08)]';
+
 const telecomPlans = {
   portabilidade: [
     ['Start', '4 GB', 'R$ 54,90', 'até 11 GB acumulados'], ['Mega', '7 GB', 'R$ 59,90', 'até 15 GB acumulados'],
@@ -39,7 +41,7 @@ function SegmentedControl({ labels, active, onChange, label }: { labels: readonl
   return (
     <div role="tablist" aria-label={label} className="flex flex-wrap gap-2">
       {labels.map((item, index) => (
-        <Button key={item} type="button" role="tab" aria-selected={active === index} variant={active === index ? 'primary' : 'secondary'} size="sm" onClick={() => onChange(index)}>
+        <Button key={item} type="button" role="tab" aria-selected={active === index} variant={active === index ? 'primary' : 'secondary'} size="sm" className="rounded-full" onClick={() => onChange(index)}>
           {item}
         </Button>
       ))}
@@ -59,7 +61,7 @@ function GreenCalculator() {
   }, [bill]);
   const brl = (value: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(value);
   return (
-    <Card variant="raised" padding="lg">
+    <Card variant="raised" padding="lg" className={widgetCard}>
       <Text as="h2" variant="title">Estimativa de desconto</Text>
       <label htmlFor={id} className="mt-5 block text-sm font-medium">Quanto você paga de luz por mês?</label>
       <Input id={id} type="number" min={50} step={10} inputMode="numeric" value={bill} onChange={(event) => setBill(event.target.valueAsNumber || 0)} className="mt-2" />
@@ -79,7 +81,7 @@ function EligibilityQuiz() {
   const complete = answers.every((answer) => answer !== null);
   const eligible = complete && answers.every(Boolean);
   return (
-    <Card variant="raised" padding="lg">
+    <Card variant="raised" padding="lg" className={widgetCard}>
       <Text as="h2" variant="title">Sua empresa se encaixa? Teste rápido</Text>
       <div className="mt-5 space-y-5">{questions.map((question, index) => <fieldset key={question}><legend className="text-sm font-medium">{index + 1}. {question}</legend><div className="mt-2 flex gap-2">{[true,false].map((value) => <Button key={String(value)} type="button" size="sm" variant={answers[index] === value ? 'primary' : 'secondary'} aria-pressed={answers[index] === value} onClick={() => setAnswers((current) => current.map((answer, answerIndex) => answerIndex === index ? value : answer))}>{value ? 'Sim' : 'Não'}</Button>)}</div></fieldset>)}</div>
       {complete ? <p role="status" className={`mt-5 rounded-md p-4 text-sm font-medium ${eligible ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>{eligible ? 'Sua empresa parece se encaixar no Grupo A. Confirme os detalhes com o especialista.' : 'Seu perfil pode não se enquadrar ainda. Fale com um especialista para confirmar os caminhos possíveis.'}</p> : null}
@@ -90,14 +92,14 @@ function EligibilityQuiz() {
 function PaymentSelector() {
   const [active, setActive] = useState(0);
   const selected = paymentOptions[active] ?? paymentOptions[0];
-  return <Card variant="raised" padding="lg"><Text as="h2" variant="title">Como prefere pagar?</Text><div className="mt-4"><SegmentedControl labels={paymentOptions.map(([label]) => label)} active={active} onChange={setActive} label="Formas de pagamento" /></div><Text as="p" variant="body" className="mt-4" aria-live="polite">{selected[1]}</Text></Card>;
+  return <Card variant="raised" padding="lg" className={widgetCard}><Text as="h2" variant="title">Como prefere pagar?</Text><div className="mt-4"><SegmentedControl labels={paymentOptions.map(([label]) => label)} active={active} onChange={setActive} label="Formas de pagamento" /></div><Text as="p" variant="body" className="mt-4" aria-live="polite">{selected[1]}</Text></Card>;
 }
 
 function InsuranceSelector() {
   const labels = Object.keys(insurancePlans) as (keyof typeof insurancePlans)[];
   const [active, setActive] = useState(0);
   const selected: keyof typeof insurancePlans = labels[active] ?? 'Compreensivo';
-  return <Card variant="raised" padding="lg"><Text as="h2" variant="title">Qual proteção você quer para seu carro?</Text><div className="mt-4"><SegmentedControl labels={labels} active={active} onChange={setActive} label="Coberturas do seguro" /></div><ul className="mt-5 grid gap-2 text-sm text-content-muted">{insurancePlans[selected].map((item: string) => <li key={item}>✓ {item}</li>)}</ul><Text as="p" variant="caption" className="mt-4">Adicionais podem incluir carro reserva, vidros e ampliação de RCF. Confirme disponibilidade e condições na proposta.</Text></Card>;
+  return <Card variant="raised" padding="lg" className={widgetCard}><Text as="h2" variant="title">Qual proteção você quer para seu carro?</Text><div className="mt-4"><SegmentedControl labels={labels} active={active} onChange={setActive} label="Coberturas do seguro" /></div><ul className="mt-5 grid gap-2 text-sm text-content-muted">{insurancePlans[selected].map((item: string) => <li key={item}>✓ {item}</li>)}</ul><Text as="p" variant="caption" className="mt-4">Adicionais podem incluir carro reserva, vidros e ampliação de RCF. Confirme disponibilidade e condições na proposta.</Text></Card>;
 }
 
 function SolarBenefits() {
@@ -107,13 +109,13 @@ function SolarBenefits() {
     'Visita técnica antes de qualquer instalação',
     'Acompanhamento dedicado em cada etapa',
   ];
-  return <Card variant="raised" padding="lg"><div className="flex items-center justify-between gap-4"><Text as="h2" variant="title">O que você recebe</Text><span className="rounded-full bg-success-subtle px-3 py-1 text-xs font-semibold text-success">Sem custo para começar</span></div><ul className="mt-5 grid gap-3 text-sm text-content-muted">{benefits.map((benefit) => <li key={benefit}>✓ {benefit}</li>)}</ul><Text as="p" variant="caption" className="mt-4">Leva poucos minutos para começar; a documentação é solicitada quando você decide avançar.</Text></Card>;
+  return <Card variant="raised" padding="lg" className={widgetCard}><div className="flex items-center justify-between gap-4"><Text as="h2" variant="title">O que você recebe</Text><span className="rounded-full bg-brand-subtle px-3 py-1 text-xs font-semibold text-brand">Sem custo para começar</span></div><ul className="mt-5 grid gap-3 text-sm text-content-muted">{benefits.map((benefit) => <li key={benefit}>✓ {benefit}</li>)}</ul><Text as="p" variant="caption" className="mt-4">Leva poucos minutos para começar; a documentação é solicitada quando você decide avançar.</Text></Card>;
 }
 
 function TelecomPlans() {
   const [active, setActive] = useState(0);
   const plans = active === 0 ? telecomPlans.portabilidade : telecomPlans.novo;
-  return <Card variant="raised" padding="lg"><Text as="h2" variant="title">Nossos planos</Text><div className="mt-4"><SegmentedControl labels={['Com portabilidade', 'Número novo']} active={active} onChange={setActive} label="Modalidade do plano" /></div><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{plans.map(([name,gb,price,bonus]) => <div key={name} className="rounded-lg border border-line p-4"><Text as="h3" variant="title">{name}</Text><p className="mt-2 text-2xl font-semibold">{gb}</p><Text variant="caption">franquia mensal</Text><p className="mt-3 font-semibold text-content">{price}<span className="block text-xs font-normal text-content-subtle">por mês</span></p><Text variant="caption" className="mt-2">{bonus}</Text></div>)}</div><Text as="p" variant="caption" className="mt-4">Valores, bônus, acúmulo e perda de saldo por atraso seguem o contrato vigente.</Text></Card>;
+  return <Card variant="raised" padding="lg" className={widgetCard}><Text as="h2" variant="title">Nossos planos</Text><div className="mt-4"><SegmentedControl labels={['Com portabilidade', 'Número novo']} active={active} onChange={setActive} label="Modalidade do plano" /></div><div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">{plans.map(([name,gb,price,bonus]) => <div key={name} className="rounded-xl border border-line bg-surface p-4"><Text as="h3" variant="title">{name}</Text><p className="mt-2 text-2xl font-semibold">{gb}</p><Text variant="caption">franquia mensal</Text><p className="mt-3 font-semibold text-content">{price}<span className="block text-xs font-normal text-content-subtle">por mês</span></p><Text variant="caption" className="mt-2">{bonus}</Text></div>)}</div><Text as="p" variant="caption" className="mt-4">Valores, bônus, acúmulo e perda de saldo por atraso seguem o contrato vigente.</Text></Card>;
 }
 
 export function CommercialPageWidget({ widget }: { widget: ProductWidget }) {
