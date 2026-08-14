@@ -34,15 +34,17 @@ export function AppNavigation({ mobile = false }: { mobile?: boolean }) {
             href={href}
             aria-current={active ? 'page' : undefined}
             className={cn(
-              'flex min-h-11 items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-fast',
+              'flex min-h-11 min-w-0 items-center justify-center rounded-md font-medium transition-colors duration-fast',
               active
                 ? 'bg-brand text-brand-contrast'
                 : 'text-content-muted hover:bg-surface-sunken hover:text-content',
-              mobile && 'justify-center gap-1.5 px-2 sm:gap-2 sm:px-3',
+              mobile
+                ? 'flex-col gap-1 px-1 py-1.5 text-[11px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2 sm:text-sm'
+                : 'gap-3 px-3 py-2 text-sm',
             )}
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{label}</span>
+            <span className="max-w-full truncate">{label}</span>
           </Link>
         );
       })}

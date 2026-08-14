@@ -44,7 +44,7 @@ export function ProductMaterialsCard({
     <Card variant="raised" padding="lg" className="space-y-4">
       <Text as="h2" variant="title">{productLabel}</Text>
 
-      <div role="tablist" aria-label={`Formato do material de ${productLabel}`} className="flex gap-2">
+      <div role="tablist" aria-label={`Formato do material de ${productLabel}`} className="flex flex-wrap gap-2">
         {available.map((format) => (
           <Button
             key={format}
