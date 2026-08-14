@@ -1,0 +1,222 @@
+/* Identidade Green Seguros, composição "tabela comparativa" — distinta do post e do story. Fontes: ver ./fonts.ts. */
+
+.poster,
+.poster * {
+  box-sizing: border-box;
+}
+
+.poster {
+  width: 794px;
+  min-height: 1123px;
+  background: #f3f6fb;
+  background-image: radial-gradient(circle at 88% 4%, rgba(47, 111, 237, 0.1) 0%, transparent 40%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', sans-serif;
+  color: #0a2540;
+  padding: 66px 64px 40px;
+}
+
+.shieldMark {
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 320px;
+  height: 350px;
+  clip-path: polygon(50% 0%, 100% 20%, 100% 58%, 50% 100%, 0% 58%, 0% 20%);
+  background: linear-gradient(160deg, rgba(10, 37, 64, 0.06) 0%, rgba(47, 111, 237, 0.05) 100%);
+  border: 1px solid rgba(10, 37, 64, 0.06);
+  pointer-events: none;
+}
+
+.eyebrow {
+  position: relative;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 19px;
+  letter-spacing: 0.14em;
+  color: #2f6fed;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.headline {
+  position: relative;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 46px;
+  line-height: 1.16;
+  margin: 0;
+  max-width: 640px;
+}
+
+.subcopy {
+  position: relative;
+  font-size: 19px;
+  color: #4a5b74;
+  margin: 18px 0 0;
+}
+
+.table {
+  position: relative;
+  margin-top: 30px;
+  background: #ffffff;
+  border: 1px solid #dbe4f2;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(10, 37, 64, 0.06);
+}
+.tableHead,
+.tableRow {
+  display: grid;
+  grid-template-columns: 0.85fr 1fr 1.15fr;
+  align-items: center;
+}
+.tableHead {
+  background: #0a2540;
+  padding: 18px 30px;
+}
+.tableHead .colLabel {
+  color: transparent;
+}
+.tableHead .colOld {
+  color: #a9bcda;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tableHead .colNew {
+  color: #ffe9a8;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tableRow {
+  padding: 21px 30px;
+  border-top: 1px solid #eef2f9;
+}
+.colLabel {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: #0a2540;
+  white-space: nowrap;
+}
+.colOld {
+  font-size: 17px;
+  color: #8a99b3;
+  text-decoration: line-through;
+  text-decoration-color: #c7d2e4;
+  white-space: nowrap;
+}
+.colNew {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 19px;
+  font-weight: 600;
+  color: #0a2540;
+  white-space: nowrap;
+}
+.checkIcon {
+  color: #2f6fed;
+  font-weight: 700;
+}
+
+.qrZone {
+  position: relative;
+  margin-top: 30px;
+  background: #0a2540;
+  border-radius: 16px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  box-shadow: 0 16px 36px rgba(10, 37, 64, 0.18);
+}
+.qrBox {
+  width: 130px;
+  height: 130px;
+  background: #ffffff;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px;
+}
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  display: block;
+}
+.qrCopy {
+  color: #ffffff;
+}
+.qrCta {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.15;
+}
+.qrSub {
+  font-size: 15px;
+  color: #a9bcda;
+  margin-top: 7px;
+}
+
+.whatsappLine {
+  position: relative;
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  color: #5b6b82;
+  background: #ffffff;
+  border: 1px solid #dbe4f2;
+  border-radius: 100px;
+  padding: 8px 18px;
+  width: fit-content;
+}
+.whatsappLine strong {
+  color: #2f6fed;
+  font-weight: 600;
+}
+.whatsappIcon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: #2f6fed;
+}
+
+.spacer {
+  flex: 1;
+  min-height: 12px;
+}
+
+.footer {
+  position: relative;
+  flex-shrink: 0;
+  padding-top: 18px;
+  border-top: 1px solid #dbe4f2;
+}
+.footerId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: #5b6b82;
+}
+.footerId strong {
+  color: #0a2540;
+}
+.finePrint {
+  font-size: 11px;
+  color: #a3b0c4;
+  margin-top: 8px;
+  line-height: 1.4;
+  max-width: 620px;
+}

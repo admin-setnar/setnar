@@ -25,12 +25,17 @@ describe('authenticated App Shell contract', () => {
     assert.match(rootPage, /redirect\('\/app\/paginas'\)/);
   });
 
-  it('exposes only live Pages, Contacts and Account destinations with active-state semantics', () => {
+  it('exposes only live Pages, Materials, Contacts and Account destinations with active-state semantics', () => {
     assert.match(navigation, /href: '\/app\/paginas'/);
+    assert.match(navigation, /href: '\/app\/paginas\/marketing'/);
     assert.match(navigation, /href: '\/app\/contatos'/);
     assert.match(navigation, /href: '\/app\/conta'/);
     assert.match(navigation, /aria-current=\{active \? 'page'/);
-    assert.doesNotMatch(navigation, /desempenho|materiais|preview/i);
+    assert.doesNotMatch(navigation, /desempenho|preview/i);
+  });
+
+  it('resolves exactly one active nav destination for the nested /app/paginas/marketing route (SET-65)', () => {
+    assert.match(navigation, /sort\(\(a, b\) => b\.length - a\.length\)/);
   });
 
   it('keeps route-specific data outside the shared layout', () => {

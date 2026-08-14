@@ -1,0 +1,215 @@
+/* Identidade Club, formato ticket/passe de descontos — composição própria para o vertical. Fontes: ver ./fonts.ts. */
+
+.story,
+.story * {
+  box-sizing: border-box;
+}
+
+.story {
+  width: 1080px;
+  height: 1920px;
+  background: #22083a;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Space Grotesk', sans-serif;
+  color: #f7f1ff;
+}
+
+.story::before {
+  content: '';
+  position: absolute;
+  top: -180px;
+  right: -220px;
+  width: 700px;
+  height: 700px;
+  background: radial-gradient(circle, rgba(255, 61, 138, 0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.topSafe {
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.head {
+  position: relative;
+  z-index: 1;
+  padding: 0 96px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 24px;
+  letter-spacing: 0.18em;
+  color: #ffc531;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+.headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: 400;
+  font-size: 84px;
+  line-height: 1.03;
+  margin: 0;
+}
+.highlight {
+  color: #ff3d8a;
+}
+.subcopy {
+  margin: 22px auto 0;
+  font-size: 30px;
+  line-height: 1.5;
+  color: #c6aedb;
+  max-width: 700px;
+}
+
+.ticketWrap {
+  flex: 1;
+  min-height: 0;
+  padding: 48px 90px 0;
+  position: relative;
+  z-index: 1;
+  display: flex;
+}
+
+.ticket {
+  flex: 1;
+  background: #f7f1ff;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
+}
+
+.rows {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 56px 64px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #e7d9f5;
+}
+.row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.rowIcon {
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: #22083a;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rowIcon svg {
+  width: 42px;
+  height: 42px;
+}
+.rowLabel {
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: 400;
+  font-size: 46px;
+  letter-spacing: 0.01em;
+  color: #22083a;
+}
+.rowCaption {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px;
+  color: #7a5f96;
+  margin-top: 4px;
+}
+
+.perforation {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 24px;
+}
+.notch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #22083a;
+  flex-shrink: 0;
+}
+.dashedLine {
+  flex: 1;
+  height: 0;
+  border-top: 2px dashed #d8c6ec;
+}
+
+.qrBlock {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 32px 48px 40px;
+}
+.qrBox {
+  width: 152px;
+  height: 152px;
+  background: #22083a;
+  border-radius: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  display: block;
+}
+.qrCta {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  color: #22083a;
+  line-height: 1.15;
+}
+.qrSub {
+  font-size: 20px;
+  color: #5a3d73;
+  margin-top: 6px;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  padding: 30px 96px 116px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.footerId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  color: #b79fcb;
+}
+.footerId strong {
+  color: #f0e4fb;
+}
+
+.footerPhone {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  color: #b79fcb;
+  margin-top: 8px;
+}
+.footerPhone strong {
+  color: #ffc531;
+  font-weight: 500;
+}

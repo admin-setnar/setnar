@@ -1,0 +1,180 @@
+/* Identidade Green Seguros — fundo claro institucional, escudo geométrico. Fontes: ver ./fonts.ts. */
+
+.post,
+.post * {
+  box-sizing: border-box;
+}
+
+.post {
+  width: 1080px;
+  height: 1080px;
+  background: #f3f6fb;
+  background-image: radial-gradient(circle at 85% 8%, rgba(47, 111, 237, 0.1) 0%, transparent 42%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  color: #0a2540;
+  padding: 76px 96px 56px;
+}
+
+.shieldWrap {
+  flex-shrink: 0;
+  margin-bottom: 20px;
+}
+.shieldOuter {
+  width: 108px;
+  height: 118px;
+  clip-path: polygon(50% 0%, 100% 20%, 100% 58%, 50% 100%, 0% 58%, 0% 20%);
+  background: linear-gradient(160deg, #0a2540 0%, #123a66 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+}
+.shieldInner {
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(50% 0%, 100% 20%, 100% 58%, 50% 100%, 0% 58%, 0% 20%);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(201, 162, 39, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.checkMark {
+  color: #c9a227;
+  font-size: 40px;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  color: #2f6fed;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.headline {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 60px;
+  line-height: 1.14;
+  margin: 0;
+  max-width: 800px;
+  color: #0a2540;
+}
+
+.subcopy {
+  font-size: 27px;
+  line-height: 1.45;
+  color: #4a5b74;
+  margin: 22px 0 0;
+  max-width: 660px;
+}
+.highlight {
+  color: #2f6fed;
+  font-weight: 600;
+}
+
+.checklist {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 40px;
+  max-width: 760px;
+}
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #ffffff;
+  border: 1px solid #dbe4f2;
+  border-radius: 100px;
+  padding: 13px 22px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #0a2540;
+  box-shadow: 0 2px 6px rgba(10, 37, 64, 0.05);
+}
+.checkIcon {
+  color: #2f6fed;
+  font-weight: 700;
+}
+
+.qrZone {
+  margin-top: auto;
+  background: #0a2540;
+  border-radius: 20px;
+  padding: 24px 30px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  box-shadow: 0 16px 36px rgba(10, 37, 64, 0.18);
+}
+.qrBox {
+  width: 128px;
+  height: 128px;
+  background: #ffffff;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  display: block;
+}
+.qrCopy {
+  text-align: left;
+  color: #ffffff;
+}
+.qrCta {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1.2;
+}
+.qrSub {
+  font-size: 15px;
+  color: #a9bcda;
+  margin-top: 6px;
+}
+
+.footer {
+  flex-shrink: 0;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid #dbe4f2;
+  width: 100%;
+}
+.footerId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  color: #5b6b82;
+}
+.footerId strong {
+  color: #0a2540;
+}
+
+.footerPhone {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  color: #5b6b82;
+  margin-top: 6px;
+}
+.footerPhone strong {
+  color: #2f6fed;
+  font-weight: 600;
+}

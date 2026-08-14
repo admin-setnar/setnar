@@ -1,0 +1,229 @@
+/* Identidade Solar, composição "nascer do sol" — distinta do post e do story. Fontes: ver ./fonts.ts. */
+
+.poster,
+.poster * {
+  box-sizing: border-box;
+}
+
+.poster {
+  width: 794px;
+  min-height: 1123px;
+  background: #17120c;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: 'Manrope', sans-serif;
+  color: #fff3e0;
+  padding: 0 56px 44px;
+}
+
+.sunburstWrap {
+  position: relative;
+  width: 560px;
+  height: 300px;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+.ring1,
+.ring2,
+.ring3,
+.core {
+  position: absolute;
+  border-radius: 50%;
+  top: -280px;
+}
+.ring1 {
+  width: 560px;
+  height: 560px;
+  left: 0;
+  border: 1px solid rgba(255, 176, 32, 0.14);
+}
+.ring2 {
+  width: 460px;
+  height: 460px;
+  left: 50px;
+  border: 1px solid rgba(255, 176, 32, 0.22);
+}
+.ring3 {
+  width: 360px;
+  height: 360px;
+  left: 100px;
+  border: 1px solid rgba(255, 176, 32, 0.34);
+}
+.core {
+  width: 220px;
+  height: 220px;
+  left: 170px;
+  background: radial-gradient(circle at 50% 40%, #ffcf6b 0%, #ffb020 55%, rgba(255, 176, 32, 0) 78%);
+}
+
+.eyebrow {
+  position: relative;
+  z-index: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  letter-spacing: 0.16em;
+  color: #ffb020;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.headline {
+  position: relative;
+  z-index: 1;
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 50px;
+  line-height: 1.08;
+  margin: 0;
+  max-width: 580px;
+}
+.highlight {
+  color: #ffb020;
+}
+
+.statChip {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 24px;
+  background: rgba(255, 176, 32, 0.1);
+  border: 1px solid rgba(255, 176, 32, 0.4);
+  border-radius: 100px;
+  padding: 11px 22px;
+}
+.statNumber {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 22px;
+  color: #ffb020;
+}
+.statLabel {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: #d8c3ab;
+}
+
+.stepRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 22px;
+  margin-top: 32px;
+}
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.stepDot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #17120c;
+  border: 1px solid rgba(255, 176, 32, 0.5);
+  color: #ffb020;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stepLabel {
+  font-size: 13px;
+  color: #b7a68f;
+}
+
+.qrZone {
+  position: relative;
+  z-index: 1;
+  margin-top: 34px;
+  background: #fff3e0;
+  border-radius: 16px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32);
+}
+.qrBox {
+  width: 126px;
+  height: 126px;
+  background: #17120c;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px;
+}
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  border-radius: 5px;
+  display: block;
+}
+.qrCopy {
+  text-align: left;
+  color: #17120c;
+}
+.qrCta {
+  font-family: 'Archivo Black', sans-serif;
+  font-size: 21px;
+  line-height: 1.15;
+}
+.qrSub {
+  font-size: 15px;
+  color: #7a6650;
+  margin-top: 6px;
+}
+
+.whatsappLine {
+  position: relative;
+  z-index: 1;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  color: #d8c3ab;
+  background: rgba(255, 176, 32, 0.06);
+  border: 1px solid rgba(255, 176, 32, 0.28);
+  border-radius: 100px;
+  padding: 8px 18px;
+}
+.whatsappLine strong {
+  color: #ffb020;
+  font-weight: 600;
+}
+.whatsappIcon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: #ffb020;
+}
+
+.spacer {
+  flex: 1;
+  min-height: 20px;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 243, 224, 0.1);
+  width: 100%;
+}
+.footerId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: #b7a68f;
+}
+.footerId strong {
+  color: #f5e6cf;
+}

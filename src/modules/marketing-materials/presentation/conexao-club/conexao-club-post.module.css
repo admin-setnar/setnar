@@ -1,0 +1,212 @@
+/* Identidade Club: violeta profundo + magenta + dourado. Fontes: ver ./fonts.ts. */
+
+.post,
+.post * {
+  box-sizing: border-box;
+}
+
+.post {
+  width: 1080px;
+  height: 1080px;
+  background: #22083a;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  color: #f7f1ff;
+}
+
+/* Chips decorativos flutuantes — motivo de "cartões de desconto" espalhados. */
+.chip {
+  position: absolute;
+  border-radius: 22px;
+  z-index: 0;
+}
+.chip1 {
+  top: 64px;
+  left: 70px;
+  width: 120px;
+  height: 80px;
+  background: rgba(255, 61, 138, 0.14);
+  transform: rotate(-12deg);
+}
+.chip2 {
+  top: 120px;
+  right: 60px;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: rgba(255, 197, 49, 0.12);
+}
+.chip3 {
+  bottom: 260px;
+  left: 40px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(255, 61, 138, 0.1);
+}
+.chip4 {
+  bottom: 300px;
+  right: 90px;
+  width: 100px;
+  height: 68px;
+  background: rgba(255, 197, 49, 0.1);
+  transform: rotate(9deg);
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 104px 110px 0 110px;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  letter-spacing: 0.18em;
+  color: #ffc531;
+  text-transform: uppercase;
+  margin-bottom: 22px;
+}
+
+.headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-weight: 400;
+  font-size: 92px;
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+.highlight {
+  color: #ff3d8a;
+}
+
+.subcopy {
+  margin: 24px auto 0;
+  font-size: 28px;
+  line-height: 1.5;
+  color: #c6aedb;
+  max-width: 620px;
+}
+
+.iconRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  padding: 40px 0 0;
+}
+.iconChip {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 197, 49, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.iconChip svg {
+  width: 34px;
+  height: 34px;
+}
+
+.qrSection {
+  position: relative;
+  z-index: 1;
+  padding: 36px 110px 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qrTag {
+  position: relative;
+  background: #f7f1ff;
+  border-radius: 24px;
+  padding: 28px 34px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  transform: rotate(-1.6deg);
+  box-shadow: 0 20px 46px rgba(0, 0, 0, 0.4);
+}
+.qrTag::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #ffc531;
+  border: 4px solid #22083a;
+}
+
+.qrBox {
+  width: 144px;
+  height: 144px;
+  background: #22083a;
+  border-radius: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  border-radius: 7px;
+  display: block;
+}
+
+.qrCopy {
+  color: #22083a;
+  text-align: left;
+}
+.qrCta {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 30px;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+}
+.qrSub {
+  font-size: 19px;
+  color: #5a3d73;
+  margin-top: 8px;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  padding: 24px 110px 44px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+.footerId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  color: #b79fcb;
+}
+.footerId strong {
+  color: #f0e4fb;
+}
+
+.footerPhone {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 16px;
+  color: #b79fcb;
+  margin-top: 6px;
+}
+.footerPhone strong {
+  color: #ffc531;
+  font-weight: 500;
+}

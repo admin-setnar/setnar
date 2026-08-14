@@ -365,7 +365,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 - Account creation, sign-in, sign-out, and password recovery (request link and set a new password).
 - Representative onboarding: creating the representative's own record, with public name prefilled from the account, mandatory commercial phone, authorization identifier and public address (slug).
 - Editing own profile: display name, authorization identifier, phone, city. **These four fields are the whole of it.**
-- Authenticated App Shell with `/app/paginas` for page management, `/app/contatos` for the read-only inbox of captured contacts, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance or Materials destination exists.
+- Authenticated App Shell with `/app/paginas` for page management, `/app/paginas/marketing` for downloadable marketing materials (SET-65, ADR-090 — see below), `/app/contatos` for the read-only inbox of captured contacts, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance destination exists.
 - Reading the products of the authorizing organization's catalog. The catalog is seeded by migration; there is no interface to manage it.
 - Product activation and deactivation by the representative.
 - Publication of a commercial page per activated product, subject to four ordered preconditions: active representative, active SETNAR Subscription, name filled in, phone filled in. Only the first failure is reported.
@@ -378,6 +378,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 - Basic analytics shown to the representative in `/app/paginas`: visits, WhatsApp clicks and leads, counted per Product over a 7- or 30-day window (SET-37/ADR-082, `QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer, device or city, and no conversion rate** — that remains Advanced Analytics, Future vision.
 - Subscription checked through the same `is_subscription_active` rule both when a Commercial Page is published and when it is served.
 - `/app/paginas` reads that same Subscription and profile-completeness decision: it blocks publication, offers an actionable path to `/app/conta`, suppresses public links/QR Codes for inaccessible pages, and never labels an inaccessible stored `published` row as “Publicado.”
+- 21 marketing materials (7 products × Post/Story/Poster), personalized with the representative's own name, authorization ID, phone and city, plus a QR Code to their Commercial Page, downloadable as PNG from `/app/paginas/marketing` (SET-65, ADR-090). Pulled forward from Stage 2's Material Library as the minimal distribution mechanism the Stage 1 hypothesis needs — **not** the full Media Library: no campaign creation, no visual editor, no user-generated artwork, no upload, no analytics of its own. A material only shows for a product the same `is_subscription_active`/publication rule already makes publicly available — same gate as the Commercial Page itself, not a separate flag.
 
 **Known limits of the "organization-agnostic" claim.** Tenant resolution, the schema, and the core flows carry no assumption of any particular organization. Two presentation-level pieces currently do: the identification block renders the fixed string "Licenciado Autorizado iGreen Energy," and the compliance notices are iGreen-specific copy keyed to the seven seeded products. Both are documented as such in the code and are known scope, not accidental coupling — but a second authorizing organization would require changing them. This is stated here so that nobody reads "multi-tenant architecture" as "a second organization could be onboarded today."
 
@@ -391,7 +392,7 @@ Decided or under way, **not yet usable**:
 
 ### Future vision
 
-Hypotheses and concepts. **Not commitments, not authorization to build, and never publicly presentable as existing:** marketing material library, campaigns and smart links, advanced analytics, CRM and sales pipeline, artificial intelligence, business automation, enterprise multi-organization operations, white label, marketplace, developer platform and public APIs. Each one's status is in `ROADMAP.md`; each one's domain status is in `DOMAIN_MODEL.md` § 3.1.
+Hypotheses and concepts. **Not commitments, not authorization to build, and never publicly presentable as existing:** the full Media Library (campaign creation, a visual editor, user-generated artwork, an open template library, favorites, ranking, A/B testing, upload, its own analytics — see the SET-65 bullet above for what already exists instead), campaigns and smart links, advanced analytics, CRM and sales pipeline, artificial intelligence, business automation, enterprise multi-organization operations, white label, marketplace, developer platform and public APIs. Each one's status is in `ROADMAP.md`; each one's domain status is in `DOMAIN_MODEL.md` § 3.1.
 
 **A representative profile photo, social links, and business hours are not implemented** — despite appearing in `ROADMAP.md` Stage 1.
 

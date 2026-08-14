@@ -2,23 +2,32 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, UsersRound, UserRound } from 'lucide-react';
+import { FileText, Image as ImageIcon, UsersRound, UserRound } from 'lucide-react';
 
 import { cn } from '@/shared/lib/cn';
 
 const destinations = [
   { href: '/app/paginas', label: 'Páginas', icon: FileText },
+  { href: '/app/paginas/marketing', label: 'Materiais', icon: ImageIcon },
   { href: '/app/contatos', label: 'Contatos', icon: UsersRound },
   { href: '/app/conta', label: 'Conta', icon: UserRound },
 ] as const;
 
 export function AppNavigation({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
+  // Longest-matching href wins: `/app/paginas/marketing` starts with
+  // `/app/paginas` too, so a naive independent `startsWith` per item would
+  // highlight both "Páginas" and "Materiais" at once — nested routes need
+  // one active winner, not every ancestor prefix lit up.
+  const activeHref = destinations
+    .map((d) => d.href)
+    .filter((href) => pathname === href || pathname.startsWith(`${href}/`))
+    .sort((a, b) => b.length - a.length)[0];
 
   return (
-    <nav aria-label="Navegação da conta" className={cn(mobile ? 'grid grid-cols-3 gap-1 sm:gap-2' : 'space-y-1')}>
+    <nav aria-label="Navegação da conta" className={cn(mobile ? 'grid grid-cols-4 gap-1 sm:gap-2' : 'space-y-1')}>
       {destinations.map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || pathname.startsWith(`${href}/`);
+        const active = href === activeHref;
         return (
           <Link
             key={href}

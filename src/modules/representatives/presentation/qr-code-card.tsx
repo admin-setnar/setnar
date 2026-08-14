@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Check, Copy, Download, RefreshCw } from 'lucide-react';
-import { toDataURL } from 'qrcode';
 
+import { generateQrCodeDataUrl } from '@/shared/lib/generate-qr-code-data-url';
 import { Button } from '@/shared/ui/button';
 import { Card } from '@/shared/ui/card';
 import { FormAlert } from '@/shared/ui/form-alert';
@@ -35,7 +35,7 @@ export function QrCodeCard({ url, fileName }: { url: string; fileName: string })
     let cancelled = false;
     setDataUrl(null);
     setGenerationFailed(false);
-    toDataURL(url, { width: 240, margin: 1 })
+    generateQrCodeDataUrl(url)
       .then((result) => {
         if (!cancelled) setDataUrl(result);
       })
