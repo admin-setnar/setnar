@@ -91,11 +91,9 @@ export function MaterialPreview({
         </div>
       </div>
 
-      <div className="mx-auto w-fit overflow-hidden rounded-lg border border-line">
-        <ScaledFrame width={width} height={height} targetWidth={previewWidth}>
-          <Component {...materialProps} />
-        </ScaledFrame>
-      </div>
+      <ScaledFrame width={width} height={height} targetWidth={previewWidth}>
+        <Component {...materialProps} />
+      </ScaledFrame>
 
       {exportFailed ? (
         <div className="flex items-start gap-2 text-sm text-danger">
