@@ -59,6 +59,10 @@ executed. Never invent a baseline.
 | [`archive/AUDIT_SET-71_billing_events_payload.md`](archive/AUDIT_SET-71_billing_events_payload.md) | Implemented — archived | `billing_events.payload` minimized to only the fields already extracted/trusted, dropping the raw `.passthrough()` webhook body (ADR-085). Retention/purge timing intentionally left to SET-46, still open. |
 | [`DATA_RETENTION_DECISIONS_PLAN.md`](DATA_RETENTION_DECISIONS_PLAN.md) | Approved — implemented | Pedro decided retention periods per category (SET-46): `leads` 24mo, `analytics_events` 12mo (AN7), `feedback_responses`/`subscriptions` tied to account lifecycle, `billing_events`/`billing_reconciliation_log` undefined (no PII to minimize by time). The `leads`/`analytics_events` purge job is implemented and deployed (SET-73, ADR-086) — `cron.job` confirms it scheduled and active. |
 | [`MARKETING_MATERIALS_PLAN.md`](MARKETING_MATERIALS_PLAN.md) | Approved — implemented | SET-65: 21/21 materials ported to `src/modules/marketing-materials/`, live at `/app/paginas/marketing`. D1 (export pipeline) closed via a real POC — client-side capture (`html-to-image`), see ADR-090. |
+| [`MVP_ANALYTICS_AUDIT.md`](MVP_ANALYTICS_AUDIT.md) | Proposed — investigative, no product decision made | Instrumentation/KPI readiness audit for the 15 MVP validation metrics. Verdict `PARTIALLY_READY_FOR_MVP_ANALYTICS`: no P0 gaps, but `whatsapp_click` and `leads` are parallel, uncorrelated events (not a real funnel), public page views don't exclude the representative's own self-visits, and `subscriptions` has no dedicated conversion/cancellation timestamp. Read-only investigation — nothing implemented. |
+| [`ANALYTICS_DATA_LAYER_METABASE_READINESS.md`](ANALYTICS_DATA_LAYER_METABASE_READINESS.md) | Approved — D8–D12 closed by Pedro 2026-08-14 (D10 conditional on D9's LGPD review; D11 conditional on a security POC before any final migration) | Investigates a BI data layer for `STAGE_1_KPI_SPECIFICATION.md`'s KPIs: which are safe as direct queries vs. need a canonical SQL view (to keep the OR-not-funnel/`provider='asaas'`/`published` vs `unpublished` filters out of ad-hoc Metabase questions), a two-tier read-only Postgres role design (`bi_view_owner` bypassing RLS on curated `bi.*` views, `bi_readonly` with zero table access), PII minimization (`leads.telefone_e164`/`campos` never exposed), and Metabase Cloud vs. self-hosted. Adopting BI at all (D8) reverses SET-50/`PILOT_METRICS.md`'s explicit "sem BI" scope decision — extended, not erased. Nothing implemented yet — no role, schema, view or Metabase config created; D11's security POC is still pending. |
+| [`STAGE_1_KPI_SPECIFICATION.md`](STAGE_1_KPI_SPECIFICATION.md) | Approved — D1–D7 closed by Pedro 2026-08-14 (D3/D5/D7 deliberately deferred past Stage 1) | Formalizes `MVP_ANALYTICS_AUDIT.md`'s findings into one canonical definition per Stage 1 KPI (formula/numerator/denominator/filters/known limitations), so no dashboard reinvents "Pagante" or "Representante ativo" differently. Key resolved definitions: `Activated Representative` = lifetime, published at least once (D1); `Result Rate` = with-result/activated, windowed off `published_at` (D2); `Paid Customer` requires `provider='asaas'`, not just `status='active'`; Founding Cohort Conversion is the Stage 1 headline paid-conversion metric (D6); churn stays D30/D60 retention-snapshot (D7). Nothing implemented — no view, RPC or Metabase config created. |
+| [`AUDIT_MVP_LAUNCH.md`](AUDIT_MVP_LAUNCH.md) | Draft — awaiting Product Owner decision | Operational readiness audit for the MVP launch (Stage 1 of `ROADMAP.md`). Moved here from `docs/AUDIT_MVP_LAUNCH.md` on 2026-08-14 — basename unchanged, see the move table below. |
 
 `archive/` holds plans that are finished or superseded. Nothing is deleted:
 the reasoning behind a decision is worth more than the plan that carried it.
@@ -78,7 +82,13 @@ only the folder.
 | `docs/SPRINT_E_PLAN.md` | `docs/plans/SPRINT_E_PLAN.md` |
 | `docs/COMMERCIAL_PAGE_CONTENT_PLAN.md` | `docs/plans/COMMERCIAL_PAGE_CONTENT_PLAN.md` |
 
-Source comments, applied migrations, and ADRs written before that date still
+`docs/AUDIT_MVP_LAUNCH.md` moved the same way, later, on 2026-08-14:
+
+| Old path | New path |
+|---|---|
+| `docs/AUDIT_MVP_LAUNCH.md` | `docs/plans/AUDIT_MVP_LAUNCH.md` |
+
+Source comments, applied migrations, and ADRs written before these dates still
 cite the old `docs/<NAME>.md` paths. Those references were deliberately left
 untouched — applied migrations are never edited (see the migration rule in
 `README.md`), and this was a documentation-only review. The basename is

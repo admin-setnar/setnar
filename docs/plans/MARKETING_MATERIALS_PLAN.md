@@ -74,7 +74,7 @@ de D0 fecha só a primeira.
 
 `docs/PRODUCT.md` § *Future vision* e `docs/ROADMAP.md` § Stage 2 §
 *Material Library* vão ficar desatualizados assim que a primeira peça for
-implementada — o mesmo tipo de gap que `docs/AUDIT_MVP_LAUNCH.md` (Achado 2)
+implementada — o mesmo tipo de gap que `docs/plans/AUDIT_MVP_LAUNCH.md` (Achado 2)
 já registrou para o gateway de pagamento. `docs/README.md` § *Documentation
 Definition of Done* exige que `PRODUCT.md` § *What Exists Today* reflita a
 capacidade assim que ela existir para o cliente. **Esta tarefa não altera

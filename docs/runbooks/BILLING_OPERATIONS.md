@@ -341,7 +341,7 @@ regra, comparando em tempo constante sem logar nenhum dos dois lados).
 **Contato de suporte para problemas de pagamento**: `contato@setnar.com` —
 preenchido pelo Product Owner em 2026-08-14. É o canal para onde um
 representante ou quem estiver de plantão deve escalar um incidente de
-billing; fecha o Achado 4 de `docs/AUDIT_MVP_LAUNCH.md`.
+billing; fecha o Achado 4 de `docs/plans/AUDIT_MVP_LAUNCH.md`.
 
 Ainda não registrado neste repositório (não bloqueia o lançamento, já que
 o canal primário acima existe — preencher quando houver essa informação):
