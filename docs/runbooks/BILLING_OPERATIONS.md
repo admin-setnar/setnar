@@ -338,20 +338,22 @@ regra, comparando em tempo constante sem logar nenhum dos dois lados).
 
 ## 8. Contatos do gateway (Asaas)
 
-**Não registrado neste repositório.** Este projeto não tem sistema de
-contatos operacionais versionado, e inventar um número/e-mail de suporte
-aqui seria pior que deixar em aberto — um contato errado atrasa um
-incidente real mais do que a ausência de um. Antes do primeiro incidente
-de produção, o Product Owner deve preencher:
+**Contato de suporte para problemas de pagamento**: `contato@setnar.com` —
+preenchido pelo Product Owner em 2026-08-14. É o canal para onde um
+representante ou quem estiver de plantão deve escalar um incidente de
+billing; fecha o Achado 4 de `docs/AUDIT_MVP_LAUNCH.md`.
+
+Ainda não registrado neste repositório (não bloqueia o lançamento, já que
+o canal primário acima existe — preencher quando houver essa informação):
 
 - Canal de suporte Asaas (painel → Ajuda/Suporte) e SLA de resposta deles,
   se houver.
 - Se existir um gerente de conta ou contato comercial dedicado.
 
-Até lá, o canal disponível é o suporte padrão do painel do Asaas
-(`https://www.asaas.com`, autenticado com a conta do projeto) e a página
-pública de status/changelog já citada em `supabase/README.md` §8 para
-mudanças de comportamento do webhook.
+Para questões do lado do Asaas (não do SETNAR), o canal disponível é o
+suporte padrão do painel do Asaas (`https://www.asaas.com`, autenticado
+com a conta do projeto) e a página pública de status/changelog já citada
+em `supabase/README.md` §8 para mudanças de comportamento do webhook.
 
 ---
 
