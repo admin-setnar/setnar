@@ -208,6 +208,7 @@ Status verified against the Parte 2 working tree based on commit `df8db50` on 20
 - Products, links, QR Codes — done in `/app/paginas`
 - Read-only delivery of captured contacts — done in `/app/contatos` (SET-77/ADR-087); this does not activate CRM lifecycle
 - Basic statistics — done in `/app/paginas` (SET-37/ADR-082)
+- 21 downloadable marketing materials (7 products × Post/Story/Poster), personalized and gated by the same publication rule — done in `/app/paginas/marketing` (SET-65/ADR-090). Pulled forward from Stage 2's Material Library, below, as the distribution mechanism this stage's own hypothesis needs — see `MARKETING_MATERIALS_PLAN.md` §0 for the recorded reason. Scoped to exactly these 21 existing pieces, not the full Material Library
 
 ---
 
@@ -322,6 +323,8 @@ CRM lifecycle and lead working state — status, notes, tasks, pipeline, assignm
 - Videos
 - PDFs
 - Presentations
+
+**A minimal slice — 21 static, pre-designed pieces, personalized and downloadable, no campaigns/editor/upload/analytics of its own — was pulled forward into Stage 1** as the distribution mechanism for that stage's own hypothesis (SET-65/ADR-090, `MARKETING_MATERIALS_PLAN.md`). What remains here, genuinely Stage 2, is the rest: campaign creation, a visual editor, user-generated artwork, video/PDF/presentation formats, an open template library, upload.
 
 ---
 

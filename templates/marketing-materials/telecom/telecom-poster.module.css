@@ -1,0 +1,182 @@
+/* Identidade Telecom, composição "gráfico de sinal" — distinta do post e do story. Fontes: ver ./fonts.ts. */
+
+.poster,
+.poster * {
+  box-sizing: border-box;
+}
+
+.poster {
+  width: 794px;
+  min-height: 1123px;
+  background: #150b2e;
+  background-image: radial-gradient(circle at 88% 4%, rgba(124, 77, 255, 0.32) 0%, transparent 42%);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Manrope', sans-serif;
+  color: #f2eefc;
+  padding: 64px 60px 40px;
+}
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px;
+  letter-spacing: 0.14em;
+  color: #39ff9e;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.headline {
+  font-family: 'Sora', sans-serif;
+  font-weight: 800;
+  font-size: 52px;
+  line-height: 1.16;
+  margin: 0;
+  max-width: 640px;
+}
+.highlight {
+  color: #39ff9e;
+}
+
+.chartCard {
+  margin-top: 40px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  padding: 34px 36px 26px;
+}
+.legend {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 18px;
+}
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 17px;
+  font-weight: 600;
+  color: #d8d1f0;
+}
+.legendDot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.dotMuted {
+  background: #b7aed6;
+}
+.dotNeon {
+  background: #39ff9e;
+  box-shadow: 0 0 8px rgba(57, 255, 158, 0.8);
+}
+.chart {
+  width: 100%;
+  height: 270px;
+  display: block;
+}
+.chartAxis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: #7a6fa8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.qrZone {
+  margin-top: 40px;
+  background: #f2eefc;
+  border-radius: 18px;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.qrBox {
+  width: 144px;
+  height: 144px;
+  background: #150b2e;
+  border-radius: 12px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  display: block;
+}
+.qrCopy {
+  color: #150b2e;
+}
+.qrCta {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.15;
+}
+.qrSub {
+  font-size: 16px;
+  color: #5b5279;
+  margin-top: 7px;
+}
+
+.whatsappLine {
+  position: relative;
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  color: #a79bcf;
+  background: rgba(57, 255, 158, 0.05);
+  border: 1px solid rgba(57, 255, 158, 0.24);
+  border-radius: 100px;
+  padding: 8px 18px;
+  width: fit-content;
+}
+.whatsappLine strong {
+  color: #39ff9e;
+  font-weight: 600;
+}
+.whatsappIcon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  color: #39ff9e;
+}
+
+.spacer {
+  flex: 1;
+  min-height: 12px;
+}
+
+.footer {
+  flex-shrink: 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(242, 238, 252, 0.12);
+}
+.footerId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: #a79bcf;
+}
+.footerId strong {
+  color: #f2eefc;
+}
+.finePrint {
+  font-size: 11px;
+  color: #7a6fa8;
+  margin-top: 8px;
+  line-height: 1.4;
+  max-width: 560px;
+}

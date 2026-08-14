@@ -1,0 +1,204 @@
+/* Identidade Livre, composição "selo de elegibilidade" — distinta do post e do story. Fontes: ver ./fonts.ts. */
+
+.poster,
+.poster * {
+  box-sizing: border-box;
+}
+
+.poster {
+  width: 794px;
+  min-height: 1123px;
+  background: #12161f;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  color: #f2f4f8;
+  padding: 76px 60px 44px;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(61, 139, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61, 139, 255, 0.06) 1px, transparent 1px);
+  background-size: 46px 46px;
+  pointer-events: none;
+}
+
+.badgeOuter {
+  position: relative;
+  z-index: 1;
+  width: 220px;
+  height: 190px;
+  background: #3d8bff;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.badgeInner {
+  width: 204px;
+  height: 176px;
+  background: #12161f;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.badgeLabel {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 34px;
+  color: #f2f4f8;
+}
+.badgeSub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: #7f9ac9;
+  margin-top: 6px;
+  text-transform: uppercase;
+}
+
+.eyebrow {
+  position: relative;
+  z-index: 1;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px;
+  letter-spacing: 0.16em;
+  color: #3d8bff;
+  text-transform: uppercase;
+  margin: 26px 0 14px;
+}
+
+.headline {
+  position: relative;
+  z-index: 1;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 44px;
+  line-height: 1.14;
+  margin: 0;
+  max-width: 560px;
+}
+.highlight {
+  color: #3d8bff;
+}
+
+.checklist {
+  position: relative;
+  z-index: 1;
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 18px;
+  color: #cdd9ec;
+}
+.checkItem svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.qrZone {
+  position: relative;
+  z-index: 1;
+  margin-top: 40px;
+  background: #f2f4f8;
+  border-radius: 14px;
+  padding: 26px 30px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.qrBox {
+  width: 128px;
+  height: 128px;
+  background: #12161f;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px;
+}
+.qrBox img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.qrCopy {
+  text-align: left;
+  color: #12161f;
+}
+.qrCta {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 23px;
+  line-height: 1.2;
+}
+.qrSub {
+  font-size: 15px;
+  color: #4a5570;
+  margin-top: 6px;
+}
+
+.whatsappLine {
+  position: relative;
+  z-index: 1;
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  color: #cdd9ec;
+  background: rgba(61, 139, 255, 0.06);
+  border: 1px solid rgba(61, 139, 255, 0.28);
+  border-radius: 100px;
+  padding: 9px 20px;
+}
+.whatsappLine strong {
+  color: #3d8bff;
+  font-weight: 600;
+}
+.whatsappIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: #3d8bff;
+}
+
+.spacer {
+  flex: 1;
+  min-height: 20px;
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  width: 100%;
+}
+.footerId {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: #7c89a6;
+}
+.footerId strong {
+  color: #d3dae8;
+}
