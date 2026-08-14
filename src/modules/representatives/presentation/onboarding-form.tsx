@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { formatE164ToBRPhone, maskBRPhone } from '@/shared/domain/br-phone';
+import { SITE_URL } from '@/config/site';
 import { registerRepresentativeAction } from '@/modules/representatives/presentation/actions';
 import {
   onboardingErrorCopy,
@@ -39,6 +40,9 @@ import { Input } from '@/shared/ui/input';
  * for its own success path. A normal return from the action is therefore
  * always a `RegisterRepresentativeFailure` (`'rejected'` or `'error'`).
  */
+/** Same derivation `buildCommercialPageUrl` uses — the root host a slug is prefixed onto. */
+const ROOT_HOST = new URL(SITE_URL).hostname;
+
 export function OnboardingForm({
   initialDisplayName,
   initialPhone,
@@ -51,6 +55,7 @@ export function OnboardingForm({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RepresentativeOnboardingFormValues>({
     resolver: zodResolver(representativeOnboardingSchema),
@@ -69,6 +74,14 @@ export function OnboardingForm({
   // `RepresentativeProfileForm`'s own `phone` field.
   const phoneField = register('phone');
 
+  // Live URL preview for the `slug` field — lowercased the same way the
+  // schema's own `.toLowerCase()` will before submit, so what's shown here
+  // never disagrees with what actually gets registered.
+  const slugPreview = watch('slug').trim().toLowerCase();
+  const slugHint = slugPreview
+    ? `Sua página ficará em ${slugPreview}.${ROOT_HOST}`
+    : `Só letras minúsculas, números e hífen — ficará em algo como joao-silva.${ROOT_HOST}.`;
+
   async function onSubmit(values: RepresentativeOnboardingFormValues) {
     setFailure(null);
     // A normal return here is always a failure — success redirects
@@ -83,7 +96,7 @@ export function OnboardingForm({
 
       <FormField
         label="Endereço da sua página"
-        hint="Só letras minúsculas, números e hífen — ex.: joao-silva."
+        hint={slugHint}
         error={errors.slug?.message}
       >
         {({ id, describedBy, invalid }) => (

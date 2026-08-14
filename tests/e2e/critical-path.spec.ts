@@ -53,7 +53,13 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
 
     await test.step('onboarding cria o representante', async () => {
       await completeOnboarding(page, fixture);
-      await expect(page.getByText(fixture.slug)).toBeVisible();
+      // Não usa getByText(fixture.slug): o fixture deriva slug/e-mail do mesmo
+      // sufixo aleatório, então esse texto já era ambíguo por natureza (bate
+      // com o e-mail da conta na barra lateral) — e SET-82 acrescentou um
+      // segundo lugar (o preview de URL do próprio formulário de onboarding),
+      // tornando esse "coincide 1x" ainda mais frágil. O sinal real de que o
+      // onboarding terminou é a troca de tela para o hub de páginas.
+      await expect(page.getByRole('heading', { name: 'Suas páginas' })).toBeVisible();
     });
 
     await test.step('ativa o primeiro produto do catálogo', async () => {
