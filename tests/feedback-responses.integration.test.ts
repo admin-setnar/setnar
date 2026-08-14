@@ -33,6 +33,7 @@ const service = canRun
 let ownerId = '';
 let outsiderId = '';
 let ownerRepresentativeId = '';
+let outsiderRepresentativeId = '';
 let owner: SupabaseClient | null = null;
 let outsider: SupabaseClient | null = null;
 const ownerPassword = `T3st-${randomUUID()}-Aa`;
@@ -82,6 +83,7 @@ describe('feedback_responses RPCs (Postgres, integration)', { skip: !canRun }, (
     const outsiderFixture = await createRepresentative('outsider', outsiderPassword);
     outsiderId = outsiderFixture.userId;
     outsider = outsiderFixture.client;
+    outsiderRepresentativeId = outsiderFixture.representativeId;
   });
 
   after(async () => {
@@ -90,10 +92,15 @@ describe('feedback_responses RPCs (Postgres, integration)', { skip: !canRun }, (
       await service!.from('representatives').delete().eq('id', ownerRepresentativeId);
     }
     if (ownerId) await service!.auth.admin.deleteUser(ownerId);
-    if (outsiderId) {
-      // The outsider's own representative row cascades with it; delete the user only.
-      await service!.auth.admin.deleteUser(outsiderId);
+    if (outsiderRepresentativeId) {
+      // `representatives.profile_id_fkey` is NO ACTION, not CASCADE — deleting
+      // the auth user alone leaves this row (and the FK violation is swallowed
+      // by admin.deleteUser() returning an error object instead of throwing).
+      // Same explicit order as the owner fixture above.
+      await service!.from('feedback_responses').delete().eq('representative_id', outsiderRepresentativeId);
+      await service!.from('representatives').delete().eq('id', outsiderRepresentativeId);
     }
+    if (outsiderId) await service!.auth.admin.deleteUser(outsiderId);
   });
 
   it('denies both RPCs to an anonymous caller', async () => {
