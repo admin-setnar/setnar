@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
-This is the index of every ADR in the project: 89 decisions, numbered `ADR-001`
-through `ADR-089`, one file per decision. This folder is the authority on
+This is the index of every ADR in the project: 91 decisions, numbered `ADR-001`
+through `ADR-091`, one file per decision. This folder is the authority on
 **why the code is the way it is** — see `docs/README.md` § *Which document
 wins* on how an ADR relates to the normative documents.
 
@@ -133,6 +133,8 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 087 | Caixa mínima de Contatos é uma leitura de Leads, não um CRM (SET-77) | DOMAIN_MODEL.md / ARCHITECTURE.md | Consumes ADR-034/067/068, ADR-066 and ADR-082 without expanding the Stage 3 CRM scope | [`ADR-087-caixa-minima-de-contatos-e-uma-leitura-de-leads-nao-um-crm.md`](ADR-087-caixa-minima-de-contatos-e-uma-leitura-de-leads-nao-um-crm.md) |
 | 088 | Commercial Pages profissionais compartilham shell tipado e widgets isolados (SET-78) | ARCHITECTURE.md / DESIGN_SYSTEM.md | Superseded by ADR-089 | [`ADR-088-commercial-pages-profissionais-compartilham-shell-tipado-e-widgets-isolados.md`](ADR-088-commercial-pages-profissionais-compartilham-shell-tipado-e-widgets-isolados.md) |
 | 089 | Commercial Pages usam sete árvores de apresentação independentes (SET-78) | ARCHITECTURE.md / DESIGN_SYSTEM.md | Supersedes ADR-088; qualifies ADR-080 | [`ADR-089-commercial-pages-usam-sete-arvores-de-apresentacao-independentes.md`](ADR-089-commercial-pages-usam-sete-arvores-de-apresentacao-independentes.md) |
+| 090 | Materiais de marketing exportam via captura client-side, não renderização server-side (SET-65) | MARKETING_MATERIALS_PLAN.md | Depends on ADR-026's `buildCommercialPageUrl`; ADR-084's log discipline not applicable | [`ADR-090-materiais-de-marketing-exportam-via-captura-client-side.md`](ADR-090-materiais-de-marketing-exportam-via-captura-client-side.md) |
+| 091 | Card de página publicada: QR Code sob demanda, URL única, "Despublicar" atrás de confirmação (SET-91) | DESIGN_SYSTEM.md | Reuses ADR-049's QR infrastructure and `generateQrCodeDataUrl`; qualifies ADR-080's "Ver prévia" rule for the `published` state; reuses the confirmation pattern SET-32 already established for `CancelSubscriptionPanel` | [`ADR-091-card-de-pagina-publicada-qr-code-sob-demanda-e-despublicar-atras-de-confirmacao.md`](ADR-091-card-de-pagina-publicada-qr-code-sob-demanda-e-despublicar-atras-de-confirmacao.md) |
 
 ## Existing code and migration comments still say `README.md`
 

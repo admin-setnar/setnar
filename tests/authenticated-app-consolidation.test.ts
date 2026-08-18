@@ -15,7 +15,8 @@ const account = source('src/app/app/conta/page.tsx');
 const navigation = source('src/app/app/app-navigation.tsx');
 const actions = source('src/modules/representatives/presentation/actions.ts');
 const onboarding = source('src/modules/representatives/presentation/onboarding-form.tsx');
-const qrCode = source('src/modules/representatives/presentation/qr-code-card.tsx');
+const qrCode = source('src/modules/representatives/presentation/qr-code-dialog.tsx');
+const publishedPageActions = source('src/modules/representatives/presentation/published-page-actions.tsx');
 const migration = source('supabase/migrations/20260818000000_require_professional_profile_phone.sql');
 
 describe('authenticated App Shell contract', () => {
@@ -59,11 +60,15 @@ describe('authenticated App Shell contract', () => {
     assert.doesNotMatch(actions, /^\s+revalidatePath\('\/app'\);$/m);
   });
 
-  it('provides retry, clipboard feedback and manual link selection for QR Codes', () => {
+  it('generates the QR Code on demand inside a dialog, with retry on failure (SET-91)', () => {
+    assert.match(qrCode, /generateQrCodeDataUrl/);
     assert.match(qrCode, /Tentar novamente/);
-    assert.match(qrCode, /navigator\.clipboard\.writeText/);
-    assert.match(qrCode, /\.select\(\)/);
-    assert.match(qrCode, /aria-live="polite"/);
+  });
+
+  it('copies the public link with visual feedback and a manual fallback (SET-91)', () => {
+    assert.match(publishedPageActions, /navigator\.clipboard\.writeText/);
+    assert.match(publishedPageActions, /aria-live="polite"/);
+    assert.match(publishedPageActions, /Copie manualmente/);
   });
 });
 
