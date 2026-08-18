@@ -11,10 +11,8 @@ import {
 import type { Representative } from '@/modules/representatives/domain/representative';
 import type { RepresentativeCatalogEntry } from '@/modules/representatives/domain/representative-catalog-repository';
 import { isRepresentativeProfileComplete } from '@/modules/representatives/domain/representative-rules';
-import { getActivationViewState } from '@/modules/representatives/presentation/activation-view-state';
 import { buildCommercialPageUrl } from '@/modules/representatives/presentation/commercial-page-url';
 import { ProductActivationCard } from '@/modules/representatives/presentation/product-activation-card';
-import { QrCodeCard } from '@/modules/representatives/presentation/qr-code-card';
 import { Card } from '@/shared/ui/card';
 import { FeedbackPrompt, type FeedbackPromptOption } from '@/shared/ui/feedback-prompt';
 import { FormAlert } from '@/shared/ui/form-alert';
@@ -40,10 +38,11 @@ import { Text } from '@/shared/ui/typography';
  * ("nothing in TenantClientView/useTenant() exposes the root hostname
  * today") — closed by reusing the config that already IS this project's
  * single source of truth for its own root domain. Matches ADR-026's shape
- * (`<slug>.<domain>`, no path prefix) and only ever shown for a `published`
- * entry — an unpublished or draft activation has no reachable public page
- * yet. `buildCommercialPageUrl()` also backs the canonical/Open Graph URL
- * `[productSlug]/page.tsx` emits (SET-11) — one derivation, not three.
+ * (`<slug>.<domain>`, no path prefix). `buildCommercialPageUrl()` also backs
+ * the canonical/Open Graph URL `[productSlug]/page.tsx` emits (SET-11) — one
+ * derivation, not three. Computed for every catalog entry and passed down
+ * as `pageUrl`; `ProductActivationCard` itself decides whether the
+ * activation is publicly reachable enough to display/use it (SET-91).
  *
  * Profile editing lives in `/app/conta`; this pages-only surface displays an
  * actionable link there whenever the central publication prerequisites are
@@ -179,7 +178,6 @@ export function RepresentativeHub({
           </Card>
         ) : null}
         {catalog.map((entry) => {
-          const viewState = getActivationViewState(entry.state, subscriptionActive, profileComplete);
           const pageUrl = buildCommercialPageUrl(representative, entry.product);
           const analytics = analyticsByProductId.get(entry.product.id) ?? {
             productId: entry.product.id,
@@ -189,32 +187,17 @@ export function RepresentativeHub({
           };
 
           return (
-          <div key={entry.product.id} className="space-y-2">
             <ProductActivationCard
+              key={entry.product.id}
               product={entry.product}
               state={entry.state}
               subscriptionActive={subscriptionActive}
               profileComplete={profileComplete}
               analytics={analytics}
               periodDays={periodDays}
+              pageUrl={pageUrl}
+              qrFileName={`${representative.slug}-${entry.product.slug}.png`}
             />
-            {viewState.isPubliclyAvailable ? (
-              <>
-                <Text as="p" variant="caption" className="pl-1">
-                  Página no ar:{' '}
-                  <a
-                    href={pageUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-brand underline underline-offset-2"
-                  >
-                    {pageUrl.replace(/^https:\/\//, '')}
-                  </a>
-                </Text>
-                <QrCodeCard url={pageUrl} fileName={`${representative.slug}-${entry.product.slug}.png`} />
-              </>
-            ) : null}
-          </div>
           );
         })}
       </div>

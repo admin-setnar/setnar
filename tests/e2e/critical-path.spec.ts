@@ -70,7 +70,10 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
     await test.step('publica — trial já concede entitlement, sem checkout', async () => {
       await page.getByRole('button', { name: 'Publicar' }).click();
       await expect(page.getByRole('button', { name: 'Despublicar' })).toBeVisible({ timeout: 15_000 });
-      await expect(page.getByText('Página no ar:')).toBeVisible();
+      // SET-91: a URL pública some do card, virando a informação contextual
+      // abaixo do nome + a ação "Abrir site" — não mais um texto solto
+      // "Página no ar: ...".
+      await expect(page.getByRole('link', { name: 'Abrir site' })).toBeVisible();
     });
 
     // A partir daqui a asserção de estado usa o banco real (service_role),
