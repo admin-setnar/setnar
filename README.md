@@ -25,7 +25,7 @@ what exists today, and why any given decision was made are answered by
 | Visual and interaction rules | [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) |
 | Everyday engineering practice | [`docs/ENGINEERING_GUIDELINES.md`](docs/ENGINEERING_GUIDELINES.md) |
 | Sequencing and what's only a candidate | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
-| Why a specific decision was made | [`docs/adr/`](docs/adr/README.md) — 63 ADRs, one per decision |
+| Why a specific decision was made | [`docs/adr/`](docs/adr/README.md) — 92 ADRs, one per decision |
 | What's being worked on right now | [`docs/plans/`](docs/plans/README.md) |
 | Reading order, authority, and governance | [`docs/README.md`](docs/README.md) |
 
@@ -159,7 +159,7 @@ status: [`docs/plans/COMMERCIAL_PAGE_CONTENT_PLAN.md`](docs/plans/COMMERCIAL_PAG
 
 ## Architecture Decision Records
 
-63 decisions, one file per decision, in [`docs/adr/`](docs/adr/README.md).
+92 decisions, one file per decision, in [`docs/adr/`](docs/adr/README.md).
 Moved out of this README on 2026-08-05 so that a 232 KB decision log stops
 looking like part of the onboarding document — see that folder's own
 `README.md` for the index and the migration note.
