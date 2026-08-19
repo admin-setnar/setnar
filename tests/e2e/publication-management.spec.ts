@@ -59,13 +59,18 @@ test.describe('gerenciamento de página publicada (E2E, desktop)', () => {
         .single();
       const { data: product } = await service!
         .from('products')
-        .select('slug')
+        .select('slug, company:companies!inner(slug)')
         .eq('id', activation!.product_id as string)
         .single();
       const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://setnar.com').replace(/\/$/, '');
       const rootHost = new URL(siteUrl).hostname;
       const slug = product!.slug as string;
-      return { expectedUrl: `https://${fixture.slug}.${rootHost}/${slug}`, productSlug: slug };
+      const companySlug = (product!.company as unknown as { slug: string }).slug;
+      // <representative-slug>.<company-slug>.<rootHost> (ADR-092) — same
+      // composition buildCommercialPageUrl uses, replicated here from the
+      // DB directly since this step exists to derive the expected value
+      // independently, not to call the app's own helper.
+      return { expectedUrl: `https://${fixture.slug}.${companySlug}.${rootHost}/${slug}`, productSlug: slug };
     });
 
     await test.step('a URL pública aparece uma única vez, sem overflow, e não como QR Code permanente', async () => {

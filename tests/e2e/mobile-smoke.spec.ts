@@ -6,6 +6,7 @@ import {
   cleanupRepresentative,
   completeOnboarding,
   e2eSkipReason,
+  publicPageOrigin,
   serviceClient,
   signUp,
 } from './support/fixtures';
@@ -53,7 +54,7 @@ test.describe('caminho essencial do MVP (E2E, mobile)', () => {
       .single();
 
     const publicPage = await context.newPage();
-    await publicPage.goto(`http://${fixture.slug}.localhost:3000/${product!.slug}`);
+    await publicPage.goto(`${publicPageOrigin(fixture)}/${product!.slug}`);
     const leadSubmit = publicPage.locator('#quero-simular').getByRole('button');
     await expect(leadSubmit).toBeVisible();
 
