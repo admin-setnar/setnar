@@ -6,6 +6,7 @@ import {
   cleanupRepresentative,
   completeOnboarding,
   e2eSkipReason,
+  publicPageOrigin,
   serviceClient,
   signUp,
 } from './support/fixtures';
@@ -59,7 +60,7 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
       await publicPage.setViewportSize(viewport);
       for (const product of products!) {
         const template = productsExpected.find((item)=>item.slug===product.slug)!;
-        await publicPage.goto(`http://${fixture.slug}.localhost:3000/${product.slug}`);
+        await publicPage.goto(`${publicPageOrigin(fixture)}/${product.slug}`);
         await expect(publicPage.getByRole('heading', { level: 1, name: template.headline })).toBeVisible();
         await expect(publicPage.locator('#quero-simular').getByRole('button', { name: template.leadButton })).toBeVisible();
         await expect(publicPage.getByRole('link', { name: 'Política de Privacidade' })).toBeVisible();
@@ -105,30 +106,30 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
 
     await publicPage.setViewportSize({ width: 1280, height: 800 });
 
-    await publicPage.goto(`http://${fixture.slug}.localhost:3000/conexao-green`);
+    await publicPage.goto(`${publicPageOrigin(fixture)}/conexao-green`);
     await publicPage.getByLabel('Quanto você paga de luz por mês?').fill('1000');
     await expect(publicPage.getByText('14%', { exact: true })).toBeVisible();
 
-    await publicPage.goto(`http://${fixture.slug}.localhost:3000/conexao-livre`);
+    await publicPage.goto(`${publicPageOrigin(fixture)}/conexao-livre`);
     for (const question of await publicPage.getByRole('button', { name: 'Sim', exact: true }).all()) {
       await question.click();
     }
     await expect(publicPage.getByRole('status').filter({ hasText: 'perfil Grupo A' })).toBeVisible();
 
-    await publicPage.goto(`http://${fixture.slug}.localhost:3000/conexao-placas`);
+    await publicPage.goto(`${publicPageOrigin(fixture)}/conexao-placas`);
     await publicPage.getByRole('tab', { name: 'À vista' }).click();
     await expect(publicPage.getByText('Pagamento integral pelo valor apresentado na proposta')).toBeVisible();
 
-    await publicPage.goto(`http://${fixture.slug}.localhost:3000/green-seguros`);
+    await publicPage.goto(`${publicPageOrigin(fixture)}/green-seguros`);
     await publicPage.getByRole('tab', { name: 'Furto e Roubo' }).click();
     await expect(publicPage.getByText('Simular o plano Furto e Roubo')).toBeVisible();
 
-    await publicPage.goto(`http://${fixture.slug}.localhost:3000/telecom`);
+    await publicPage.goto(`${publicPageOrigin(fixture)}/telecom`);
     await expect(publicPage.locator('section#topo ul').first()).toHaveCSS('display', 'block');
     await publicPage.getByRole('tab', { name: 'Número novo' }).click();
     await expect(publicPage.getByText('R$ 104,90')).toBeVisible();
 
-    await publicPage.goto(`http://${fixture.slug}.localhost:3000/conexao-solar`);
+    await publicPage.goto(`${publicPageOrigin(fixture)}/conexao-solar`);
     await expect(publicPage.locator('section#topo ul').first()).toHaveCSS('display', 'block');
 
     const firstInteractiveButton = publicPage.getByRole('button').first();
