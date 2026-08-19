@@ -513,6 +513,17 @@ resolution rather than a new mechanism. The URL scheme (subdomain per
 representative) is decided in
 [`ADR-026`](adr/ADR-026-representative-pages-resolve-by-subdomain-slugdomain-not-by.md).
 
+The public address itself carries a third label: `<representative>.<company>.setnar.com`
+([`ADR-092`](adr/ADR-092-endereco-publico-da-commercial-page-passa-a-incluir-a-company.md)).
+This is **not** a third tier of tenant resolution — the Company label is
+validated against `RepresentativeRepository`'s own data (the Company a
+Product Activation's Product belongs to), never used to look up a
+`TenantRepository` entry. `Tenant`, `Company`, and `Representative` remain
+three distinct concepts: Tenant resolution (ADR-001) still runs first and
+alone decides which known root domains exist; Company only ever
+participates as a label to be matched, one level inside that root, never as
+a second Tenant.
+
 ---
 
 # Scalability Strategy

@@ -15,11 +15,21 @@ export interface RepresentativeRepository {
   /**
    * Resolves the (Representative, Product) pair for a public Commercial
    * Page, or `null` if the Representative doesn't exist, the Product
-   * doesn't exist, or there is no `published` Product Activation linking
-   * the two.
+   * doesn't exist, there is no `published` Product Activation linking the
+   * two, or the Representative does not belong to the Company identified by
+   * `companySlug`.
+   *
+   * The `companySlug` check is a security requirement, not an optional
+   * refinement: without it, a Host like `pedro.ademicom.setnar.com` would
+   * resolve Pedro (who only belongs to iGreen) exactly as if the Company
+   * label were never there. A mismatch returns `null` — the same generic
+   * "not found" outcome as a nonexistent Representative or Company, never a
+   * differentiated response (ADR-030's anti-enumeration principle, applied
+   * to Company membership too).
    */
   findPublishedActivation(
     representativeSlug: string,
+    companySlug: string,
     productSlug: string,
   ): Promise<RepresentativeActivation | null>;
 

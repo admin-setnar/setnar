@@ -20,12 +20,23 @@ import { resolveRepresentativeActivation } from '@/modules/representatives/appli
  * both already keep one-directional. The Server Component boundary is where
  * this wiring belongs.
  *
+ * Named `resolveCommercialPresence`, not `resolveCommercialPageActivation`
+ * (its name before the Company joined the public address): the public
+ * address now identifies a Representative *and* the Company that authorizes
+ * them together — `<representative>.<company>.setnar.com` — so the contract
+ * exposed to callers is named for that business concept, Commercial
+ * Presence (DOMAIN_MODEL.md's Commercial Page, contextualized by Company),
+ * rather than reading as if the Company were only an incidental validation
+ * detail. The mechanism underneath is unchanged: `resolveRepresentativeActivation`
+ * still genuinely locates a Representative by slug first, which is exactly
+ * what it does — only this outward-facing name changed.
+ *
  * Wrapped in React's `cache()` — same fix, same shape, as `getCurrentUser`
  * in `auth-gateway-factory.ts`: `[productSlug]/page.tsx` now calls this from
  * both `generateMetadata` and the page body, and without `cache()` that
  * would hit Supabase twice per request instead of once.
  */
-export const resolveCommercialPageActivation = cache(
+export const resolveCommercialPresence = cache(
   async (
     hostname: string | null,
     productSlug: string,

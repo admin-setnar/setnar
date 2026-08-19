@@ -101,6 +101,7 @@ export class InMemoryRepresentativeRepository implements RepresentativeRepositor
 
   async findPublishedActivation(
     representativeSlug: string,
+    companySlug: string,
     productSlug: string,
   ): Promise<RepresentativeActivation | null> {
     const row = this.rows.find((r) => r.representative.slug === representativeSlug);
@@ -110,6 +111,10 @@ export class InMemoryRepresentativeRepository implements RepresentativeRepositor
       (a) => a.product.slug === productSlug && a.status === 'published',
     );
     if (!activation) return null;
+    // Same Company-membership check as SupabaseRepresentativeRepository —
+    // see that adapter's doc comment for why this is a security requirement,
+    // not defense-in-depth.
+    if (activation.product.companySlug !== companySlug) return null;
 
     return { representative: toRepresentative(row.representative), product: activation.product };
   }

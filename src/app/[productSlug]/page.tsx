@@ -9,13 +9,17 @@ import {
 } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
 import { DispatchCommercialPage } from '@/modules/representatives/presentation/commercial-pages/dispatch-commercial-page';
 import { resolveCommercialPageMetadata } from '@/modules/representatives/presentation/commercial-page-metadata';
-import { resolveCommercialPageActivation } from '@/modules/representatives/presentation/resolve-commercial-page-activation';
+import { resolveCommercialPresence } from '@/modules/representatives/presentation/resolve-commercial-presence';
 import { getClientIp } from '@/shared/lib/get-client-ip';
 
 /**
- * A Representative's public Commercial Page — `<slug>.setnar.com/<productSlug>`
- * (ADR-026 fixes the Host as the Representative; this route resolves the
- * path segment as the Product). Resolution happens here, in the Server
+ * A Representative's public Commercial Page —
+ * `<representative-slug>.<company-slug>.setnar.com/<productSlug>` (ADR-026
+ * fixes the Host as identifying the Representative and, since the Company
+ * joined the public address, the Company that authorizes them too — see
+ * `resolveCommercialPresence`/`parseCommercialPresenceHost` for the current
+ * two-label contract; this route resolves the path segment as the Product).
+ * Resolution happens here, in the Server
  * Component, the same place `app/layout.tsx` resolves the Company tenant
  * from `headers().get('host')` — not in `middleware.ts`, which ADR-001
  * already rejected for this kind of per-request repository lookup.
@@ -34,8 +38,8 @@ import { getClientIp } from '@/shared/lib/get-client-ip';
  * (2) `/entrar`, `/criar-conta`, `/app`, `/termos`, `/privacidade`,
  * `/esqueci-senha` and `/redefinir-senha` all keep answering on a
  * Representative's own subdomain too (e.g.
- * `joao-silva.setnar.com/entrar` renders SETNAR's own login page) — a
- * conscious gap, not an oversight: nothing reaches those paths from a
+ * `joao-silva.igreen.setnar.com/entrar` renders SETNAR's own login page) —
+ * a conscious gap, not an oversight: nothing reaches those paths from a
  * Representative's published link, and scoping them per-host is a
  * separate product decision for whenever it actually matters.
  *
@@ -54,7 +58,7 @@ export async function generateMetadata({
   params: Promise<{ productSlug: string }>;
 }): Promise<Metadata> {
   const [{ productSlug }, requestHeaders] = await Promise.all([params, headers()]);
-  const activation = await resolveCommercialPageActivation(requestHeaders.get('host'), productSlug);
+  const activation = await resolveCommercialPresence(requestHeaders.get('host'), productSlug);
   return resolveCommercialPageMetadata(activation);
 }
 
@@ -69,7 +73,7 @@ export default async function ProductPage({
     getClientIp(),
   ]);
 
-  const activation = await resolveCommercialPageActivation(requestHeaders.get('host'), productSlug);
+  const activation = await resolveCommercialPresence(requestHeaders.get('host'), productSlug);
 
   if (!activation) {
     notFound();
