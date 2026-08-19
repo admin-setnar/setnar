@@ -116,8 +116,6 @@ Frameworks are implementation details.
 The system is organized into four independent layers.
 
 ```
-
-```
 ┌──────────────────────────────┐
 │        Presentation          │
 ├──────────────────────────────┤
@@ -233,8 +231,6 @@ markup may be repeated for template fidelity; business rules may not.
 A module boundary is drawn where code changes together, not where the domain vocabulary draws a line. When the two coincide, prefer the same name; when they do not, the code's boundary wins and the difference is recorded here rather than hidden.
 
 ```
-
-```
 Modules
 
 Authentication
@@ -273,8 +269,6 @@ Each module should expose services rather than internal implementation.
 Dependencies must always point inward.
 
 ```
-
-```
 UI
 
 ↓
@@ -295,8 +289,6 @@ Never invert this flow.
 ---
 
 # Folder Structure
-
-```
 
 ```
 src/

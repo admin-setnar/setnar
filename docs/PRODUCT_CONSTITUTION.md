@@ -130,8 +130,6 @@ Each belief below is a standing test. A decision that violates one of these shou
 
 ---
 
----
-
 # 6. Completeness of this document
 
 **This Constitution is complete as it stands.** There is no Part 2, no pending section, and nothing deliberately withheld. Earlier drafts closed with a note describing this as "Part 1," which was accurate while the document was being written and became misleading once it was adopted (ADR-058) — a constitution that appears unfinished invites readers to assume that some governing principle exists somewhere else. None does.

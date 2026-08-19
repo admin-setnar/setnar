@@ -52,13 +52,13 @@ Mesma classe de problema do Achado 1, mas é um documento **diferente**, então 
 
 ---
 
-## Achado 3 [Novo] — `README.md` raiz erra o número de ADRs por quase 30
+## Achado 3 [Novo, CORRIGIDO 2026-08-19] — `README.md` raiz errava o número de ADRs por quase 30
 
-`README.md:28` e `README.md:162` dizem **"63 ADRs"/"63 decisions"**. A contagem real hoje é **92** (confirmado por contagem de arquivos em `docs/adr/` e pelo próprio índice, `docs/adr/README.md:3`, que já diz corretamente "92 decisions").
+`README.md:28` e `README.md:162` diziam **"63 ADRs"/"63 decisions"**. A contagem real é **92** (confirmado por contagem de arquivos em `docs/adr/` e pelo próprio índice, `docs/adr/README.md:3`, que já diz corretamente "92 decisions").
 
 **Severidade: Alta.** É o arquivo mais lido do repositório, o número é trivialmente verificável (`ls docs/adr | wc -l`), e é exatamente o tipo de erro que um cliente/investidor técnico notaria em segundos — minando a credibilidade de tudo que vem depois.
 
-**Recomendação**: corrigir "63" → "92" nas duas linhas, ou (melhor, mais durável) trocar o número fixo por uma referência a "o índice em `docs/adr/README.md`" para não voltar a ficar obsoleto a cada ADR nova.
+**Corrigido**: "63" → "92" nas duas linhas. Optou-se pela correção direta do número (em vez de trocá-lo por uma referência indireta ao índice) para manter o diff mínimo — se o padrão voltar a ficar obsoleto, é um sinal de que vale a pena revisitar a ideia da referência indireta.
 
 ---
 
@@ -74,23 +74,23 @@ Junto com `PRODUCT.md` (Achado 1) e `ROADMAP.md` (Achado 2), este é o **terceir
 
 ---
 
-## Achado 5 [Novo] — 5 de 7 planos `Approved`/`Implemented` não têm o cabeçalho que o próprio `docs/plans/README.md` exige
+## Achado 5 [FALSO POSITIVO — invalidado ao executar] — "5 de 7 planos sem cabeçalho obrigatório"
 
-`docs/plans/README.md` exige, "no topo" de todo plano, um cabeçalho com `Status:`/`Authority:`/`Code baseline:`/`Last reviewed:`/`Superseded by:`. Confirmado: `QR_ANALYTICS_PLAN.md`, `SPRINT_E_PLAN.md`, `BILLING_DECISIONS_PLAN.md`, `MARKETING_MATERIALS_PLAN.md` e `DATA_RETENTION_DECISIONS_PLAN.md` não têm esse cabeçalho. Só os dois planos mais recentes (revisados em 2026-08-14) cumprem o formato — sugerindo que a exigência foi adotada depois desses cinco terem sido escritos, e nunca retroaplicada.
+A leitura original desta auditoria (busca por `Status:`/`Authority:`/... em texto puro) não encontrou o cabeçalho em `QR_ANALYTICS_PLAN.md`, `SPRINT_E_PLAN.md`, `BILLING_DECISIONS_PLAN.md`, `MARKETING_MATERIALS_PLAN.md` e `DATA_RETENTION_DECISIONS_PLAN.md`, e concluiu que faltava.
 
-**Severidade: Média** — é uma regra que o próprio repositório declara e não segue, o tipo de inconsistência que mina a alegação "isto é um processo disciplinado".
+**Isso estava errado.** Ao abrir os 5 arquivos para corrigir, os 5 têm o cabeçalho completo — só estão formatados em Markdown negrito (`**Status:** ...`) em vez de texto puro (`Status: ...`), e a busca original não bateu com esse formato. Todo o conteúdo exigido (`Status`/`Authority`/`Code baseline`/`Last reviewed`/`Superseded by`) está presente e correto nos 5 arquivos.
 
-**Recomendação**: retroaplicar o cabeçalho aos 5 planos (é mecânico — `Status: Approved`/`Implemented` já é conhecido pela tabela-resumo do `docs/plans/README.md`, só falta escrever).
+**Nenhuma ação necessária.** Este achado fica registrado como estava — errado — para que uma sessão futura não repita a mesma leitura apressada; a lição, não o "problema", é o que vale a pena manter aqui.
 
 ---
 
-## Achado 6 [Novo] — Diagramas ASCII quebrados em `ARCHITECTURE.md`
+## Achado 6 [Novo, CORRIGIDO 2026-08-19] — Diagramas ASCII quebrados em `ARCHITECTURE.md`
 
-`docs/ARCHITECTURE.md:118-130,235-265,275-291,299-341` — os 4 diagramas ASCII (camadas, módulos, dependências, estrutura de pastas) têm fence Markdown malformado (abre \`\`\` vazio, o conteúdo do diagrama fica fora do bloco, fecha \`\`\` solto depois). Repetido nas 4 ocorrências — não é um typo isolado, é um padrão de como os diagramas foram inseridos.
+`docs/ARCHITECTURE.md:118-130,233-263,273-289,297-335` — os 4 diagramas ASCII (camadas, módulos, dependências, estrutura de pastas) tinham fence Markdown malformado: abria uma fence vazia (\`\`\` seguido de linha em branco e outra \`\`\`), o diagrama real ficava fora de qualquer fence (renderizado como parágrafo comum, sem monoespaçamento), e uma \`\`\` solta depois do diagrama abria uma fence nova que só fechava na ocorrência seguinte — arrastando um bloco de código não intencional por boa parte do arquivo. Repetido nas 4 ocorrências — não era um typo isolado, era o padrão de como os diagramas foram inseridos.
 
-**Severidade: Média** — provavelmente não renderiza como texto monoespaçado em nenhum visualizador Markdown (GitHub incluso), quebrando o alinhamento que o diagrama depende para ser legível.
+**Severidade: Média** — não renderizava como texto monoespaçado em nenhum visualizador Markdown (GitHub incluso), e potencialmente corrompia a renderização de tudo entre um diagrama e o próximo.
 
-**Recomendação**: corrigir o fencing dos 4 blocos (mover \`\`\`text/\`\`\`ascii para envolver o diagrama inteiro).
+**Corrigido**: removida a fence vazia redundante nas 4 ocorrências, deixando cada diagrama dentro de exatamente um par \`\`\`/\`\`\`. Verificado após a correção: 8 marcadores de fence no arquivo, 4 pares limpos.
 
 ---
 
@@ -104,14 +104,14 @@ Junto com `PRODUCT.md` (Achado 1) e `ROADMAP.md` (Achado 2), este é o **terceir
 
 ---
 
-## Achado 8 [Atualiza D2 e D3 de `docs/README.md`] — a própria tabela de dívida documental está com dois itens desatualizados
+## Achado 8 [Atualiza D2 e D3 de `docs/README.md`, CORRIGIDO 2026-08-19] — a própria tabela de dívida documental estava com dois itens desatualizados
 
-- **D2** (`docs/README.md:276`) registra 1 referência quebrada a `docs/AUDIT_CONSTITUTION_RECONCILIATION.md` (via ADR-058). Na prática são **4 ADRs** citando esse arquivo inexistente: `ADR-058:11`, `ADR-059:4`, `ADR-060:11`, `ADR-061:16`. A tabela subestima o alcance do próprio débito que já rastreia.
-- **D3** (`docs/README.md:277`) descreve como pendente uma correção em seções do `README.md` raiz ("What is deliberately not here"/"Next steps, in order") que **não existem mais sob esses nomes** — a raiz já foi reescrita, com "What exists, and what doesn't" e "Current work and what's next" no lugar, ambas já deferindo corretamente a `PRODUCT.md`/`docs/plans/`. O débito parece resolvido, mas a tabela nunca foi atualizada para dizer isso.
+- **D2** (`docs/README.md:276`) registrava 1 referência quebrada a `docs/AUDIT_CONSTITUTION_RECONCILIATION.md` (via ADR-058). Na prática são **4 ADRs** citando esse arquivo inexistente: `ADR-058:11`, `ADR-059:4`, `ADR-060:11`, `ADR-061:16`. A tabela subestimava o alcance do próprio débito que já rastreia.
+- **D3** (`docs/README.md:277`) descrevia como pendente uma correção em seções do `README.md` raiz ("What is deliberately not here"/"Next steps, in order") que **não existem mais sob esses nomes** — a raiz já foi reescrita, com "What exists, and what doesn't" e "Current work and what's next" no lugar, ambas já deferindo corretamente a `PRODUCT.md`/`docs/plans/`. O débito parecia resolvido, mas a tabela nunca tinha sido atualizada para dizer isso.
 
-**Severidade: Baixa** — nenhum dos dois é visível a cliente, mas é uma inconsistência dentro do próprio mecanismo que existe para rastrear inconsistências.
+**Severidade: Baixa** — nenhum dos dois é visível a cliente, mas era uma inconsistência dentro do próprio mecanismo que existe para rastrear inconsistências.
 
-**Recomendação**: atualizar D2 para "4 ADRs", e marcar D3 como resolvido (ou reescrever seu texto para citar as seções atuais, se ainda houver algo de fato pendente nelas).
+**Corrigido**: D2 atualizado para citar as 4 ADRs; D3 marcado resolvido, com nota explicando quais seções substituíram as antigas.
 
 ---
 
@@ -132,8 +132,8 @@ Nenhuma bloqueia o lançamento; registradas para uma limpeza de rotina:
 
 ## Achado 10 — Cosméticos menores em documentos
 
-- `docs/PRODUCT_CONSTITUTION.md:132-133` — regra horizontal (`---`) duplicada antes da § 6.
-- `docs/adr/README.md:109` — `ADR-063`, cujo título ("...**redefinida**...") sugere que substitui uma regra anterior, tem a coluna `Related` vazia. Não foi possível confirmar qual ADR ela redefiniria sem investigação mais profunda — vale uma checagem humana rápida, não uma correção automática.
+- `docs/PRODUCT_CONSTITUTION.md:132-133` — regra horizontal (`---`) duplicada antes da § 6. **[CORRIGIDO 2026-08-19]** — linha redundante removida.
+- `docs/adr/README.md:109` — `ADR-063`, cujo título ("...**redefinida**...") sugere que substitui uma regra anterior, tem a coluna `Related` vazia. Não foi possível confirmar qual ADR ela redefiniria sem investigação mais profunda — vale uma checagem humana rápida, não uma correção automática. **Ainda aberto** — não corrigido nesta passada, é o item que a auditoria original já sinalizava como precisando de decisão/investigação, não uma correção mecânica.
 
 **Severidade: Baixa.**
 
@@ -149,30 +149,32 @@ Nenhuma bloqueia o lançamento; registradas para uma limpeza de rotina:
 
 ## Resumo executivo
 
-| # | Achado | Documento/arquivo | Severidade | Bloqueia lançamento? |
+| # | Achado | Documento/arquivo | Severidade | Status |
 |---|---|---|---|---|
-| 1 | `PRODUCT.md` nega billing automatizado na seção "MVP Goal" (= D13, reabre e corrige Achado 2 de `AUDIT_MVP_LAUNCH.md`) | `PRODUCT.md:196` | Alta | Não é bug — é uma correção de conteúdo antes de material voltado a cliente citar o documento |
-| 2 | `ROADMAP.md` descreve billing como não implementado | `ROADMAP.md:126,150,215-220,260-262` | Alta | Idem |
-| 3 | `README.md` raiz erra contagem de ADRs ("63" vs 92 reais) | `README.md:28,162` | Alta | Correção trivial, mas visível a qualquer leitor técnico |
-| 4 | `DOMAIN_MODEL.md` com verificação vencida (3º documento nessa classe) | `DOMAIN_MODEL.md:242` | Média-alta | Não |
-| 5 | 5/7 planos sem o cabeçalho obrigatório | `docs/plans/*.md` | Média | Não |
-| 6 | Diagramas ASCII com fence Markdown quebrado | `ARCHITECTURE.md` (4 ocorrências) | Média | Não |
-| 7 | Convenção de branch documentada não é a usada na prática | `ENGINEERING_GUIDELINES.md:550-577` | Média | Não |
-| 8 | Tabela de dívida documental (D2/D3) desatualizada em si mesma | `docs/README.md:276-277` | Baixa | Não |
-| 9 | 4 redundâncias/sobras cosméticas de baixa severidade | `src/`, `supabase/migrations/`, `package.json` | Baixa | Não |
-| 10 | 2 cosméticos menores em documentos | `PRODUCT_CONSTITUTION.md`, `docs/adr/README.md` | Baixa | Não |
+| 1 | `PRODUCT.md` nega billing automatizado na seção "MVP Goal" (= D13, reabre e corrige Achado 2 de `AUDIT_MVP_LAUNCH.md`) | `PRODUCT.md:196` | Alta | Aberto — precisa de texto novo, aguardando execução |
+| 2 | `ROADMAP.md` descreve billing como não implementado | `ROADMAP.md:126,150,215-220,260-262` | Alta | Aberto — precisa de texto novo, aguardando execução |
+| 3 | `README.md` raiz erra contagem de ADRs ("63" vs 92 reais) | `README.md:28,162` | Alta | **Corrigido 2026-08-19** |
+| 4 | `DOMAIN_MODEL.md` com verificação vencida (3º documento nessa classe) | `DOMAIN_MODEL.md:242` | Média-alta | Aberto — precisa reverificar a tabela inteira, não só a data |
+| 5 | ~~5/7 planos sem o cabeçalho obrigatório~~ | `docs/plans/*.md` | — | **Falso positivo — invalidado**, os 5 já têm o cabeçalho (em negrito Markdown) |
+| 6 | Diagramas ASCII com fence Markdown quebrado | `ARCHITECTURE.md` (4 ocorrências) | Média | **Corrigido 2026-08-19** |
+| 7 | Convenção de branch documentada não é a usada na prática | `ENGINEERING_GUIDELINES.md:550-577` | Média | Aberto — precisa de decisão do PO (ver abaixo) |
+| 8 | Tabela de dívida documental (D2/D3) desatualizada em si mesma | `docs/README.md:276-277` | Baixa | **Corrigido 2026-08-19** |
+| 9 | 4 redundâncias/sobras cosméticas de baixa severidade | `src/`, `supabase/migrations/`, `package.json` | Baixa | Aberto — mudança de código, não de doc; deixado para uma passada separada |
+| 10 | 2 cosméticos menores em documentos | `PRODUCT_CONSTITUTION.md`, `docs/adr/README.md` | Baixa | Constitution **corrigido 2026-08-19**; ADR-063 aberto, precisa investigação |
 
-**Nenhum achado bloqueia tecnicamente o lançamento** — o código está limpo e os runbooks operacionais são sólidos. Mas os Achados 1–3 (severidade Alta) estão exatamente nos três documentos que um investidor ou cliente técnico mais provavelmente leria primeiro (`README.md`, `PRODUCT.md`, `ROADMAP.md`), e são verificáveis em minutos — recomendo fechá-los antes de qualquer material voltado a cliente real citar esses arquivos.
+**Nenhum achado bloqueia tecnicamente o lançamento** — o código está limpo e os runbooks operacionais são sólidos. Dos 3 achados de severidade Alta, 1 (contagem de ADRs) já está corrigido; os outros 2 (`PRODUCT.md`, `ROADMAP.md`) exigem escrever um parágrafo novo e preciso sobre o billing, não uma troca mecânica de número — ficaram para a próxima passada.
 
 ---
 
 ## Próximo passo recomendado
 
-Esta auditoria não executa nada — como de costume, aguarda decisão. Pontos que precisam de uma decisão explícita do Product Owner, não só "aprovar a correção":
+**Primeira leva de correções mecânicas já executada em 2026-08-19** (Achados 3, 6, 8, e a parte de `PRODUCT_CONSTITUTION.md` do Achado 10) — eram as partes mais simples e de menor risco: números/metadados triviais e um fechamento de fence Markdown, sem nenhuma composição de conteúdo novo sobre o produto. O Achado 5 foi investigado e descartado (falso positivo).
 
-- **Achado 7** (convenção de branch): corrigir o documento para refletir a prática real, ou migrar a prática para o padrão documentado? São decisões diferentes.
-- **Achado 10, ADR-063**: vale o tempo de investigar qual ADR anterior ela redefine, ou aceitar a lacuna no índice?
+O que ainda falta, em ordem de esforço:
 
-Todo o resto (Achados 1–6, 8, 9, e a parte "documentar a convenção real" do Achado 7) é correção mecânica de conteúdo/metadado — sem decisão de produto nova — e pode ser executado assim que aprovado, achado por achado ou em bloco.
+- **Achados 1 e 2** (`PRODUCT.md`/`ROADMAP.md` sobre billing): mecânico no sentido de "sem decisão de produto nova", mas exige escrever um parágrafo substituto correto — deixado para uma próxima passada dedicada, para não arriscar uma descrição imprecisa do billing nos dois documentos mais lidos.
+- **Achado 4** (`DOMAIN_MODEL.md`): precisa reverificar a tabela "Implemented Domain" inteira contra o código atual, não só trocar uma data.
+- **Achado 9** (código): são mudanças em `src/`/`package.json`, não em documentação — candidatas a uma passada de limpeza de código separada.
+- **Achado 7** (convenção de branch) e **Achado 10/ADR-063** continuam precisando de uma decisão explícita do Product Owner antes de qualquer edição, como já registrado.
 
-**Aguardando aprovação.**
+**Aguardando aprovação para a próxima leva.**
