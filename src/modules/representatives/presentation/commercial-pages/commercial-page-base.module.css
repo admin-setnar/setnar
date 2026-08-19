@@ -1067,6 +1067,9 @@
     align-items: flex-start;
     text-align: left;
   }
+  .consultorInfo {
+    flex-basis: auto;
+  }
   .consultorCard .btnWhats {
     width: 100%;
     justify-content: center;
