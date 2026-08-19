@@ -11,7 +11,7 @@ const REPRESENTATIVE = {
   city: 'Belo Horizonte',
 };
 
-const PRODUCT = { slug: 'conexao-green' };
+const PRODUCT = { slug: 'conexao-green', companySlug: 'igreen' };
 const QR = 'data:image/png;base64,fake';
 
 describe('buildMarketingMaterialProps (SET-65)', () => {
@@ -24,9 +24,9 @@ describe('buildMarketingMaterialProps (SET-65)', () => {
     assert.equal(props.qrCodeDataUrl, QR);
   });
 
-  it('composes publicUrl via buildCommercialPageUrl — <slug>.<rootHost>/<productSlug>, no manual reconstruction', () => {
+  it('composes publicUrl via buildCommercialPageUrl — <slug>.<companySlug>.<rootHost>/<productSlug>, no manual reconstruction', () => {
     const props = buildMarketingMaterialProps(REPRESENTATIVE, PRODUCT, QR);
-    assert.match(props.publicUrl, /^https:\/\/mariana-souza\..+\/conexao-green$/);
+    assert.match(props.publicUrl, /^https:\/\/mariana-souza\.igreen\..+\/conexao-green$/);
   });
 
   it('maps a missing phone to null, never an empty string', () => {

@@ -29,31 +29,53 @@ export async function resolveRepresentativeActivation(
   hostname: string | null,
   productSlug: string,
 ): Promise<RepresentativeActivation | null> {
-  const representativeSlug = await extractRepresentativeSlug(hostname);
-  if (!representativeSlug) return null;
-  return repository.findPublishedActivation(representativeSlug, productSlug);
+  const host = await parseCommercialPresenceHost(hostname);
+  if (!host) return null;
+  return repository.findPublishedActivation(host.representativeSlug, host.companySlug, productSlug);
 }
 
 /**
- * Extracts a candidate Representative slug from a `Host` header value, or
- * `null` if the host cannot possibly be a Representative subdomain.
- * Returning a non-null slug here is NOT proof the Representative exists —
- * that is `RepresentativeRepository`'s job; this function only decides what
- * is worth asking the repository about at all.
+ * The two labels a public Commercial Presence resolves by —
+ * `<representative>.<company>.<tenant-root>`. Neither field is proof the
+ * Representative or the Company exists, or that they are actually
+ * affiliated — see `parseCommercialPresenceHost`'s own doc comment.
+ */
+export interface CommercialPresenceHost {
+  readonly representativeSlug: string;
+  readonly companySlug: string;
+}
+
+/**
+ * Parses a `Host` header value into a candidate
+ * `{ representativeSlug, companySlug }` pair, or `null` if the host cannot
+ * possibly be one. Returning a non-null pair here is NOT proof either label
+ * resolves to a real row, or that the Representative actually belongs to
+ * that Company — that validation is `RepresentativeRepository`'s job
+ * (`findPublishedActivation`); this function only decides what is worth
+ * asking the repository about at all.
+ *
+ * Public address format, decided by product: `<representative>.<company>.setnar.com`
+ * (e.g. `pedro-policeno.igreen.setnar.com`) — exactly two labels before a
+ * known Tenant hostname, always. There is deliberately no fallback for the
+ * earlier one-label form (`<representative>.setnar.com`): no production
+ * traffic or distributed QR code/link ever depended on it when the format
+ * changed, so this is not a legacy alias to maintain, and a one-label host
+ * is simply an invalid Commercial Presence host like any other malformed one.
  *
  * Precedence — decided here, architecturally, not incidentally: a `Host` is
  * tried as a Company tenant (ADR-001) FIRST; it is only ever considered as a
- * Representative subdomain candidate if that fails. In order of weight:
+ * candidate two-label Commercial Presence host if that fails. In order of
+ * weight:
  *
  * 1. ADR-001 already owns resolution for `setnar.com`, `www.setnar.com` and
  *    `localhost` — the exact hostnames `setnarTenant` claims — and its own
  *    `resolveTenant()` never returns null for them; it falls back to the
  *    default tenant instead. If those hostnames were parsed for a
- *    Representative slug first, a naive split could misread `www` (from
- *    `www.setnar.com`) as a representative's slug label, turning SETNAR's
- *    own site into a "representative not found" response instead of
+ *    Commercial Presence host first, a naive split could misread a label
+ *    (e.g. `www` from `www.setnar.com`) as part of a representative/company
+ *    pair, turning SETNAR's own site into a "not found" response instead of
  *    rendering it. Company tenant hostnames are a small, closed, known set
- *    (ADR-001's own in-memory adapter); Representative slugs are
+ *    (ADR-001's own in-memory adapter); Commercial Presence hosts are
  *    open-ended, so checking the closed set first is both the correct order
  *    and the cheaper one.
  * 2. Checking against `getTenantRepository()` — the same port ADR-001
@@ -67,25 +89,27 @@ export async function resolveRepresentativeActivation(
  * Explicitly excluded, and why:
  * - Any hostname a Company tenant already claims — see above.
  * - `*.vercel.app` — every Vercel preview deployment. Checked explicitly
- *   rather than left to fall out of the "unknown parent domain" branch
- *   below, so a preview's random hash (e.g.
- *   `abc123-branch-team.vercel.app`) can never be mistaken for a
- *   representative slug, even if a future Company tenant were ever
- *   registered under a `vercel.app` hostname. `supabase/README.md`'s "URL
- *   Configuration" section documents this same preview-hostname shape
- *   showing up elsewhere in this project.
- * - Any host whose parent domain (everything after the first label) is not
- *   itself a known Company tenant hostname — e.g. a stray, unrelated domain
- *   pointed at this deployment. Representative subdomains only ever exist
- *   one level inside a Company's own domain (ADR-026); a host two levels
- *   deep, or under a domain no Company tenant owns, is not one.
- * - A first label that doesn't match the slug format
+ *   rather than left to fall out of the "unknown tenant root" branch below,
+ *   so a preview's random hash (e.g. `abc123-branch-team.vercel.app`) can
+ *   never be mistaken for a representative/company pair, even if a future
+ *   Company tenant were ever registered under a `vercel.app` hostname.
+ *   `supabase/README.md`'s "URL Configuration" section documents this same
+ *   preview-hostname shape showing up elsewhere in this project.
+ * - Any host whose remainder after the first two labels is not itself a
+ *   known Company tenant hostname — e.g. a stray, unrelated domain pointed
+ *   at this deployment, or a host with only one label, or three or more
+ *   labels before the tenant root. A Commercial Presence host is always
+ *   exactly two labels deep inside a Company's own domain — a host any
+ *   shallower or deeper than that is not one.
+ * - A representative or company label that doesn't match the slug format
  *   `representatives.slug` is constrained to in
  *   `20260731000000_create_representative_domain.sql`
- *   (`^[a-z0-9]+(-[a-z0-9]+)*$`) — it could never be a real representative's
- *   slug, so there is no reason to ask the repository about it.
+ *   (`^[a-z0-9]+(-[a-z0-9]+)*$`) — neither could ever be a real slug, so
+ *   there is no reason to ask the repository about either.
  */
-export async function extractRepresentativeSlug(hostname: string | null): Promise<string | null> {
+export async function parseCommercialPresenceHost(
+  hostname: string | null,
+): Promise<CommercialPresenceHost | null> {
   if (!hostname) return null;
 
   const normalized = hostname.toLowerCase().trim().split(':')[0] ?? '';
@@ -96,14 +120,23 @@ export async function extractRepresentativeSlug(hostname: string | null): Promis
   const tenantRepository = getTenantRepository();
   if (await tenantRepository.findByHostname(normalized)) return null;
 
-  const dotIndex = normalized.indexOf('.');
-  if (dotIndex <= 0) return null;
+  const labels = normalized.split('.');
+  if (labels.length < 3) return null;
 
-  const label = normalized.slice(0, dotIndex);
-  const parentDomain = normalized.slice(dotIndex + 1);
+  // Indexed rather than destructured: `noUncheckedIndexedAccess` (tsconfig)
+  // types every array access as possibly `undefined` regardless of the
+  // length guard above, same reason `extractRepresentativeSlug` (this
+  // function's predecessor) indexed `.split(':')[0] ?? ''` instead of
+  // trusting a destructure. The `?? ''` fallbacks below are unreachable at
+  // runtime (the length check already guarantees both labels exist) and
+  // exist only to satisfy that flow analysis.
+  const representativeLabel = labels[0] ?? '';
+  const companyLabel = labels[1] ?? '';
+  const tenantRoot = labels.slice(2).join('.');
 
-  if (!(await tenantRepository.findByHostname(parentDomain))) return null;
-  if (!REPRESENTATIVE_SLUG_PATTERN.test(label)) return null;
+  if (!(await tenantRepository.findByHostname(tenantRoot))) return null;
+  if (!REPRESENTATIVE_SLUG_PATTERN.test(representativeLabel)) return null;
+  if (!REPRESENTATIVE_SLUG_PATTERN.test(companyLabel)) return null;
 
-  return label;
+  return { representativeSlug: representativeLabel, companySlug: companyLabel };
 }

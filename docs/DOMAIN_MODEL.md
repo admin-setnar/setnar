@@ -93,7 +93,7 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 ### Commercial Page
 **Definition:** The public-facing, personalized digital page that presents a Representative and the Products they have activated, ending in a call to action (WhatsApp contact).
 **Business meaning:** The core deliverable of the MVP. It is what a Representative shares instead of a PDF or a raw WhatsApp number.
-**Example:** `joao-silva.setnar.com.br` showing João's photo, his iGreen affiliation, and his activated Products.
+**Example:** `joao-silva.igreen.setnar.com` showing João's photo, his iGreen affiliation, and his activated Products.
 **Relationships:** Owned by exactly one Representative; references one or more Products; has one QR Code; is the target of Visitor traffic and the origin of Leads.
 
 ### QR Code
@@ -520,7 +520,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Invariants:** Cannot exist without a Representative (per ROADMAP.md and the explicit example in ARCHITECTURE.md). Cannot reference a Product the owning Representative has not activated. Cannot be published without complete, minimum required Representative Profile information (name, photo, contact) and at least one activated Product.
 **Creation rules:** Created automatically as part of Representative onboarding (per PRODUCT.md's "automatic generation" and "automatic activation").
 **Deletion rules:** Unpublishing removes public visibility but preserves the page and its historical Analytics/Leads.
-**Example:** `joao-silva.setnar.com.br`.
+**Example:** `joao-silva.igreen.setnar.com` — the address is `<representative-slug>.<company-slug>.<tenant-root>`; the Company label is part of the canonical public address, not merely a validation detail (ADR-092).
 **Future evolution:** Stage 2 allows richer content (Material Library assets embedded); Stage 4 allows AI-suggested copy; Stage 6 may support Company-branded, White-Labeled page templates.
 
 ### 8.7 QR Code
