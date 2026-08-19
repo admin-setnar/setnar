@@ -34,6 +34,29 @@ export interface E2ERepresentative {
   readonly phone: string;
 }
 
+/**
+ * Company every E2E-created representative belongs to — self-service
+ * registration always resolves `company_id` to `'igreen'`
+ * (`register_representative`, `20260806000000_add_register_representative.sql:457`),
+ * the only Company that exists in the MVP. Named here, once, so every spec
+ * navigating to a fixture's public Commercial Page composes the same
+ * `<representative-slug>.<company-slug>.<tenant-root>` host (ADR-092)
+ * without repeating the literal.
+ */
+export const E2E_COMPANY_SLUG = 'igreen';
+
+/**
+ * Local-dev origin for a fixture's public Commercial Page —
+ * `http://<representative-slug>.<company-slug>.localhost:3000` (ADR-092).
+ * Callers append `/<productSlug>`. Never resolves the app's own
+ * `SITE_URL`/production root: local E2E runs always navigate through
+ * `localhost`, the same Tenant root `parseCommercialPresenceHost` already
+ * recognizes for local development.
+ */
+export function publicPageOrigin(fixture: Pick<E2ERepresentative, 'slug'>): string {
+  return `http://${fixture.slug}.${E2E_COMPANY_SLUG}.localhost:3000`;
+}
+
 /** Dados determinísticos por execução — únicos o bastante para nunca colidir entre execuções paralelas ou repetidas. */
 export function buildE2ERepresentative(prefix: string): E2ERepresentative {
   const unique = randomUUID().slice(0, 8);

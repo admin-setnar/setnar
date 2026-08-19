@@ -8,6 +8,7 @@ import {
   completeOnboarding,
   e2eSkipReason,
   generateSyntheticCPF,
+  publicPageOrigin,
   serviceClient,
   signUp,
 } from './support/fixtures';
@@ -109,7 +110,7 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
     const publicPage = await context.newPage();
 
     await test.step('a página pública carrega e registra a visita', async () => {
-      await publicPage.goto(`http://${fixture.slug}.localhost:3000/${productSlug}`);
+      await publicPage.goto(`${publicPageOrigin(fixture)}/${productSlug}`);
       await expect(publicPage.getByRole('link', { name: 'Falar no WhatsApp' }).first()).toBeVisible();
       await expect(publicPage.locator('#quero-simular').getByRole('button')).toBeVisible();
     });
