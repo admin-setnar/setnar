@@ -43,6 +43,21 @@ import { Input } from '@/shared/ui/input';
 /** Same derivation `buildCommercialPageUrl` uses — the root host a slug is prefixed onto. */
 const ROOT_HOST = new URL(SITE_URL).hostname;
 
+/**
+ * Display only — the Company shown in the live URL preview below, while
+ * every Representative that registers is still automatically iGreen's. This
+ * is NOT the authority for that association: `register_representative`
+ * (`supabase/migrations/20260806000000_add_register_representative.sql:457`)
+ * resolves `company_id` on its own, server-side, and remains the sole
+ * source of truth. This constant is never sent anywhere — it exists only so
+ * the preview shown here doesn't disagree with what registration actually
+ * produces. Keep the two in sync by hand if the MVP's single Company ever
+ * changes — the same trade-off already accepted elsewhere in this module
+ * for other values that exist on both sides of the SQL/TypeScript boundary
+ * (see `representative-rules.ts`, e.g. `DISPLAY_NAME_MAX_LENGTH`).
+ */
+const COMPANY_SLUG_PREVIEW = 'igreen';
+
 export function OnboardingForm({
   initialDisplayName,
   initialPhone,
@@ -79,8 +94,8 @@ export function OnboardingForm({
   // never disagrees with what actually gets registered.
   const slugPreview = watch('slug').trim().toLowerCase();
   const slugHint = slugPreview
-    ? `Sua página ficará em ${slugPreview}.${ROOT_HOST}`
-    : `Só letras minúsculas, números e hífen — ficará em algo como joao-silva.${ROOT_HOST}.`;
+    ? `Sua página ficará em ${slugPreview}.${COMPANY_SLUG_PREVIEW}.${ROOT_HOST}`
+    : `Só letras minúsculas, números e hífen — ficará em algo como joao-silva.${COMPANY_SLUG_PREVIEW}.${ROOT_HOST}.`;
 
   async function onSubmit(values: RepresentativeOnboardingFormValues) {
     setFailure(null);

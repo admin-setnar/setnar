@@ -36,7 +36,7 @@ export interface MarketingMaterialProps {
  */
 export function buildMarketingMaterialProps(
   representative: Pick<Representative, 'slug' | 'name' | 'authorizationId' | 'phone' | 'city'>,
-  product: Pick<RepresentativeProduct, 'slug'>,
+  product: Pick<RepresentativeProduct, 'slug' | 'companySlug'>,
   qrCodeDataUrl: string,
 ): MarketingMaterialProps {
   const publicUrl = buildCommercialPageUrl(representative, product);
@@ -55,7 +55,7 @@ export function buildMarketingMaterialProps(
 /** Thin wrapper so callers never call `generateQrCodeDataUrl` against the wrong URL by mistake. */
 export async function buildMarketingMaterialPropsWithQrCode(
   representative: Pick<Representative, 'slug' | 'name' | 'authorizationId' | 'phone' | 'city'>,
-  product: Pick<RepresentativeProduct, 'slug'>,
+  product: Pick<RepresentativeProduct, 'slug' | 'companySlug'>,
 ): Promise<MarketingMaterialProps> {
   const publicUrl = buildCommercialPageUrl(representative, product);
   const qrCodeDataUrl = await generateQrCodeDataUrl(publicUrl);

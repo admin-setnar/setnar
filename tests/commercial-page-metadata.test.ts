@@ -11,14 +11,14 @@ describe('resolveCommercialPageMetadata', () => {
   it('builds canonical/Open Graph/Twitter metadata for a resolved (Representative, Product) pair', async () => {
     const activation = await resolveRepresentativeActivation(
       repository,
-      'joao-silva.setnar.com',
+      'joao-silva.igreen.setnar.com',
       'conexao-green',
     );
     assert.ok(activation);
 
     const metadata = resolveCommercialPageMetadata(activation);
 
-    const expectedUrl = 'https://joao-silva.setnar.com/conexao-green';
+    const expectedUrl = 'https://joao-silva.igreen.setnar.com/conexao-green';
     assert.equal(metadata.alternates?.canonical, expectedUrl);
     assert.equal(metadata.title, 'Conexão Green — João Silva');
     assert.ok(String(metadata.description).includes('João Silva'));
@@ -36,9 +36,11 @@ describe('resolveCommercialPageMetadata', () => {
   it('returns an empty object for every unresolvable case — bad host, unpublished, and suspended alike', async () => {
     const cases: ReadonlyArray<[string, string]> = [
       ['setnar.com', 'conexao-green'], // Company tenant host, not a representative
-      ['nao-existe.setnar.com', 'conexao-green'], // representative does not exist
-      ['joao-silva.setnar.com', 'conexao-solar'], // activated but still draft
-      ['maria-suspensa.setnar.com', 'conexao-green'], // suspended representative
+      ['joao-silva.setnar.com', 'conexao-green'], // one-label host — no legacy alias
+      ['nao-existe.igreen.setnar.com', 'conexao-green'], // representative does not exist
+      ['joao-silva.igreen.setnar.com', 'conexao-solar'], // activated but still draft
+      ['maria-suspensa.igreen.setnar.com', 'conexao-green'], // suspended representative
+      ['joao-silva.ademicom.setnar.com', 'conexao-green'], // real representative, wrong Company
     ];
 
     for (const [host, productSlug] of cases) {

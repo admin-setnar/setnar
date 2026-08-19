@@ -47,7 +47,7 @@ export function ProductPreview({ className }: { className?: string }) {
             <div className="flex items-center justify-between gap-3">
               <div className="space-y-1">
                 <p className="text-[13px] font-semibold text-content">Minhas páginas</p>
-                <p className="text-[11px] text-content-subtle">setnar.com/joao-silva</p>
+                <p className="text-[11px] text-content-subtle">joao-silva.empresa.setnar.com</p>
               </div>
               <Badge variant="success">Publicadas</Badge>
             </div>

@@ -49,6 +49,7 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
 
   async findPublishedActivation(
     representativeSlug: string,
+    companySlug: string,
     productSlug: string,
   ): Promise<RepresentativeActivation | null> {
     // Queried from product_activations, not representatives, so that
@@ -60,7 +61,7 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
     // Postgres RLS is enforced per table regardless of how PostgREST joins
     // them. The `.eq(...)` calls below are NOT re-implementing that
     // filtering; they are this adapter's own defense against trusting a
-    // returned row's shape blindly (see the two checks after the query).
+    // returned row's shape blindly (see the checks after the query).
     const { data, error } = await this.supabase
       .from('product_activations')
       .select(
@@ -88,6 +89,20 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
     // status this code doesn't otherwise reject).
     if (data.status !== 'published') return null;
     if (representativeRow.status !== 'active') return null;
+
+    // Company membership — a security requirement, not defense-in-depth on
+    // top of RLS: RLS has no concept of "the Company the Host claims", only
+    // this comparison does. `productRow.company.slug` is the Company the
+    // Representative's own Product Activation actually belongs to (Business
+    // Rule 6 guarantees a Product Activation can never reference a Product
+    // outside the Representative's own Company's Catalog, so this is
+    // equivalent to checking the Representative's own Company, using data
+    // the query above already loaded — no second query). A mismatch means
+    // the Host's Company label doesn't match reality — e.g.
+    // `pedro.ademicom.setnar.com` when Pedro only belongs to iGreen — and
+    // returns the same `null` as any other unresolvable host, never a
+    // differentiated response (ADR-030).
+    if (productRow.company.slug !== companySlug) return null;
 
     const representative: Representative = {
       id: representativeRow.id,

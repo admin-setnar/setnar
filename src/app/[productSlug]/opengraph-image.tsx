@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 import { headers } from 'next/headers';
 
 import { OpenGraphCardFrame, TenantOpenGraphCard } from '@/config/opengraph-card';
-import { resolveCommercialPageActivation } from '@/modules/representatives/presentation/resolve-commercial-page-activation';
+import { resolveCommercialPresence } from '@/modules/representatives/presentation/resolve-commercial-presence';
 import { resolveTenant } from '@/modules/tenancy/application/resolve-tenant';
 
 /**
@@ -41,7 +41,7 @@ export default async function CommercialPageOpenGraphImage({
 }) {
   const [{ productSlug }, requestHeaders] = await Promise.all([params, headers()]);
   const hostname = requestHeaders.get('host');
-  const activation = await resolveCommercialPageActivation(hostname, productSlug);
+  const activation = await resolveCommercialPresence(hostname, productSlug);
 
   if (!activation) {
     const tenant = await resolveTenant(hostname);
