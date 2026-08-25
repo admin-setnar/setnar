@@ -108,7 +108,7 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
 
     await publicPage.goto(`${publicPageOrigin(fixture)}/conexao-green`);
     await publicPage.getByLabel('Quanto você paga de luz por mês?').fill('1000');
-    await expect(publicPage.getByText('14%', { exact: true })).toBeVisible();
+    await expect(publicPage.getByText('10%', { exact: true })).toBeVisible();
 
     await publicPage.goto(`${publicPageOrigin(fixture)}/conexao-livre`);
     for (const question of await publicPage.getByRole('button', { name: 'Sim', exact: true }).all()) {

@@ -367,12 +367,10 @@
   // sendo cobrados. Aplicar o percentual sobre o total da fatura superestimava
   // a economia entre 48% e 104% conforme a faixa da conta.
   //
-  // REGRA DE DESCONTO POR FAIXA divulgada pela iGreen: 10% abaixo de R$ 1.000
-  // e 14% a partir de R$ 1.000. A página mantém a linguagem de "estimativa"
-  // porque a economia efetiva depende da composição da fatura analisada.
-  const CORTE_FAIXA = 1000;           // abaixo disso: desconto baixo. Igual ou acima: desconto alto.
-  const DESCONTO_BAIXO = 0.10;        // contas < R$ 1.000
-  const DESCONTO_ALTO  = 0.14;        // contas >= R$ 1.000
+  // REGRA DE DESCONTO divulgada pela iGreen: 10% flat, para qualquer valor de
+  // conta. A página mantém a linguagem de "estimativa" porque a economia
+  // efetiva depende da composição da fatura analisada.
+  const DESCONTO_FLAT = 0.10;         // todas as contas
   const CARGA_TRIBUTARIA = 0.27;      // ICMS + PIS/COFINS embutidos (aproximação)
   const ILUMINACAO_PUBLICA = 25;      // contribuição municipal, valor típico
   const CUSTO_DISPONIBILIDADE = 35;   // taxa mínima da distribuidora
@@ -383,8 +381,8 @@
     return Math.max(semImpostos - CUSTO_DISPONIBILIDADE, 0);
   }
 
-  function descontoAplicavel(valor){
-    return valor < CORTE_FAIXA ? DESCONTO_BAIXO : DESCONTO_ALTO;
+  function descontoAplicavel(){
+    return DESCONTO_FLAT;
   }
 
   const NUM_WHATS = '{{REP_WHATSAPP}}';
@@ -411,7 +409,7 @@
     let valor = parseFloat(billInput.value);
     if(isNaN(valor) || valor < 0) valor = 0;
 
-    const percentual = descontoAplicavel(valor);
+    const percentual = descontoAplicavel();
     const base = baseCompensavel(valor);
     const economia = base * percentual;
     const contaNova = valor - economia;

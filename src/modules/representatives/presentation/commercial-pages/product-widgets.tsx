@@ -49,7 +49,7 @@ export function GreenCalculator({ representative, product }: { representative: R
   const result = useMemo(() => {
     const value = Math.max(0, Number.isFinite(bill) ? bill : 0);
     const compensable = Math.max(0, Math.max(value - 25, 0) * (1 - .27) - 35);
-    const percentage = value < 1000 ? 10 : 14;
+    const percentage = 10;
     const saving = compensable * (percentage / 100);
     return { value, percentage, saving, newBill: value - saving };
   }, [bill]);
