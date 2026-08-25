@@ -76,7 +76,7 @@ describe('ADR-089 commercial page composition',()=>{
       }
     }
     const widgets=source('src/modules/representatives/presentation/commercial-pages/product-widgets.tsx');
-    assert.match(widgets,/value < 1000 \? 10 : 14/);
+    assert.match(widgets,/const percentage = 10;/);
     assert.match(widgets,/\+5 GB de portabilidade/);
     assert.match(widgets,/RCF \(danos a terceiros\)/);
   });
