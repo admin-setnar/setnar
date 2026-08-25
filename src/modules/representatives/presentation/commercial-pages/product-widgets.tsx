@@ -48,9 +48,8 @@ export function GreenCalculator({ representative, product }: { representative: R
   const [bill, setBill] = useState(500);
   const result = useMemo(() => {
     const value = Math.max(0, Number.isFinite(bill) ? bill : 0);
-    const compensable = Math.max(0, Math.max(value - 25, 0) * (1 - .27) - 35);
     const percentage = 10;
-    const saving = compensable * (percentage / 100);
+    const saving = value * (percentage / 100);
     return { value, percentage, saving, newBill: value - saving };
   }, [bill]);
   const brl = (value: number) => new Intl.NumberFormat('pt-BR', { style:'currency', currency:'BRL', maximumFractionDigits:0 }).format(value);
@@ -59,7 +58,7 @@ export function GreenCalculator({ representative, product }: { representative: R
     <label className={styles.billInputLabel} htmlFor={id}>Quanto você paga de luz por mês?</label>
     <div className={styles.billInputWrap}><span aria-hidden="true">R$</span><input id={id} className={styles.billInput} type="number" min={0} step={10} inputMode="numeric" value={bill} onChange={(event) => setBill(event.target.valueAsNumber || 0)} /></div>
     <div className={styles.billValues}><span className={styles.billOld}>{brl(result.value)}</span><span className={styles.billNew}>{brl(result.newBill)}</span></div>
-    <p className={styles.billCaption}>Economia estimada de <strong>{brl(result.saving)}</strong> por mês. O desconto incide sobre o <strong>consumo de energia</strong> — impostos (ICMS, PIS e COFINS), iluminação pública e taxas fixas da distribuidora continuam sendo cobrados e não entram no cálculo.</p>
+    <p className={styles.billCaption}>Economia estimada de <strong>{brl(result.saving)}</strong> por mês, aplicando <strong>10% de desconto</strong> sobre o valor total da sua conta de luz.</p>
     <div className={styles.billProgress}><div className={styles.billProgressFill} style={{ width:'70%' }} /></div>
     <p className={styles.billAnnual}>No ano, isso representa cerca de <strong>{brl(result.saving * 12)}</strong>. Estimativa — o valor exato sai na sua simulação e consta no contrato.</p>
     <ProductWhatsapp representative={representative} product={product} message={`Olá! Minha conta de luz é de ${brl(result.value)} por mês. Quero simular meu desconto.`} label="Simular meu desconto no WhatsApp" />

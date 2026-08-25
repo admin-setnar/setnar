@@ -104,11 +104,11 @@
 
           <div class="bill-values">
             <span class="bill-old" id="bill-old">R$ 500</span>
-            <span class="bill-new" id="bill-value">R$ 469</span>
+            <span class="bill-new" id="bill-value">R$ 450</span>
           </div>
-          <p class="bill-caption">Economia estimada de <strong id="bill-eco">R$ 31</strong> por mês. O desconto incide sobre o <strong>consumo de energia</strong> — impostos (ICMS, PIS e COFINS), iluminação pública e taxas fixas da distribuidora continuam sendo cobrados e não entram no cálculo.</p>
+          <p class="bill-caption">Economia estimada de <strong id="bill-eco">R$ 50</strong> por mês, aplicando <strong>10% de desconto</strong> sobre o valor total da sua conta de luz.</p>
           <div class="bill-progress"><div class="bill-progress-fill" id="bill-fill"></div></div>
-          <p class="bill-annual">No ano, isso representa cerca de <strong id="bill-annual-value">R$ 374</strong>. Estimativa — o valor exato sai na sua simulação e consta no contrato.</p>
+          <p class="bill-annual">No ano, isso representa cerca de <strong id="bill-annual-value">R$ 600</strong>. Estimativa — o valor exato sai na sua simulação e consta no contrato.</p>
 
           <a class="btn-whats bill-cta" id="bill-cta"
              href="https://wa.me/{{REP_WHATSAPP}}?text=Ol%C3%A1!%20Quero%20confirmar%20meu%20desconto%20na%20conta%20de%20luz."
@@ -361,25 +361,11 @@
 
 <script>
   // ===== Simulador interativo do desconto na conta de luz =====
-  // O desconto NÃO incide sobre a conta inteira. Conforme o FAQ oficial do
-  // Conexão Green, ele se aplica ao consumo de energia — impostos obrigatórios
-  // (ICMS, PIS, COFINS), iluminação pública e custo de disponibilidade seguem
-  // sendo cobrados. Aplicar o percentual sobre o total da fatura superestimava
-  // a economia entre 48% e 104% conforme a faixa da conta.
-  //
-  // REGRA DE DESCONTO divulgada pela iGreen: 10% flat, para qualquer valor de
-  // conta. A página mantém a linguagem de "estimativa" porque a economia
-  // efetiva depende da composição da fatura analisada.
-  const DESCONTO_FLAT = 0.10;         // todas as contas
-  const CARGA_TRIBUTARIA = 0.27;      // ICMS + PIS/COFINS embutidos (aproximação)
-  const ILUMINACAO_PUBLICA = 25;      // contribuição municipal, valor típico
-  const CUSTO_DISPONIBILIDADE = 35;   // taxa mínima da distribuidora
-
-  function baseCompensavel(total){
-    const semIluminacao = Math.max(total - ILUMINACAO_PUBLICA, 0);
-    const semImpostos = semIluminacao * (1 - CARGA_TRIBUTARIA);
-    return Math.max(semImpostos - CUSTO_DISPONIBILIDADE, 0);
-  }
+  // REGRA DE DESCONTO divulgada pela iGreen: 10% flat sobre o valor total da
+  // conta informado, para qualquer faixa de valor. Ver ADR-093. A página
+  // mantém a linguagem de "estimativa" porque o valor exato consta no
+  // contrato assinado após a análise da conta real.
+  const DESCONTO_FLAT = 0.10;         // todas as contas, sobre o valor total
 
   function descontoAplicavel(){
     return DESCONTO_FLAT;
@@ -410,8 +396,7 @@
     if(isNaN(valor) || valor < 0) valor = 0;
 
     const percentual = descontoAplicavel();
-    const base = baseCompensavel(valor);
-    const economia = base * percentual;
+    const economia = valor * percentual;
     const contaNova = valor - economia;
 
     if(billBadge) billBadge.textContent = `${Math.round(percentual * 100)}%`;
