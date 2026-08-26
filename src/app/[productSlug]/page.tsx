@@ -10,6 +10,7 @@ import {
 import { DispatchCommercialPage } from '@/modules/representatives/presentation/commercial-pages/dispatch-commercial-page';
 import { resolveCommercialPageMetadata } from '@/modules/representatives/presentation/commercial-page-metadata';
 import { resolveCommercialPresence } from '@/modules/representatives/presentation/resolve-commercial-presence';
+import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
 import { getClientIp } from '@/shared/lib/get-client-ip';
 
 /**
@@ -88,8 +89,22 @@ export default async function ProductPage({
   // resolution above already succeeded — `record_page_visit` re-validates
   // the pair itself, but there is no reason to attempt the call on a path
   // that is already about to 404.
+  //
+  // Owner-view exclusion (docs/plans/MVP_ANALYTICS_AUDIT.md §7, P1 #2):
+  // `record_page_visit` runs through the service-role Analytics client
+  // (`analytics-write-client.ts`), which carries no session, so it has no
+  // way to know the visitor is the page's own owner. That check has to
+  // happen here instead, against the request's own cookies, before the RPC
+  // is ever called — `isViewerOwner` is the only place left in the request
+  // where that identity is still available (`analytics_events` itself has
+  // none). A representative checking their own live page is simply not
+  // recorded, same as a detected bot (`is_bot_user_agent`) — not tagged,
+  // not counted against the rate limit, because the RPC is never invoked.
   after(async () => {
     try {
+      const repository = await getRepresentativeRepository();
+      if (await repository.isViewerOwner(representative.id)) return;
+
       const analyticsGateway = await getAnalyticsGateway();
       await analyticsGateway.recordPageVisit({
         representativeSlug: representative.slug,

@@ -42,7 +42,11 @@ export async function POST(request: Request) {
         productSlug,
       );
 
-      if (activation) {
+      // Owner-view exclusion — see the matching comment in
+      // `[productSlug]/page.tsx`'s `after()` block for the full reasoning
+      // (docs/plans/MVP_ANALYTICS_AUDIT.md §7, P1 #2). Same check, same
+      // early-out before the RPC is ever called.
+      if (activation && !(await repository.isViewerOwner(activation.representative.id))) {
         const analyticsGateway = await getAnalyticsGateway();
         await analyticsGateway.recordWhatsappClick({
           representativeSlug: activation.representative.slug,

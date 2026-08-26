@@ -178,4 +178,22 @@ export class SupabaseRepresentativeRepository implements RepresentativeRepositor
 
     return { representative, product, status: data.status };
   }
+
+  async isViewerOwner(representativeId: string): Promise<boolean> {
+    // Reuses `is_own_representative` (`supabase/migrations/20260805000000_fix_rls_policy_cycle.sql`),
+    // the same SECURITY DEFINER helper the RLS policies on
+    // product_activations/analytics_events already call — one question, one
+    // place, not a second implementation of "does auth.uid() own this row?".
+    // `this.supabase` is bound to the current request's cookies
+    // (`shared/lib/supabase/server.ts`), so `auth.uid()` inside the function
+    // reflects the actual visitor, not a service-role bypass.
+    const { data, error } = await this.supabase.rpc('is_own_representative', {
+      p_representative_id: representativeId,
+    });
+
+    // Fail closed toward "treat as an external visitor" — an error here must
+    // never suppress a real visit/click from being recorded.
+    if (error) return false;
+    return data === true;
+  }
 }

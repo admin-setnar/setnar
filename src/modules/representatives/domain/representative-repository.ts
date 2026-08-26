@@ -52,4 +52,18 @@ export interface RepresentativeRepository {
    * for not filtering by status.
    */
   findOwnActivation(profileId: string, productSlug: string): Promise<OwnCommercialPageActivation | null>;
+
+  /**
+   * Whether the current request's authenticated session (if any) belongs to
+   * the Representative identified by `representativeId` — i.e., the owner
+   * viewing/interacting with their own public Commercial Page, not an
+   * external visitor. Always `false` for an unauthenticated request.
+   *
+   * Exists so `[productSlug]/page.tsx` and `/api/track-click` can skip
+   * recording a `visit`/`whatsapp_click` Analytics Event when the caller is
+   * the page's own owner — analytics_events has no visitor identity of any
+   * kind (ADR-050), so this is the only point in the request where "is this
+   * the owner?" can still be answered, before that identity is lost.
+   */
+  isViewerOwner(representativeId: string): Promise<boolean>;
 }

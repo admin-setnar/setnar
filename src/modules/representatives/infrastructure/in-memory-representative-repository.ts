@@ -97,7 +97,16 @@ const DEFAULT_ROWS: readonly FixtureRow[] = [
 ];
 
 export class InMemoryRepresentativeRepository implements RepresentativeRepository {
-  constructor(private readonly rows: readonly FixtureRow[] = DEFAULT_ROWS) {}
+  /**
+   * `viewerProfileId` simulates the current request's session for
+   * `isViewerOwner` — there is no real cookie/JWT to read in a fixture.
+   * Defaults to `null` (unauthenticated), matching how an anonymous visitor
+   * behaves in production.
+   */
+  constructor(
+    private readonly rows: readonly FixtureRow[] = DEFAULT_ROWS,
+    private readonly viewerProfileId: string | null = null,
+  ) {}
 
   async findPublishedActivation(
     representativeSlug: string,
@@ -127,6 +136,12 @@ export class InMemoryRepresentativeRepository implements RepresentativeRepositor
     if (!activation) return null;
 
     return { representative: toRepresentative(row.representative), product: activation.product, status: activation.status };
+  }
+
+  async isViewerOwner(representativeId: string): Promise<boolean> {
+    if (!this.viewerProfileId) return false;
+    const row = this.rows.find((r) => r.representative.id === representativeId);
+    return row?.representative.profileId === this.viewerProfileId;
   }
 }
 
