@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import clubStyles from '@/modules/representatives/presentation/commercial-pages/conexao-club/conexao-club.module.css';
 import styles from '@/modules/representatives/presentation/commercial-pages/commercial-page-base.module.css';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
@@ -19,9 +20,11 @@ const CATEGORIES = [
 export function ClubCategoryWidget({
   representative,
   product,
+  origin,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
+  origin: OriginId | null;
 }) {
   const [active, setActive] = useState<(typeof CATEGORIES)[number]['key']>('mercado');
   const activeCategory = CATEGORIES.find((category) => category.key === active) ?? CATEGORIES[0];
@@ -55,7 +58,7 @@ export function ClubCategoryWidget({
           href={buildWhatsappHref(representative.phone, 'Olá! Quero ativar meu Conexão Club.')}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => trackWhatsappClick(product.slug)}
+          onClick={() => trackWhatsappClick(product.slug, origin)}
         >
           Quero economizar assim
         </a>

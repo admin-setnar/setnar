@@ -5,6 +5,7 @@ import { ConexaoPlacasPage } from '@/modules/representatives/presentation/commer
 import { ConexaoSolarPage } from '@/modules/representatives/presentation/commercial-pages/conexao-solar/conexao-solar-page';
 import { GreenSegurosPage } from '@/modules/representatives/presentation/commercial-pages/green-seguros/green-seguros-page';
 import { TelecomPage } from '@/modules/representatives/presentation/commercial-pages/telecom/telecom-page';
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 
 /** ADR-089: the only shared composition point. Both public and preview routes
@@ -14,13 +15,15 @@ export function DispatchCommercialPage({
   product,
   productSlug,
   leadFormDisabled = false,
+  origin,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
   productSlug: string;
   leadFormDisabled?: boolean;
+  origin: OriginId | null;
 }) {
-  const props = { representative, product, productSlug, leadFormDisabled };
+  const props = { representative, product, productSlug, leadFormDisabled, origin };
   switch (product.slug) {
     case 'conexao-club':
       return <ConexaoClubPage {...props} />;

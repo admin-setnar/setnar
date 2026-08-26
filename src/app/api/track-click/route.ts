@@ -5,6 +5,7 @@ import {
   getAnalyticsGateway,
   reportAnalyticsFailure,
 } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
+import { resolveOrigin } from '@/modules/analytics/domain/origin';
 import { resolveRepresentativeActivation } from '@/modules/representatives/application/resolve-representative';
 import { getRepresentativeRepository } from '@/modules/representatives/infrastructure/representative-repository-factory';
 import { getClientIp } from '@/shared/lib/get-client-ip';
@@ -32,6 +33,8 @@ export async function POST(request: Request) {
     const productSlug =
       body && typeof body === 'object' ? (body as { productSlug?: unknown }).productSlug : undefined;
     const referrer = body && typeof body === 'object' ? (body as { referrer?: unknown }).referrer : undefined;
+    const rawOrigin = body && typeof body === 'object' ? (body as { origin?: unknown }).origin : undefined;
+    const origin = resolveOrigin(typeof rawOrigin === 'string' ? rawOrigin : null);
 
     if (typeof productSlug === 'string') {
       const [requestHeaders, clientIp] = await Promise.all([headers(), getClientIp()]);
@@ -54,6 +57,7 @@ export async function POST(request: Request) {
           referrer: typeof referrer === 'string' ? referrer : requestHeaders.get('referer'),
           ip: clientIp,
           userAgent: requestHeaders.get('user-agent'),
+          origin,
         });
       }
     }

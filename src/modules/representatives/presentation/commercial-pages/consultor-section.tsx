@@ -1,5 +1,6 @@
 'use client';
 
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import styles from '@/modules/representatives/presentation/commercial-pages/commercial-page-base.module.css';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { buildWhatsappHref, trackWhatsappClick } from '@/modules/representatives/presentation/commercial-pages/whatsapp';
@@ -14,9 +15,11 @@ import { buildWhatsappHref, trackWhatsappClick } from '@/modules/representatives
 export function ConsultorSection({
   representative,
   product,
+  origin,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
+  origin: OriginId | null;
 }) {
   const firstName = representative.name.split(' ')[0];
   const message = `Olá, ${firstName}! Quero saber mais sobre ${product.name}.`;
@@ -38,7 +41,7 @@ export function ConsultorSection({
               href={buildWhatsappHref(representative.phone, message)}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackWhatsappClick(product.slug)}
+              onClick={() => trackWhatsappClick(product.slug, origin)}
             >
               Falar com {firstName}
             </a>

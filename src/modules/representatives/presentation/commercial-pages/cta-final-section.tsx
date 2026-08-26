@@ -1,5 +1,6 @@
 'use client';
 
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import styles from '@/modules/representatives/presentation/commercial-pages/commercial-page-base.module.css';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { buildWhatsappHref, trackWhatsappClick } from '@/modules/representatives/presentation/commercial-pages/whatsapp';
@@ -13,6 +14,7 @@ export function CtaFinalSection({
   description,
   message,
   buttonLabel = 'Falar no WhatsApp agora',
+  origin,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
@@ -20,6 +22,7 @@ export function CtaFinalSection({
   description: string;
   message: string;
   buttonLabel?: string;
+  origin: OriginId | null;
 }) {
   return (
     <section>
@@ -34,7 +37,7 @@ export function CtaFinalSection({
               href={buildWhatsappHref(representative.phone, message)}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => trackWhatsappClick(product.slug)}
+              onClick={() => trackWhatsappClick(product.slug, origin)}
             >
               <WhatsAppIcon />
               {buttonLabel}

@@ -1,5 +1,6 @@
 'use client';
 
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import styles from '@/modules/representatives/presentation/commercial-pages/commercial-page-base.module.css';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { buildWhatsappHref, trackWhatsappClick } from '@/modules/representatives/presentation/commercial-pages/whatsapp';
@@ -15,10 +16,12 @@ export function FloatingWhatsapp({
   representative,
   product,
   message,
+  origin,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
   message: string;
+  origin: OriginId | null;
 }) {
   if (!representative.phone) return null;
 
@@ -29,7 +32,7 @@ export function FloatingWhatsapp({
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar no WhatsApp"
-      onClick={() => trackWhatsappClick(product.slug)}
+      onClick={() => trackWhatsappClick(product.slug, origin)}
     >
       <WhatsAppIcon size={24} />
     </a>

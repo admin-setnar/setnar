@@ -13,3 +13,21 @@
 export const ORIGIN_IDS = ['instagram_post', 'instagram_story', 'whatsapp', 'qrcode', 'direct'] as const;
 
 export type OriginId = (typeof ORIGIN_IDS)[number];
+
+/**
+ * Resolves the `?src=` query value into a validated `OriginId`, or `null`
+ * for anything else (missing, repeated, or outside the allowlist) — the
+ * same "degrade, never reject" contract `is_valid_origin`
+ * (`supabase/migrations/20260908000002_add_origin_write_functions.sql`)
+ * enforces server-side in Postgres. This is the client-visible half of that
+ * same rule, not a second source of truth: both read `ORIGIN_IDS`.
+ *
+ * A `?src=` repeated in the URL arrives here as `string[]` (Next.js
+ * `searchParams` shape) — treated the same as an invalid value, never the
+ * first/last entry, so a caller cannot pad the query string to smuggle a
+ * second value past a lenient reading.
+ */
+export function resolveOrigin(rawSrc: string | readonly string[] | undefined | null): OriginId | null {
+  if (typeof rawSrc !== 'string') return null;
+  return (ORIGIN_IDS as readonly string[]).includes(rawSrc) ? (rawSrc as OriginId) : null;
+}

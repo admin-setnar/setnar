@@ -58,6 +58,7 @@ export class SupabaseLeadGateway implements LeadGateway {
       p_origem: input.origem,
       p_referrer: input.referrer,
       p_ip_hash: hash(input.ip),
+      p_origin: input.origin,
     });
 
     if (error) {

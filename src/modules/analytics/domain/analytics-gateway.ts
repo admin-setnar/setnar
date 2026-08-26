@@ -1,3 +1,5 @@
+import type { OriginId } from '@/modules/analytics/domain/origin';
+
 /**
  * Port for the two write paths `docs/QR_ANALYTICS_PLAN.md` (AN2/AN4) already
  * put behind `SECURITY DEFINER` functions in Postgres: `record_page_visit`
@@ -18,6 +20,7 @@ export interface RecordAnalyticsEventInput {
   readonly referrer: string | null;
   readonly ip: string | null;
   readonly userAgent: string | null;
+  readonly origin: OriginId | null;
 }
 
 export interface AnalyticsGateway {
