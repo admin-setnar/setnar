@@ -62,7 +62,7 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 **Definition:** An independent professional authorized by exactly one Company to sell that Company's Products under their own name and identity.
 **Business meaning:** The primary user and beneficiary of SETNAR. A Representative is not an employee — they operate independently but derive credibility and tooling from their affiliation with the Company.
 **Example:** A licensed iGreen representative who sells Conexão Green and Conexão Solar.
-**Relationships:** Belongs to exactly one Company; owns one Commercial Page per activated Product (or a unified Commercial Page presenting several); is the subject of Analytics; receives Leads.
+**Relationships:** Belongs to exactly one Company; owns one Commercial Page per activated Product — never a unified page presenting several (ADR-029, "no hub"); is the subject of Analytics; receives Leads.
 
 **Stage 1 profile invariant:** a Representative has a public professional name, an authorization identifier and a commercial phone. The phone is a contact attribute of the Representative, not an authentication factor, and is stored canonically for the WhatsApp CTA. Legacy rows that predate this invariant may remain incomplete temporarily, but cannot publish and must be given a correction path; no fictitious value may be inferred. The User Profile's `full_name` may prefill onboarding, but it remains a distinct identity value from the Representative's editable public name.
 
@@ -91,16 +91,16 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 **Relationships:** Connects a Representative to a Product; is a precondition for that Product appearing on a Commercial Page.
 
 ### Commercial Page
-**Definition:** The public-facing, personalized digital page that presents a Representative and the Products they have activated, ending in a call to action (WhatsApp contact).
-**Business meaning:** The core deliverable of the MVP. It is what a Representative shares instead of a PDF or a raw WhatsApp number.
-**Example:** `joao-silva.igreen.setnar.com` showing João's photo, his iGreen affiliation, and his activated Products.
-**Relationships:** Owned by exactly one Representative; references one or more Products; has one QR Code; is the target of Visitor traffic and the origin of Leads.
+**Definition:** The public-facing, personalized digital page that presents a Representative and exactly one Product they have activated, ending in a call to action (WhatsApp contact).
+**Business meaning:** The core deliverable of the MVP. It is what a Representative shares instead of a PDF or a raw WhatsApp number. A Representative with several activated Products has several Commercial Pages, one per Product — never one page aggregating several Products (ADR-029, "no hub"). The set of a Representative's Commercial Pages is what `PRODUCT.md` calls their Digital Office; the Digital Office is not itself a Commercial Page or any other single object (§ 3.1).
+**Example:** `joao-silva.igreen.setnar.com` showing João's name, authorization identifier, iGreen affiliation, and his activated Product. **No photo or free-text description exists in the product** — see § 3.1 and § 9.
+**Relationships:** Owned by exactly one Representative; references exactly one Product; the Company that authorizes both is part of the Page's public address (ADR-092), not a separate relationship to track here; has one derived QR Code (§ 8.7 — not a persisted entity); is the target of Visitor traffic and the origin of Leads.
 
 ### QR Code
-**Definition:** A generated, scannable visual representation of a Commercial Page's (or, later, Campaign's) link.
+**Definition:** A deterministic, on-demand visual encoding of a Commercial Page's current address — today, a computed representation, not a stored entity. (Later, a "Smart QR Code" belonging to a Campaign would be a different, persisted concept — see below.)
 **Business meaning:** Enables offline-to-online conversion — a Representative can hand a printed QR Code to a prospect who has no reason to type a URL.
 **Example:** A QR Code printed on a Representative's business card, linking to their Commercial Page.
-**Relationships:** Belongs to exactly one Commercial Page in Stage 1; in Stage 2, a "Smart QR Code" can belong to a Campaign instead, to enable performance tracking per physical placement.
+**Relationships:** Derived from exactly one Commercial Page's address, in Stage 1 — there is nothing to "belong" to it beyond that address, and nothing persists independently of it. In Stage 2, a "Smart QR Code" would be a genuinely different, persisted concept belonging to a Campaign, with its own identity and lifecycle, to enable performance tracking per physical placement — that concept does not exist today and must not be read back onto the Stage 1 QR Code.
 
 ### Visitor
 **Definition:** An anonymous person who accesses a Commercial Page.
@@ -239,7 +239,7 @@ A concept can be correctly modelled and completely unbuilt. Both are normal. Wha
 
 ## Implemented Domain
 
-Verified against the working tree based on commit `23290c4`, including Sprint E/E2, on 2026-08-05. This table is re-verified at every sprint close — see `docs/README.md` § *When this documentation is re-verified*. If its date is older than the last closed sprint, treat it as unverified and check the code.
+Verified against the working tree based on commit `b1cd1da`, branch `develop`, on 2026-08-27 (SET-89, following the `PRODUCT.md`/`ROADMAP.md` reconciliation of SET-87/SET-88). This table is re-verified at every sprint close — see `docs/README.md` § *When this documentation is re-verified*. If its date is older than the last closed sprint, treat it as unverified and check the code.
 
 | Concept | § | Note |
 |---|---|---|
@@ -248,12 +248,13 @@ Verified against the working tree based on commit `23290c4`, including Sprint E/
 | Catalog | 8.3 | The *governance* is implemented — a Product belongs to a Company, and activation is constrained by it — but there is **no Catalog table or entity**, deliberately (ADR-028). The concept is in force; the object does not exist |
 | Product | 8.4 | Seeded, not managed through the product |
 | Product Activation | 8.5 | Full write path with ordered publication preconditions, including active Subscription |
-| Commercial Page | 8.6 | One per (Representative × Product); resolves by subdomain |
-| QR Code | 8.7 | Rendered client-side from the resolved address; not persisted |
+| Commercial Page | 8.6 | Exactly one per (Representative × Product), each its own independent presentation tree (ADR-089); resolves by subdomain-and-path, with Company in the public address (ADR-092) |
+| QR Code | 8.7 | Rendered client-side on demand from the resolved address; not persisted, not a stored entity |
 | Visitor | 8.8 | As anonymous events only |
 | Lead | 8.12 | Capture plus a minimal owner-only, read-only contact inbox. No Pipeline Status, Activity, notes or mutation |
-| Subscription | 8.14 | Record exists; enforced on publication, public read and representative-facing availability state through the same rule; **activated manually** |
-| Metric Aggregate | 8.9 | Basic read path: visits, WhatsApp clicks and leads, counted per Product over a 7/30-day window, shown to the representative in `/app/paginas` (SET-37/ADR-082, `docs/plans/QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer/device/city, no conversion rate** — that is Advanced Analytics, Stage 2 |
+| Subscription | 8.14 | Full lifecycle implemented and automated (hosted checkout, webhook, cancellation, 30-day trial, reconciliation — ADR-072–078); enforced on publication, public read and representative-facing availability state through the same rule. No representative- or founder-facing view of who paid, MRR or churn exists (`PRODUCT.md` § *Success Metrics*) |
+| Metric Aggregate | 8.9 | Read path implemented: visits, WhatsApp clicks and leads, shown to the representative per Product over a 7/30-day window in `/app/paginas` (SET-37/ADR-082). **No breakdown by referrer/device/city, no conversion rate** — that is Advanced Analytics, Stage 2 |
+| Material (partial — see § 8.11 note) | 8.11 | 21 personalized pieces (7 Products × Post/Story/Poster) exist (SET-65/ADR-090), but as a template rendered per Representative, not the Company-owned shared asset this section models. See § 8.11 for why these are not the same concept |
 
 ## Validated or Planned Domain
 
@@ -268,18 +269,18 @@ Decided, tracked in a plan, not yet built.
 | Concept | § | Status |
 |---|---|---|
 | Campaign, Smart QR Code | 8.10 | Conceptual |
-| Material | 8.11 | Conceptual |
+| Material — as modeled: a Company-owned, shared asset library | 8.11 | Conceptual. **Not the same thing** as the 21 personalized pieces already shipped (SET-65/ADR-090) — see § 8.11 |
 | Activity / Timeline Entry | 8.13 | Conceptual |
 | Pipeline Status, Conversion | 3, 14.2 | Conceptual |
 | Role, Permission | 8.15, 8.16 | Conceptual — authorization today is table-level isolation, not a role model |
-| Marketing Enablement Context | 7.7 | Conceptual |
+| Marketing Enablement Context | 7.7 | The 21 personalized materials (SET-65/ADR-090) are implemented; Campaign and Smart QR Code remain Conceptual |
 | Sales Operations Context (CRM) | 7.8 | Lead capture and read-only contact delivery exist; lifecycle, Pipeline Status, Activity and CRM behavior remain Conceptual |
 | AI Assistance Context | 7.9 | Conceptual |
 | Administration Context | 7.11 | Conceptual |
 | Multi-organization operations, White Label | 18 | Conceptual |
 | Marketplace, Product Distribution, Developer Platform | 18 | Conceptual — lowest confidence in the whole model |
 
-Contexts partly real: **Identity & Access** (7.1) exists as authentication without roles or permissions; **Company Management** (7.2) exists as data without a management surface; **Analytics** (7.6) exists as collection without reporting; **Billing** (7.10) exists as a record without billing; **Compliance** (7.12) is implemented for per-product notices (ADR-055) and conceptual beyond that.
+Contexts partly real: **Identity & Access** (7.1) exists as authentication without roles or permissions; **Company Management** (7.2) exists as data without a management surface; **Analytics** (7.6) exists with both collection and a representative-facing read path (visits, WhatsApp clicks, leads — SET-37/ADR-082); breakdown/reporting beyond that aggregate view (by referrer, device, city; conversion rate) remains Conceptual; **Marketing Enablement** (7.7) exists narrowly — the 21 personalized materials (SET-65/ADR-090) are implemented, Campaign and Smart QR Code remain fully Conceptual; **Sales Operations** (7.8) exists as Lead capture and read-only contact delivery; lifecycle, Pipeline Status, Activity and CRM behavior remain Conceptual; **Billing** (7.10) exists with a full automated lifecycle (checkout, webhook, cancellation, trial, reconciliation — ADR-072–078); a representative- or founder-facing view of payment/MRR/churn does not; **Compliance** (7.12) is implemented for per-product notices (ADR-055) and conceptual beyond that.
 
 ## How to read the rest of this document
 
@@ -329,7 +330,7 @@ Supporting Domains are necessary for the Core Domain to function correctly and c
 Generic Domains solve problems that are not unique to SETNAR's business and could, in principle, be satisfied by an off-the-shelf capability. They are modeled here only to the extent needed to define their business meaning; they do not encode differentiated business logic.
 
 - **Analytics/Metrics collection** — recording and aggregating Visitor events. The *event vocabulary* (a Commercial Page visit, a WhatsApp click) is domain-specific, but the mechanics of counting and aggregation are generic.
-- **QR Code generation** — turning a link into a scannable image is a generic capability; what's domain-specific is *what* the QR Code points to and *who* owns it (Section 7 notes this ownership explicitly belongs to Commercial Pages, per ARCHITECTURE.md's own example).
+- **QR Code rendering** — turning a link into a scannable image is a generic capability; what's domain-specific is *what address* it renders (today, always a Commercial Page's — § 8.7). It is a rendering, not a stored, owned entity.
 - **Notification/Communication** — any transactional messaging (e.g., "your Lead status changed") is a generic supporting capability, not a differentiator.
 - **AI Content Generation** — Stage 4's content/copy generation capability is, from a business-model perspective, a generic capability (text generation) applied to the Core Domain's specific artifacts (Commercial Page copy, Product descriptions).
 
@@ -339,7 +340,7 @@ Generic Domains solve problems that are not unique to SETNAR's business and coul
 
 Each Bounded Context corresponds to a business capability area and maps directly to a System Module named in ARCHITECTURE.md, keeping the same name so architecture and domain vocabulary never diverge.
 
-> **Status (§ 3.1).** Twelve contexts are described; **four exist as code modules today** (Identity & Access, Company/Representative management, Commercial Presence, Compliance), four exist partially (Analytics, Billing, Catalog Management, and Sales Operations only as Lead capture plus read-only delivery), and four are Conceptual (Marketing Enablement, AI Assistance, Administration, and the enterprise portion of Company Management). A context described here is a boundary reserved in the vocabulary, not a module to create.
+> **Status (§ 3.1).** Twelve contexts are described; **four exist as code modules today** (Identity & Access, Company/Representative management, Commercial Presence, Compliance), five exist partially (Analytics — collection plus a representative-facing read path, not a breakdown; Billing — full automated lifecycle, not a payment/MRR view; Catalog Management; Sales Operations only as Lead capture plus read-only delivery; Marketing Enablement only as the 21 personalized materials, not Campaign or Smart QR Code), and three are Conceptual (AI Assistance, Administration, and the enterprise portion of Company Management). A context described here is a boundary reserved in the vocabulary, not a module to create.
 
 ## 7.1 Identity & Access Context
 **Purpose:** Know who is acting and what they are permitted to do.
@@ -375,12 +376,12 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Events produced:** ProductAddedToCatalog, ProductRetired.
 
 ## 7.5 Commercial Presence Context — **Core Domain**
-**Purpose:** Turn a Representative's identity and activated Products into a public, shareable, credible Commercial Page, and generate a QR Code for it.
-**Responsibilities:** Commercial Page composition and publication lifecycle, QR Code generation and association.
-**Owned entities:** Commercial Page, QR Code.
-**Business rules:** A Commercial Page cannot exist without a Representative. A Commercial Page can only reference Products the Representative has activated. Publishing a Commercial Page requires, at minimum, a complete Representative Profile and at least one activated Product.
+**Purpose:** Turn a Representative's identity and one activated Product into a public, shareable, credible Commercial Page, and render a QR Code for it on demand.
+**Responsibilities:** Commercial Page composition and publication lifecycle, QR Code rendering (§ 8.7 — not a stored capability, a derivation of the Page's address).
+**Owned entities:** Commercial Page. (QR Code is not a separately owned entity — see § 8.7.)
+**Business rules:** A Commercial Page cannot exist without a Representative. A Commercial Page can only reference a Product the Representative has activated. Publishing a Commercial Page requires, at minimum, a complete-enough Representative Profile (today: name and phone) and its one activated Product.
 **Relationships:** Depends on Representative Management and Catalog Management; is the origin point for Analytics and Marketing Enablement; is the entity that Lead Capture references as the source of a Lead.
-**Events produced:** CommercialPagePublished, CommercialPageUnpublished, QRCodeGenerated.
+**Events produced:** CommercialPagePublished, CommercialPageUnpublished.
 
 ## 7.6 Analytics Context
 **Purpose:** Measure Visitor interaction with Commercial Pages and Campaigns.
@@ -512,12 +513,12 @@ Each Bounded Context corresponds to a business capability area and maps directly
 
 **Business description:** The public digital page presenting a Representative and an activated Product. It is the central artifact of the Digital Office, not a synonym for it — a Representative with several activated Products has several Commercial Pages and one Digital Office (ADR-029).
 **Purpose:** Convert a stranger's attention into a Lead by presenting a credible, professional, personalized offer.
-**Responsibilities:** Presenting Representative identity, presenting activated Products, exposing a call-to-action (WhatsApp), carrying a QR Code.
+**Responsibilities:** Presenting Representative identity, presenting the one activated Product it exists for, exposing a call-to-action (WhatsApp), rendering a QR Code on demand.
 **Identity:** Uniquely identified by its own shareable address, owned by exactly one Representative.
 **Lifecycle:** Draft → Published → (optionally) Unpublished. See Section 14 for full state machine.
-**Relationships:** Belongs to exactly one Representative; references one or more Products (via that Representative's Activations); has exactly one QR Code; is the origin of Analytics events and Leads.
-**Behaviors:** Compose/edit content, publish, unpublish, regenerate its QR Code.
-**Invariants:** Cannot exist without a Representative (per ROADMAP.md and the explicit example in ARCHITECTURE.md). Cannot reference a Product the owning Representative has not activated. Cannot be published without complete, minimum required Representative Profile information (name, photo, contact) and at least one activated Product.
+**Relationships:** Belongs to exactly one Representative; references exactly one Product (via that Representative's Activation of it) — never several (ADR-029, "no hub"); has one derived QR Code (§ 8.7 — not a persisted entity of its own); is the origin of Analytics events and Leads.
+**Behaviors:** Compose/edit content, publish, unpublish, render/download its QR Code.
+**Invariants:** Cannot exist without a Representative (per ROADMAP.md and the explicit example in ARCHITECTURE.md). Cannot reference a Product the owning Representative has not activated. Cannot be published without a complete-enough Representative Profile — **today, name and phone; not photo, which is not implemented** (§ 11, Rule 7) — and its one activated Product.
 **Creation rules:** Created automatically as part of Representative onboarding (per PRODUCT.md's "automatic generation" and "automatic activation").
 **Deletion rules:** Unpublishing removes public visibility but preserves the page and its historical Analytics/Leads.
 **Example:** `joao-silva.igreen.setnar.com` — the address is `<representative-slug>.<company-slug>.<tenant-root>`; the Company label is part of the canonical public address, not merely a validation detail (ADR-092).
@@ -525,15 +526,16 @@ Each Bounded Context corresponds to a business capability area and maps directly
 
 ### 8.7 QR Code
 
-**Business description:** A generated scannable image representing a Commercial Page's (or Campaign's) address.
+**Business description, today (Stage 1):** **Not a persisted entity.** A QR Code is a deterministic visual encoding of a Commercial Page's current address, computed client-side whenever a representative asks for it. It has no identity, no stored row, and no state of its own — it is a rendering of a fact that already lives on the Commercial Page (its address), the same way a printed copy of an address is not a second address.
 **Purpose:** Bridge offline sales interactions (business cards, printed flyers, in-person conversations) into trackable online traffic.
-**Responsibilities:** Encoding a stable reference to exactly one target (a Commercial Page in Stage 1; optionally a Campaign in Stage 2 as a "Smart QR Code").
-**Identity:** Uniquely identified, always owned by exactly one Commercial Page (Stage 1) or one Campaign (Stage 2 "Smart QR Code").
-**Lifecycle:** Generated → Active → (optionally) Regenerated (invalidating the previous version).
-**Relationships:** Belongs to exactly one Commercial Page or exactly one Campaign — this ownership is intentionally explicit per ARCHITECTURE.md's own worked example ("QR Code generation belongs to Commercial Pages, not Shared").
-**Behaviors:** Generate, download, regenerate, copy underlying link.
-**Invariants:** A QR Code never exists independent of the entity it represents; it cannot outlive its owner.
+**Responsibilities:** Encoding, on demand, whatever a Commercial Page's current address is.
+**Identity:** None of its own. "Regenerating" it does not invalidate a prior version — there is no prior version stored to invalidate; it simply re-encodes the same (or, if the address changed, the new) address.
+**Lifecycle:** None. It is computed at render time and discarded; there is nothing to activate, expire, or persist between renders.
+**Relationships:** Derived from exactly one Commercial Page's address at the moment it is rendered. It does not "belong to" the Page in the ownership sense the rest of this document uses for persisted entities — there is nothing separate from the Page for it to belong to.
+**Behaviors:** Render, download, copy the underlying link, retry on a generation error.
+**Invariants:** A QR Code's encoded content is always exactly the Commercial Page's current address at render time — there is no invariant to state about its own lifecycle, because it does not have one.
 **Example:** The QR Code printed on João's business card, linking to his Commercial Page.
+**Stage 2, a different concept — "Smart QR Code":** belonging to a Campaign, this *would* be a genuinely persisted entity with its own identity and lifecycle (so that scanning it can be attributed to that specific Campaign and physical placement, even after the Campaign's underlying link changes). Nothing about today's derived, non-persisted QR Code is evidence toward this — it is a different shape of concept, not an earlier version of the same one.
 
 ### 8.8 Visitor
 
@@ -565,6 +567,8 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Future evolution:** Stage 6 may allow Campaigns to be Company-sponsored across multiple Representatives.
 
 ### 8.11 Material
+
+> **Not the same thing as the 21 personalized pieces already shipped (SET-65/ADR-090).** This section models the *future* Material Library concept: a Company-owned asset, identical for every Representative who uses it, that a Representative references or downloads unchanged. What exists today is a different shape — a template rendered per (Representative, Product), personalized with that Representative's own name, authorization ID, phone and city (§ 3.1 table, *Implemented Domain*). It has no Company-scoped identity of its own to be "used" or "retired" the way this section describes; it is closer to a derived artifact (like § 8.7's QR Code) than to the shared, static asset modeled below. Treat this section as the shape a future Company-managed library would take **if built** — not a description, partial or otherwise, of what SET-65 delivered.
 
 **Business description:** A reusable, Company-approved marketing asset made available to Representatives.
 **Purpose:** Standardize and simplify content production while protecting brand compliance.
@@ -601,7 +605,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Identity:** Uniquely identified, owned by exactly one Representative or exactly one Company.
 **Lifecycle:** Trialing (30 days, from onboarding) → Activated → Active → (optionally) Suspended (non-payment) → (optionally) Canceled. See Section 14.
 **Relationships:** Owned by a Representative or Company; constrains the publication capability of Commercial Pages.
-**Invariants:** A Commercial Page cannot remain Published if its owner's Subscription is not Active (see Section 14 for the precise transition and grace behavior, which is an inferred, conservative rule since PRODUCT.md does not specify billing enforcement mechanics for the MVP).
+**Invariants:** A Commercial Page cannot remain Published if its owner's Subscription is not Active or an unexpired Trialing (see Section 14 for the precise transition and grace behavior — sourced from `is_subscription_active()`, ADR-063/064, and the automated Asaas lifecycle, ADR-072–078, not inferred).
 **Future evolution:** Stage 5 introduces Company-level Subscriptions covering multiple Representatives at once.
 
 ### 8.15 Role
@@ -622,7 +626,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 
 # 9. Value Objects
 
-> **Status (§ 3.1).** Phone Number, Email Address, Slug/Page Address and Referrer Source correspond to real values in the code. **Social Link, Business Hours and Money/Commission Value do not exist anywhere** — no field, no column, no interface. They are modelled so that the vocabulary is ready if they arrive; they are not a specification to build against, and Money/Commission is explicitly labelled a placeholder.
+> **Status (§ 3.1).** Phone Number, Email Address, Slug/Page Address and Referrer Source correspond to real, persisted values in the code. **QR Code Image Reference is real but ephemeral** — computed client-side on each render, never stored (§ 8.7). **Social Link, Business Hours and Money/Commission Value do not exist anywhere** — no field, no column, no interface. They are modelled so that the vocabulary is ready if they arrive; they are not a specification to build against, and Money/Commission is explicitly labelled a placeholder.
 
 Value Objects have no identity of their own; two Value Objects with the same attributes are interchangeable. They are immutable — any "change" produces a new value rather than mutating the old one, because their entire business meaning is the value itself.
 
@@ -630,7 +634,7 @@ Value Objects have no identity of their own; two Value Objects with the same att
 - **Email Address** — a validated identity/contact value, used for authentication and notification. Same immutability reasoning as Phone Number.
 - **Slug / Page Address** — the human-readable identifier portion of a Commercial Page's shareable address (e.g., `joao-silva`). Immutable once a Commercial Page is Published, to preserve the validity of already-distributed QR Codes and links (an inferred rule — see Section 17).
 - **Social Link** — a labeled external URL (Instagram, Facebook, etc.) attached to a Representative's Profile. Immutable per entry; changing it means replacing the value.
-- **QR Code Image Reference** — the rendered visual artifact corresponding to a QR Code's underlying link. Regenerating invalidates and replaces it; it does not mutate in place.
+- **QR Code Image Reference** — the rendered visual artifact corresponding to a Commercial Page's current address, recomputed fresh on each render. There is no prior version to invalidate or replace — a new render simply reflects whatever the address currently is (§ 8.7).
 - **Money / Commission Value** *(placeholder for Billing/Enterprise)* — an amount plus currency, immutable, used wherever a Subscription price or commission figure is expressed.
 - **Status** — a closed-set named value (e.g., Published/Draft, New/Contacted/Negotiation/Won/Lost, Active/Suspended/Canceled). A Status is never edited; an entity transitions from one Status value to another under governed rules (Section 14).
 - **Business Hours** *(supports Company/Representative contact expectations)* — an immutable description of when a Representative is reachable, referenced by their Profile.
@@ -667,10 +671,10 @@ An Aggregate defines a transactional consistency boundary: everything inside it 
 
 ### Commercial Page Aggregate
 **Root:** Commercial Page.
-**Internal entities/values:** QR Code, referenced Product Activations (by reference, not by copy), page content composition.
-**Consistency rule:** The Page can only be Published if every referenced Product is currently an active Product Activation of the owning Representative; the QR Code must always point to the Page's current address.
-**Transaction boundary:** Publishing/unpublishing the Page, or regenerating its QR Code, is one atomic transaction.
-**Business justification:** This is the Core Domain's central deliverable — its publication state, its content, and its QR Code must never be observed in an inconsistent combination (e.g., a live QR Code pointing to an unpublished page).
+**Internal entities/values:** its one referenced Product Activation (by reference, not by copy), page content composition. The QR Code is **not** an internal entity — it is derived at render time from the Page's address (§ 8.7) and carries no state for the aggregate to keep consistent.
+**Consistency rule:** The Page can only be Published if its referenced Product is currently an active Product Activation of the owning Representative.
+**Transaction boundary:** Publishing/unpublishing the Page is one atomic transaction. Rendering its QR Code is not a transaction against this aggregate at all — it is a read of the Page's current address.
+**Business justification:** This is the Core Domain's central deliverable — its publication state and its content must never be observed in an inconsistent combination. Because the QR Code is always derived fresh from the current address, it cannot itself drift out of sync — the only thing to keep consistent is the address it is derived from.
 
 ### Campaign Aggregate
 **Root:** Campaign.
@@ -699,7 +703,7 @@ An Aggregate defines a transactional consistency boundary: everything inside it 
 
 Organized by domain, all rules stated here are either directly sourced from the five project documents or are the minimal necessary inference to keep the model consistent (marked *[Inferred]*).
 
-> **Status (§ 3.1).** A rule about a Conceptual entity is a rule that will apply *if* that entity is ever built — it is not in force today and nothing is violating it by not enforcing it. Rules 1–3, 5–10, 21 and 26 are enforced in the code. **Rule 21 uses the same `is_subscription_active` decision at publication time and on public read.** Rules 15–20 and 23–25 concern Conceptual entities and are dormant. Rule 7 is enforced in a narrower form than stated: name and phone are required to publish; **photo is not, because profile photos are not implemented**.
+> **Status (§ 3.1).** A rule about a Conceptual entity is a rule that will apply *if* that entity is ever built — it is not in force today and nothing is violating it by not enforcing it. Rules 1–3, 5–10, 21 and 26 are enforced in the code. **Rule 21 uses the same `is_subscription_active` decision at publication time and on public read, backed by the automated Asaas billing lifecycle (ADR-072–078) — it is sourced, not inferred.** Rules 15–20 and 23–25 concern Conceptual entities and are dormant. Rule 7 below already states the narrower, real requirement (name and phone; not photo, which is not implemented) rather than the fuller aspirational one.
 
 ### Company & Catalog
 1. A Company must exist before any Catalog, Representative, or Commercial Page can exist under it.
@@ -710,13 +714,13 @@ Organized by domain, all rules stated here are either directly sourced from the 
 ### Representative
 5. A Representative belongs to exactly one Company at a time.
 6. A Representative can only activate Products that exist in their own Company's Catalog.
-7. A Representative's core Profile (name, photo, phone) must be complete before their Commercial Page can be Published.
+7. A Representative's core Profile — today, name and phone; not photo, which is not implemented — must be complete before their Commercial Page can be Published.
 
 ### Commercial Page — *Core Domain*
 8. A Commercial Page cannot exist without a Representative.
-9. A Commercial Page can only reference Products the owning Representative has actively activated.
-10. A Commercial Page must have at least one active Product reference to be Published.
-11. A Commercial Page has exactly one QR Code at any time; regenerating creates a new QR Code and invalidates the previous one. *[Inferred, consistent with QR Code ownership example in ARCHITECTURE.md]*
+9. A Commercial Page can only reference a Product the owning Representative has actively activated — never a Product outside that set.
+10. A Commercial Page must reference its one active Product Activation to be Published; it cannot exist referencing zero or more than one (ADR-029, "no hub").
+11. A Commercial Page's QR Code is derived, not stored: it always encodes whatever the Page's current address is, computed at render time. There is no prior version to invalidate, so there is nothing to regenerate in the sense Rule 12 protects for the address itself. *[Corrects an earlier version of this rule, which treated the QR Code as a persisted, invalidatable entity — see § 8.7]*
 12. A Commercial Page's Slug/address, once Published, should not silently change, to preserve already-distributed QR Codes and links. *[Inferred]*
 
 ### Analytics
@@ -734,7 +738,7 @@ Organized by domain, all rules stated here are either directly sourced from the 
 20. A Lead's Pipeline Status can only move through the defined transitions in Section 14 — it cannot skip directly from New to Won without passing through Contacted and Negotiation. *[Inferred, standard CRM practice; not contradicted by any source document]*
 
 ### Billing
-21. A Representative's (or, in Stage 5, Company's) Subscription must be Active for their Commercial Page(s) to remain Published. *[Inferred — no MVP document defines enforcement, but PRODUCT.md's MVP goal is explicitly to "validate willingness to pay," which requires *some* mechanism tying payment status to platform access]*
+21. A Representative's (or, in Stage 5, Company's) Subscription must be Active — or an unexpired Trialing — for their Commercial Page(s) to remain Published, via `is_subscription_active()` (ADR-063, ADR-064; automated by the Asaas webhook, ADR-072–078). No longer inferred: this is sourced directly from the implemented billing lifecycle.
 22. A Subscription lapsing unpublishes Commercial Pages but never deletes their content, Analytics, or Leads.
 
 ### Identity & Access / Administration
@@ -754,7 +758,7 @@ Domain Services represent business processes that do not belong naturally to a s
 > **Status (§ 3.1).** Representative Onboarding, Commercial Page Publication and Catalog Compliance exist in some form today. **Lead Attribution, Pipeline Progression, Subscription Enforcement and AI Content Suggestion do not exist** — Subscription enforcement today is a read-time check, not a service that reacts to status changes. Naming a service here does not schedule it.
 
 - **Representative Onboarding Service** — orchestrates the self-service registration flow: creating the Representative, linking them to the correct Company, and automatically generating their initial Commercial Page (per PRODUCT.md's "self-service and automatic activation").
-- **Commercial Page Publication Service** — validates all publication preconditions across the Representative, Product Activation, and Subscription Aggregates (Profile completeness, at least one active Product, active Subscription) before allowing a Page's Status to move to Published.
+- **Commercial Page Publication Service** — validates all publication preconditions across the Representative, Product Activation, and Subscription Aggregates (Profile completeness, its one active Product Activation, active or trialing Subscription) before allowing a Page's Status to move to Published.
 - **Lead Attribution Service** — determines, at the moment a conversion-intent Visitor Event occurs (e.g., a WhatsApp click), whether it should be attributed to a Campaign or to the Commercial Page directly, and creates the corresponding Lead.
 - **Pipeline Progression Service** — enforces the allowed Pipeline Status transitions for a Lead and ensures each transition produces a corresponding Activity Timeline entry.
 - **Catalog Compliance Service** — validates, whenever a Representative attempts a Product Activation, that the Product genuinely belongs to that Representative's Company's Catalog and is not Retired.
@@ -773,9 +777,8 @@ Domain Services represent business processes that do not belong naturally to a s
 | **RepresentativeRegistered** | A Representative completes self-service sign-up under a Company | Marks the start of the Representative's digital presence | Triggers automatic Commercial Page creation (Draft) | Representative Management, Commercial Presence |
 | **ProductActivated** | A Representative activates a Product from their Company's Catalog | Signals intent to sell that Product | Makes the Product eligible to appear on the Representative's Commercial Page | Commercial Presence, Catalog Management |
 | **ProductDeactivated** | A Representative deactivates a Product | Signals they no longer offer it | Any Commercial Page content referencing it must be updated before republishing | Commercial Presence |
-| **CommercialPagePublished** | A Representative publishes their Page after preconditions are met | The Digital Office becomes publicly reachable | QR Code becomes live; Analytics scope begins recording | Analytics, Marketing Enablement |
-| **CommercialPageUnpublished** | A Page is manually unpublished, or a Subscription lapses | Removes public visibility | QR Code stops resolving publicly; Analytics recording pauses | Analytics, Billing |
-| **QRCodeGenerated** | A Commercial Page is first published, or its QR Code is regenerated | Produces a scannable offline-to-online bridge | Enables offline distribution (business cards, flyers) | Commercial Presence, Marketing Enablement |
+| **CommercialPagePublished** | A Representative publishes their Page after preconditions are met | The Digital Office becomes publicly reachable | Its address becomes renderable as a QR Code on demand (§ 8.7 — not a one-time generation event); Analytics scope begins recording | Analytics, Marketing Enablement |
+| **CommercialPageUnpublished** | A Page is manually unpublished, or a Subscription lapses | Removes public visibility | Its address no longer resolves publicly, so any QR Code rendered from it stops working; Analytics recording pauses | Analytics, Billing |
 | **PageVisitRecorded** | A Visitor loads a Commercial Page or Campaign link | Raw traffic signal | Contributes to Metric Aggregates | Analytics |
 | **WhatsAppClickRecorded** | A Visitor clicks the call-to-action | Signals conversion intent | Triggers Lead Attribution Service | Analytics, Sales Operations |
 | **CampaignCreated** | A Representative creates a Campaign | Enables isolated performance tracking of a specific marketing effort | Establishes a new Analytics scope and (optionally) a Smart QR Code | Marketing Enablement, Analytics |
@@ -793,7 +796,7 @@ Domain Services represent business processes that do not belong naturally to a s
 
 # 14. State Machines
 
-> **Status (§ 3.1).** **14.1 (Commercial Page)** is real, in a narrower form: publication is gated on four ordered preconditions (active Representative, active Subscription, display name, phone), and an inactive Subscription hides an already-published page on read rather than transitioning it to Unpublished — there is still no reactive process that rewrites the stored state. **14.2 (Lead Pipeline)** is Conceptual in full: no Lead has a status, because there is no pipeline. **14.3 (Subscription)** exists as stored values changed by hand; `is_subscription_active()` already evaluates the grace-until-period-end rule live (SET-26), but no billing event yet drives a transition automatically — that is SET-29/30, not shipped. **14.4 (Product)** reflects seeded data, not a managed lifecycle.
+> **Status (§ 3.1).** **14.1 (Commercial Page)** is real, in a narrower form: publication is gated on four ordered preconditions (active Representative, active Subscription, display name, phone), and an inactive Subscription hides an already-published page on read rather than transitioning it to Unpublished — there is still no reactive process that rewrites the stored state. **14.2 (Lead Pipeline)** is Conceptual in full: no Lead has a status, because there is no pipeline. **14.3 (Subscription)** has a full automated lifecycle: the Asaas webhook drives every transition (Trialing→Activated→Active, Active↔Suspended, and cancellation) — see the detailed status updates within § 14.3 (SET-26, SET-29/30, SET-32, SET-67; ADR-072–078). This corrects an earlier version of this line, which said billing transitions were still manual; they have not been since SET-29/30 shipped. **14.4 (Product)** reflects seeded data, not a managed lifecycle.
 
 ### 14.1 Commercial Page
 
@@ -808,7 +811,7 @@ Domain Services represent business processes that do not belong naturally to a s
 
 **Permitted transitions:** Draft → Published; Published → Unpublished; Unpublished → Published.
 **Forbidden transitions:** Draft → Unpublished directly is meaningless (an unpublished page must have been published at some point, or it is simply still a Draft) — the model treats "never published" and "unpublished" as the same externally-invisible state, distinguished only by history.
-**Business rules governing transitions:** Draft → Published requires: complete Representative Profile, at least one active Product Activation referenced, and an Active Subscription. Published → Unpublished can be triggered either manually by the Representative or automatically by the Subscription Enforcement Service.
+**Business rules governing transitions:** Draft → Published requires: complete Representative Profile, its one active Product Activation referenced, and an Active (or unexpired Trialing) Subscription. Published → Unpublished can be triggered either manually by the Representative or automatically by the Subscription Enforcement Service.
 
 ### 14.2 Lead (Pipeline Status)
 
@@ -906,7 +909,7 @@ Representative      Representative Mgmt      Commercial Presence      Catalog Mg
       |                     |                        |--check preconditions|
       |                     |                        |  (Profile, Product, |
       |                     |                        |   Subscription)     |
-      |<---------------------- Page Published, QR Code generated ----------|
+      |<---------------------- Page Published, QR Code renderable on demand |
 ```
 
 ### 15.2 Visitor → Lead → Conversion
@@ -966,9 +969,9 @@ Billing Context             Subscription Enforcement       Commercial Presence
 | Company — Representative | 1 to many | A Company authorizes many Representatives | Company owns (authorizes) | Representative's authorization ends if Company is deactivated |
 | Representative — Product Activation | 1 to many | A Representative chooses which Products to sell | Representative owns | Activation cannot outlive the Representative |
 | Product — Product Activation | 1 to many | A Product can be activated by many Representatives | Shared reference, not owned by either alone | Activation cannot reference a Retired/removed Product |
-| Representative — Commercial Page | 1 to many (typically 1) | A Representative's public presence | Representative owns | Page cannot outlive its Representative |
-| Commercial Page — Product (via Activation) | many to many | A Page presents one or more activated Products | Reference only | Page content must update if referenced Activation is removed |
-| Commercial Page — QR Code | 1 to 1 | A Page's offline access bridge | Page owns | QR Code cannot outlive its Page |
+| Representative — Commercial Page | 1 to many | One Page per activated Product — a Representative with several activated Products has several Pages, never one page aggregating them (ADR-029) | Representative owns | Page cannot outlive its Representative |
+| Commercial Page — Product (via Activation) | many to 1 | Each Page references exactly one Product; a Product may be referenced by many Pages across many Representatives | Reference only | Page becomes unpublishable if its one referenced Activation is removed |
+| Commercial Page — QR Code | 1 to 0 (derived, not stored) | A Page's offline access bridge, computed on demand from the Page's address | Not owned — nothing separate exists to own | No lifecycle dependency: there is no stored QR Code to outlive or be outlived |
 | Commercial Page — Analytics (Metric Aggregate) | 1 to many | Traffic measurement over time | Analytics context owns the record, references the Page | Analytics history persists even if Page is unpublished |
 | Representative — Campaign | 1 to many | Representative-driven marketing initiatives | Representative owns | Campaign cannot outlive its Representative |
 | Campaign — Commercial Page | many to 1 | Campaigns funnel traffic to a Page | Reference only | Campaign becomes invalid if its target Page is deleted (not merely unpublished) |
@@ -998,7 +1001,7 @@ Things that must never happen, anywhere in the system, at any stage:
 10. A published Commercial Page whose owning Representative's (or Company's) Subscription is not Active must never exist for longer than the enforcement process requires to unpublish it.
 11. A Role or Permission assignment that crosses Company boundaries (an administrator acting outside their own Company) must never exist.
 12. A Lead in a terminal Status (Won/Lost) transitioning to any other Status must never happen — a reopened opportunity is a new Lead, not a resurrected one. *[Inferred]*
-13. A QR Code resolving to a target other than its current owning Commercial Page or Campaign must never exist (no dangling or repointed QR Codes without regeneration).
+13. A rendered QR Code must always encode the Commercial Page's address at the moment of rendering — since nothing is stored, there is no dangling or stale QR Code to guard against separately from Constraint 5 above (a Page cannot reference a Product it hasn't activated) and Rule 12 (the address should not silently change once Published).
 14. Data belonging to one Company must never be visible to, or computed into aggregates for, another Company — multi-tenant isolation is absolute, per ARCHITECTURE.md's explicit "no module should assume a single company."
 
 ---
@@ -1043,6 +1046,8 @@ This section explains, in business terms, how this Domain Model is expected to r
 
 ### 20.1 Domain Class Diagram
 
+**`QRCode` below is illustrative of a derived rendering, not a persisted class** — see § 8.7. UML class-diagram notation has no lighter-weight way to show "computed on demand from another class's data," so it is drawn like the other, genuinely persisted entities; do not read the `"1" --> "1"` arrow as evidence of a stored one-to-one row.
+
 ```mermaid
 classDiagram
     class Company {
@@ -1073,7 +1078,7 @@ classDiagram
         +Slug
         publish()
         unpublish()
-        regenerateQRCode()
+        renderQRCode()
     }
     class QRCode {
         +ImageReference

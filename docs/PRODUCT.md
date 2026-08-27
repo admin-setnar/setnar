@@ -118,6 +118,8 @@ Our value is not creating pages.
 
 Our value is the trust between a representative and the organization that authorizes them — the reason a customer can act on that presence with confidence.
 
+That trust is completed by a cycle, not a single artifact: a credible presence, distributed through links, QR Codes and ready-made materials, captures real interest as leads, and basic analytics shows that the interest happened. Each stage exists to make the others verifiable — not to grow SETNAR into a marketing platform (see *Non-Goals*).
+
 ---
 
 # Target Audience
@@ -183,17 +185,13 @@ Digital tools should be accessible even for users with minimal technical knowled
 
 # MVP Goal
 
-The MVP has one objective:
+The MVP's objective is to validate whether independent representatives perceive enough recurring value in a Digital Office to adopt it and pay for it.
 
-Validate whether independent representatives are willing to pay for a Digital Office.
+The Digital Office being validated is the one that exists today (see *"Digital Office" — formal definition*), put to use through the distribution, capture and measurement already part of this same baseline (see *What Exists Today*). A presence nobody can find, share or measure would not be evaluating the same offer this hypothesis is meant to test.
 
-Nothing else.
+This does not authorize solving every commercial problem a representative has. A full CRM, Campaigns, Artificial Intelligence and advanced business automation remain out of scope for this validation (see *Non-Goals* and *Long-Term Vision*), independently of how the billing question below is resolved.
 
-The MVP is not intended to solve every commercial problem.
-
-It only validates demand.
-
-**Known gap, stated openly:** the product cannot yet measure this hypothesis. Subscriptions exist as a record and are enforced both when a Commercial Page is published and when it is served, but they are activated manually — there is no payment gateway, billing flow, or automated Subscription lifecycle. Until that closes, "willing to pay" is being observed outside the product, not by it. Tracked in `docs/plans/SPRINT_E_PLAN.md` (E3–E6).
+**Billing.** Subscriptions are enforced both when a Commercial Page is published and when it is served, through the same `is_subscription_active` rule. A hosted Asaas checkout, an authenticated/idempotent webhook, representative-initiated cancellation, a 30-day free trial and manual reconciliation are implemented and part of the current baseline. This closes the gap this section previously recorded ("no payment gateway, billing flow, or automated Subscription lifecycle"); it does not by itself give the product a way to display business metrics to anyone — see *Success Metrics*.
 
 ---
 
@@ -215,7 +213,7 @@ These are the metrics against which the MVP is to be judged. Listing a metric he
 - WhatsApp clicks
 - Returning visitors
 
-**Instrumentation status.** Page visits and WhatsApp clicks are recorded, but there is no read path and no interface that displays them — to the representative or to anyone else. Every business metric above is currently obtained outside the product. Any statement implying that a representative can "track their results today" is false.
+**Instrumentation status.** Page visits, WhatsApp clicks and leads are recorded and are shown to the representative, per Product, over a 7- or 30-day window (SET-37/ADR-082) — see *What Exists Today*. There is no breakdown by referrer, device or city, and no conversion rate. Every Business Metric above — paying customers, monthly recurring revenue, retention, referral rate — is still obtained outside the product; none of them has a representative- or founder-facing read path today. Any statement implying that a representative can track referral, retention or revenue results today is false; visits, WhatsApp clicks and leads are the one exception already available to them.
 
 ---
 
@@ -353,9 +351,9 @@ The single authoritative answer to "what does the product do?" Three categories 
 
 | | |
 |---|---|
-| Baseline | Parte 2 working tree based on commit `df8db50`, branch `develop` |
-| Date | 2026-08-06 |
-| Performed by | Documentation governance audit, approved by the Product Owner |
+| Baseline | Working tree based on commit `b1cd1da`, branch `develop` |
+| Date | 2026-08-27 |
+| Performed by | Documentation governance audit (SET-87), approved by the Product Owner |
 | Method | Direct reading of `src/`, `supabase/migrations/` and `package.json`. A capability is listed only where a code path was found that a user can actually reach |
 | Not covered | Runtime behaviour in production, and whether any real representative has used any of it |
 | Re-verified | At every sprint close, and before every release — `docs/README.md` § *When this documentation is re-verified* |
@@ -369,7 +367,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 - Reading the products of the authorizing organization's catalog. The catalog is seeded by migration; there is no interface to manage it.
 - Product activation and deactivation by the representative.
 - Publication of a commercial page per activated product, subject to four ordered preconditions: active representative, active SETNAR Subscription, name filled in, phone filled in. Only the first failure is reported.
-- Seven professional public Commercial Pages, one per seeded Product, currently delivered by the shared-shell implementation of ADR-088, with authorized-representative identification, per-product content and compliance, WhatsApp CTA, FAQ, product-specific widget and the common lead form. **No representative photo, and no free-text description** — neither exists in the product. The approved replacement by seven independent presentation trees (ADR-089) is in development and is not described here as shipped.
+- Seven professional public Commercial Pages, one per seeded Product, each delivered by its own independent presentation tree (ADR-089), with authorized-representative identification, per-product content and compliance, WhatsApp CTA, FAQ, product-specific widget and the common lead form. **No representative photo, and no free-text description** — neither exists in the product. The independence is presentation-only: Company/Representative/Product resolution, the secure Lead path, analytics recording and the public-access rule remain shared and canonical across all seven trees.
 - QR Code rendered in the browser from the page's public address, with **download**, **copy link**, manual-copy fallback and retry after a generation error. There is **no persisted QR Code** and no content-level regeneration.
 - Public address by subdomain — `<representative-slug>.<company-slug>.setnar.com/<product-slug>` (ADR-092) — one page per (representative × product). Company is part of the canonical public address; there is no earlier one-label form to preserve, since the change shipped before any representative had production traffic. There is no public hub page listing a representative's products.
 - Lead capture, with an IP rate limit and attribution to the originating page.
@@ -384,11 +382,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 
 ### In validation or development
 
-Decided or under way, **not yet usable**:
-
-- Replacement of the shared Commercial Page shell by seven independent product presentation trees, preserving one secure Lead path and the same product tree in public and preview routes (SET-78/ADR-089).
-- Manual Subscription activation/reactivation (`SPRINT_E_PLAN.md`, E3).
-- Analytics event retention/purge (AN7).
+Nothing decided-but-unbuilt is tracked here at this baseline. The three items previously listed have each resolved: the seven independent presentation trees (SET-78/ADR-089, now described under *Available now*) and analytics event retention/purge (AN7) are implemented and part of the current baseline; manual Subscription activation (`SPRINT_E_PLAN.md`, E3) is superseded by the automated billing described under *MVP Goal*.
 
 ### Future vision
 
@@ -459,13 +453,14 @@ permanently, independent of when it ships.
 
 **Analytics** — proving to the representative that their presence generates interest.
 
-- Visits — *collected, not shown*
-- Clicks — *collected, not shown*
-- Sources — *collected, not shown*
+- Visits — *available now* (shown per Product, over a 7- or 30-day window)
+- Clicks — *available now* (WhatsApp clicks, same window)
+- Sources — *collected, not shown* (referrer is recorded; no breakdown by referrer, device or city — that remains Advanced Analytics, future vision)
 
 **Marketing** — helping the representative generate traffic, not just receive it.
 
-- Material Library — *future vision*
+- Marketing Materials (personalized Post/Story/Poster per Product, SET-65) — *available now*, the minimal distribution kit this MVP's hypothesis needs
+- Material Library (campaign creation, visual editor, user-generated artwork, upload, its own analytics) — *future vision*, a distinct and broader capability; the row above does not authorize it
 - Campaigns — *future vision*
 - Smart Links — *future vision*
 

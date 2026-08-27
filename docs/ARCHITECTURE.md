@@ -357,7 +357,7 @@ Every business rule belongs to exactly one module.
 
 Example:
 
-QR Code generation belongs to:
+QR Code rendering (derived from a Commercial Page's address, not a stored artifact — `DOMAIN_MODEL.md` § 8.7) belongs to:
 
 Commercial Pages
 
@@ -425,6 +425,7 @@ They only receive the authenticated user.
 Every `/app/*` route is protected server-side by `src/app/app/layout.tsx`; middleware refreshes sessions but is not the authorization boundary. The shared layout owns only session resolution, responsive navigation and the page frame. Route-specific data stays with its consumer:
 
 - `/app/paginas` loads onboarding, catalog, activations, publication links and QR Codes;
+- `/app/paginas/marketing` renders the 21 personalized marketing materials as a nested destination alongside Pages, gated by the same publication rule (SET-65/ADR-090) — see `PRODUCT.md` for what it delivers;
 - `/app/contatos` reads the Representative's immutable Lead projection through a request-scoped authenticated client and existing owner RLS; it is not a CRM write surface;
 - `/app/conta` loads the Representative profile and current access e-mail;
 - `/app` redirects to `/app/paginas` and owns no duplicated overview.
