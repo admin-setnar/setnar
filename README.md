@@ -25,7 +25,7 @@ what exists today, and why any given decision was made are answered by
 | Visual and interaction rules | [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md) |
 | Everyday engineering practice | [`docs/ENGINEERING_GUIDELINES.md`](docs/ENGINEERING_GUIDELINES.md) |
 | Sequencing and what's only a candidate | [`docs/ROADMAP.md`](docs/ROADMAP.md) |
-| Why a specific decision was made | [`docs/adr/`](docs/adr/README.md) — 92 ADRs, one per decision |
+| Why a specific decision was made | [`docs/adr/`](docs/adr/README.md) — 93 ADRs, one per decision |
 | What's being worked on right now | [`docs/plans/`](docs/plans/README.md) |
 | Reading order, authority, and governance | [`docs/README.md`](docs/README.md) |
 
@@ -96,8 +96,12 @@ src/
 │   ├── representatives/     Representative, Product Activation, Commercial Page,
 │   │                        onboarding, compliance notices, company-brand tokens
 │   ├── leads/                lead capture from a Commercial Page
-│   ├── analytics/           page-visit and WhatsApp-click event recording
-│   └── marketing/           institutional landing content
+│   ├── analytics/            page-visit and WhatsApp-click event recording
+│   ├── billing/               Subscription lifecycle, Asaas checkout/webhook,
+│   │                          cancellation, trial (SET-26 through SET-35, SET-67)
+│   ├── marketing-materials/  the 21 personalized Post/Story/Poster pieces (SET-65/ADR-090)
+│   ├── feedback/              qualitative microfeedback infra (SET-60/61/62/63)
+│   └── marketing/            institutional landing content
 └── shared/
     ├── ui/                  the design system (see src/shared/ui/README.md)
     ├── layout/               Container, Section, Navbar, Footer
@@ -159,7 +163,7 @@ status: [`docs/plans/COMMERCIAL_PAGE_CONTENT_PLAN.md`](docs/plans/COMMERCIAL_PAG
 
 ## Architecture Decision Records
 
-92 decisions, one file per decision, in [`docs/adr/`](docs/adr/README.md).
+93 decisions, one file per decision, in [`docs/adr/`](docs/adr/README.md).
 Moved out of this README on 2026-08-05 so that a 232 KB decision log stops
 looking like part of the onboarding document — see that folder's own
 `README.md` for the index and the migration note.
