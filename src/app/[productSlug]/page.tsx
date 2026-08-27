@@ -82,6 +82,16 @@ export default async function ProductPage({
 
   const { representative, product } = activation;
 
+  // Started here, before after() schedules — not awaited yet. Next.js
+  // forbids reading `cookies()` for the first time inside an `after()`
+  // callback (throws "used \"cookies\" inside \"after(...)\""), and
+  // `getRepresentativeRepository()` reads it as its very first statement
+  // (`createClient()` → `await cookies()`), synchronously, the moment this
+  // function is invoked — so kicking it off out here satisfies that
+  // requirement while `after()` still does the actual awaiting, keeping
+  // this off the response path.
+  const representativeRepositoryPromise = getRepresentativeRepository();
+
   // AN3 (docs/QR_ANALYTICS_PLAN.md §4) — best-effort visit tracking.
   // `after()` runs this once the response has already been sent, so a slow
   // or failing RPC can never delay or break the page a real visitor sees;
@@ -102,7 +112,7 @@ export default async function ProductPage({
   // not counted against the rate limit, because the RPC is never invoked.
   after(async () => {
     try {
-      const repository = await getRepresentativeRepository();
+      const repository = await representativeRepositoryPromise;
       if (await repository.isViewerOwner(representative.id)) return;
 
       const analyticsGateway = await getAnalyticsGateway();
