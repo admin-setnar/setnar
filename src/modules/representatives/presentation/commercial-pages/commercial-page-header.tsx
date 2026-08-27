@@ -1,5 +1,6 @@
 'use client';
 
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import styles from '@/modules/representatives/presentation/commercial-pages/commercial-page-base.module.css';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { buildWhatsappHref, trackWhatsappClick } from '@/modules/representatives/presentation/commercial-pages/whatsapp';
@@ -16,11 +17,13 @@ export function CommercialPageHeader({
   product,
   productName,
   headerMessage,
+  origin,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
   productName: string;
   headerMessage: string;
+  origin: OriginId | null;
 }) {
   return (
     <header className={styles.header}>
@@ -47,7 +50,7 @@ export function CommercialPageHeader({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Falar agora no WhatsApp"
-            onClick={() => trackWhatsappClick(product.slug)}
+            onClick={() => trackWhatsappClick(product.slug, origin)}
           >
             <WhatsAppIcon />
             <span className={styles.full}>Falar no WhatsApp</span>

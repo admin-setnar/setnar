@@ -7,6 +7,7 @@ import {
   getAnalyticsGateway,
   reportAnalyticsFailure,
 } from '@/modules/analytics/infrastructure/analytics-gateway-factory';
+import { resolveOrigin } from '@/modules/analytics/domain/origin';
 import { DispatchCommercialPage } from '@/modules/representatives/presentation/commercial-pages/dispatch-commercial-page';
 import { resolveCommercialPageMetadata } from '@/modules/representatives/presentation/commercial-page-metadata';
 import { resolveCommercialPresence } from '@/modules/representatives/presentation/resolve-commercial-presence';
@@ -65,14 +66,21 @@ export async function generateMetadata({
 
 export default async function ProductPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ productSlug: string }>;
+  searchParams: Promise<{ src?: string | string[] }>;
 }) {
-  const [{ productSlug }, requestHeaders, clientIp] = await Promise.all([
+  const [{ productSlug }, { src }, requestHeaders, clientIp] = await Promise.all([
     params,
+    searchParams,
     headers(),
     getClientIp(),
   ]);
+  // SET-84 D3 (docs/plans/SET-84_DIVULGACAO_LEAN_PLAN.md §1.2) — resolved
+  // once here, then threaded as a prop through DispatchCommercialPage's tree
+  // to WhatsappCta/CommercialLeadForm, never re-read from window.location.
+  const origin = resolveOrigin(src);
 
   const activation = await resolveCommercialPresence(requestHeaders.get('host'), productSlug);
 
@@ -122,11 +130,12 @@ export default async function ProductPage({
         referrer: requestHeaders.get('referer'),
         ip: clientIp,
         userAgent: requestHeaders.get('user-agent'),
+        origin,
       });
     } catch (error) {
       reportAnalyticsFailure('record_page_visit setup failed', error);
     }
   });
 
-  return <DispatchCommercialPage representative={representative} product={product} productSlug={productSlug} />;
+  return <DispatchCommercialPage representative={representative} product={product} productSlug={productSlug} origin={origin} />;
 }

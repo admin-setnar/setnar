@@ -16,6 +16,7 @@ import { FaqSection } from '@/modules/representatives/presentation/commercial-pa
 import { CtaFinalSection } from '@/modules/representatives/presentation/commercial-pages/cta-final-section';
 import { CommercialPageFooter } from '@/modules/representatives/presentation/commercial-pages/commercial-page-footer';
 import { FloatingWhatsapp } from '@/modules/representatives/presentation/commercial-pages/floating-whatsapp';
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 
 const CATEGORIES = [
@@ -40,11 +41,13 @@ export function ConexaoClubPage({
   product,
   productSlug,
   leadFormDisabled = false,
+  origin,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
   productSlug: string;
   leadFormDisabled?: boolean;
+  origin: OriginId | null;
 }) {
   return (
     <main id="conteudo" className={styles.page}>
@@ -53,6 +56,7 @@ export function ConexaoClubPage({
         product={product}
         productName="Conexão Club"
         headerMessage="Olá! Quero saber mais sobre o Conexão Club."
+        origin={origin}
       />
 
       <HeroSection
@@ -64,12 +68,13 @@ export function ConexaoClubPage({
         ctaMessage="Olá! Quero ativar meu Conexão Club."
         ctaLabel="Quero ativar meu Club"
         heroNote="Ativação rápida pelo app · Valor confirmado no WhatsApp"
-        widget={<ClubCategoryWidget representative={representative} product={product} />}
+        widget={<ClubCategoryWidget representative={representative} product={product} origin={origin} />}
+        origin={origin}
       />
 
       <TrustStrip points={['+600 mil produtos e serviços', 'Ativação rápida pelo app', 'Sem trocar de distribuidora ou operadora']} />
 
-      <ConsultorSection representative={representative} product={product} />
+      <ConsultorSection representative={representative} product={product} origin={origin} />
 
       <section id="quero-simular">
         <div className={styles.container}>
@@ -82,6 +87,7 @@ export function ConexaoClubPage({
             privacyNote="Seus dados são usados apenas para entrarmos em contato sobre a ativação. Nada de spam."
             successDescription="Nossa equipe entra em contato em breve para ativar seu acesso ao clube de benefícios, sem compromisso."
             disabled={leadFormDisabled}
+            origin={origin}
           />
         </div>
       </section>
@@ -149,6 +155,7 @@ export function ConexaoClubPage({
         title="Fale agora e ative seu Conexão Club em poucos minutos"
         description="É só chamar no WhatsApp. Sem compromisso, sem letras miúdas."
         message="Olá! Quero ativar meu Conexão Club agora."
+        origin={origin}
       />
 
       <CommercialPageFooter
@@ -158,7 +165,7 @@ export function ConexaoClubPage({
         dataCollectedNote="Seus dados (nome, WhatsApp, cidade e e-mail) são usados apenas para contato sobre a ativação do Club, em conformidade com a LGPD (Lei nº 13.709/2018), e não são compartilhados com terceiros."
       />
 
-      <FloatingWhatsapp representative={representative} product={product} message="Olá! Quero saber mais sobre o Conexão Club." />
+      <FloatingWhatsapp representative={representative} product={product} message="Olá! Quero saber mais sobre o Conexão Club." origin={origin} />
     </main>
   );
 }

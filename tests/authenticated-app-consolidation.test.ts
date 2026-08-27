@@ -26,9 +26,10 @@ describe('authenticated App Shell contract', () => {
     assert.match(rootPage, /redirect\('\/app\/paginas'\)/);
   });
 
-  it('exposes only live Pages, Materials, Contacts and Account destinations with active-state semantics', () => {
+  it('exposes only live Pages, Materials, Divulgação, Contacts and Account destinations with active-state semantics', () => {
     assert.match(navigation, /href: '\/app\/paginas'/);
     assert.match(navigation, /href: '\/app\/paginas\/marketing'/);
+    assert.match(navigation, /href: '\/app\/divulgacao'/);
     assert.match(navigation, /href: '\/app\/contatos'/);
     assert.match(navigation, /href: '\/app\/conta'/);
     assert.match(navigation, /aria-current=\{active \? 'page'/);

@@ -67,6 +67,7 @@ export class SupabaseAnalyticsGateway implements AnalyticsGateway {
       p_referrer: input.referrer,
       p_ip_hash: hash(input.ip),
       p_user_agent: input.userAgent,
+      p_origin: input.origin,
     });
 
     if (error) {

@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+import { resolveOrigin } from '@/modules/analytics/domain/origin';
 import { formatPhoneToE164, LEAD_HONEYPOT_FIELD } from '@/modules/leads/domain/lead-rules';
 import { getLeadGateway } from '@/modules/leads/infrastructure/lead-gateway-factory';
 import { leadSubmissionSchema } from '@/modules/leads/presentation/schemas/lead.schema';
@@ -43,7 +44,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const { productSlug, origem } = body as { productSlug: string; origem?: unknown };
+  const { productSlug, origem, origin: rawOrigin } = body as {
+    productSlug: string;
+    origem?: unknown;
+    origin?: unknown;
+  };
+  const origin = resolveOrigin(typeof rawOrigin === 'string' ? rawOrigin : null);
 
   const [requestHeaders, clientIp] = await Promise.all([headers(), getClientIp()]);
   const repository = await getRepresentativeRepository();
@@ -68,6 +74,7 @@ export async function POST(request: Request) {
     origem: typeof origem === 'string' ? origem : null,
     referrer: requestHeaders.get('referer'),
     ip: clientIp,
+    origin,
   });
 
   if (result === 'submitted') {

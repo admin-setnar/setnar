@@ -1,6 +1,7 @@
 import Link from 'next/link';
 
-import type { AnalyticsPeriodDays, ProductAnalyticsSummary } from '@/modules/analytics/domain/analytics-metrics-repository';
+import type { AnalyticsPeriodDays, OriginBreakdownEntry, ProductAnalyticsSummary } from '@/modules/analytics/domain/analytics-metrics-repository';
+import { ORIGIN_LABELS, UNKNOWN_ORIGIN_LABEL } from '@/modules/analytics/domain/origin';
 import type { FirstPublicationResponse } from '@/modules/feedback/domain/feedback';
 import {
   VALUE_PERCEPTION_DETAIL_LABEL,
@@ -76,6 +77,7 @@ export function RepresentativeHub({
   showFirstPublicationFeedback = false,
   showValuePerceptionFeedback = false,
   analyticsByProduct,
+  originBreakdown,
   periodDays,
 }: {
   representative: Representative;
@@ -93,6 +95,8 @@ export function RepresentativeHub({
   showValuePerceptionFeedback?: boolean;
   /** SET-37 — AN6. One entry per Product with at least one event/lead in `periodDays`; a Product missing here had none. */
   analyticsByProduct: readonly ProductAnalyticsSummary[];
+  /** SET-84 D5. One entry per origin with at least one visit/lead in `periodDays`, `origin: null` included. */
+  originBreakdown: readonly OriginBreakdownEntry[];
   /** SET-37 — the window `analyticsByProduct` was computed over; drives the active state of the period toggle below. */
   periodDays: AnalyticsPeriodDays;
 }) {
@@ -170,6 +174,8 @@ export function RepresentativeHub({
         </div>
       ) : null}
 
+      <OriginBreakdownSection originBreakdown={originBreakdown} />
+
       <div className="space-y-3">
         {catalog.length === 0 ? (
           <Card variant="outlined" padding="lg" className="space-y-2">
@@ -202,5 +208,48 @@ export function RepresentativeHub({
         })}
       </div>
     </div>
+  );
+}
+
+/**
+ * SET-84 D5 — "De onde vieram seus resultados": visitas e leads lado a
+ * lado por origem, mesma janela (`periodDays`) que o resto desta tela.
+ * Nomenclatura interna deliberada: "breakdown by origin", nunca "analytics
+ * por canal" (§2 do plano) — `origin` não é sinônimo de `channel`/`campaign`.
+ * Taxa de conversão é derivada aqui, na apresentação, nunca armazenada.
+ */
+function OriginBreakdownSection({ originBreakdown }: { originBreakdown: readonly OriginBreakdownEntry[] }) {
+  if (originBreakdown.length === 0) return null;
+
+  return (
+    <Card variant="outlined" padding="lg" className="space-y-4">
+      <Text as="h2" variant="title">De onde vieram seus resultados</Text>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-line text-left text-content-muted">
+              <th scope="col" className="py-2 pr-4 font-medium">Origem</th>
+              <th scope="col" className="py-2 pr-4 text-right font-medium">Visitas</th>
+              <th scope="col" className="py-2 pr-4 text-right font-medium">Leads</th>
+              <th scope="col" className="py-2 text-right font-medium">Conversão</th>
+            </tr>
+          </thead>
+          <tbody>
+            {originBreakdown.map((entry) => {
+              const label = entry.origin ? ORIGIN_LABELS[entry.origin] : UNKNOWN_ORIGIN_LABEL;
+              const conversion = entry.visits > 0 ? `${Math.round((entry.leads / entry.visits) * 100)}%` : '—';
+              return (
+                <tr key={entry.origin ?? 'unknown'} className="border-b border-line last:border-0">
+                  <td className="py-2 pr-4 text-content">{label}</td>
+                  <td className="py-2 pr-4 text-right text-content">{entry.visits}</td>
+                  <td className="py-2 pr-4 text-right text-content">{entry.leads}</td>
+                  <td className="py-2 text-right text-content-muted">{conversion}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
   );
 }

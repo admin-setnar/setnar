@@ -7,9 +7,15 @@ import {
   type AnalyticsEventRow,
   type LeadRow,
 } from '@/modules/analytics/infrastructure/aggregate-analytics-summary';
+import {
+  aggregateOriginBreakdown,
+  type OriginAnalyticsEventRow,
+  type OriginLeadRow,
+} from '@/modules/analytics/infrastructure/aggregate-origin-breakdown';
 import type {
   AnalyticsMetricsRepository,
   AnalyticsPeriodDays,
+  OriginBreakdownEntry,
   ProductAnalyticsSummary,
 } from '@/modules/analytics/domain/analytics-metrics-repository';
 
@@ -60,6 +66,40 @@ export class SupabaseAnalyticsMetricsRepository implements AnalyticsMetricsRepos
     return aggregateAnalyticsSummary(
       eventsResult.data as unknown as AnalyticsEventRow[],
       leadsResult.data as unknown as LeadRow[],
+    );
+  }
+
+  async listOwnBreakdownByOrigin(
+    representativeId: string,
+    periodDays: AnalyticsPeriodDays,
+  ): Promise<readonly OriginBreakdownEntry[]> {
+    const cutoff = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString();
+
+    const [eventsResult, leadsResult] = await Promise.all([
+      this.supabase
+        .from('analytics_events')
+        .select('event_type, origin')
+        .eq('representative_id', representativeId)
+        .gte('created_at', cutoff),
+      this.supabase
+        .from('leads')
+        .select('origin')
+        .eq('representative_id', representativeId)
+        .gte('created_at', cutoff),
+    ]);
+
+    if (eventsResult.error || leadsResult.error) {
+      const error = eventsResult.error ?? leadsResult.error;
+      console.error('Representative origin breakdown read failed.', {
+        code: error?.code,
+        message: error?.message,
+      });
+      throw new Error('Representative origin breakdown unavailable.');
+    }
+
+    return aggregateOriginBreakdown(
+      eventsResult.data as unknown as OriginAnalyticsEventRow[],
+      leadsResult.data as unknown as OriginLeadRow[],
     );
   }
 }

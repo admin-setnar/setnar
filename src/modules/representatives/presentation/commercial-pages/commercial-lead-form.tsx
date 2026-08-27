@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import { phoneFieldHint, maskPhone, validaTelefone } from '@/modules/representatives/presentation/commercial-pages/br-phone-field';
 import styles from '@/modules/representatives/presentation/commercial-pages/commercial-page-base.module.css';
 import { LEAD_HONEYPOT_FIELD } from '@/modules/leads/domain/lead-rules';
@@ -30,6 +31,7 @@ export function CommercialLeadForm({
   privacyNote,
   successDescription,
   disabled = false,
+  origin,
 }: {
   productSlug: string;
   representativeId: string;
@@ -39,6 +41,7 @@ export function CommercialLeadForm({
   privacyNote: string;
   successDescription: string;
   disabled?: boolean;
+  origin: OriginId | null;
 }) {
   const [nome, setNome] = useState('');
   const [telefone, setTelefone] = useState('');
@@ -84,6 +87,7 @@ export function CommercialLeadForm({
           [LEAD_HONEYPOT_FIELD]: honeypot,
           productSlug,
           origem: 'commercial_page',
+          origin,
         }),
       });
       if (!response.ok) {

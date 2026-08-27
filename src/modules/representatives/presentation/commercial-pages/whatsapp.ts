@@ -1,3 +1,5 @@
+import type { OriginId } from '@/modules/analytics/domain/origin';
+
 /**
  * Pure WhatsApp-link helpers shared by every per-product commercial page —
  * not a "shared component" that renders markup (that was the whole problem
@@ -28,12 +30,12 @@ export function buildWhatsappHref(phone: string, message: string): string {
  * end-to-end). No `preventDefault`: the browser's own navigation to `wa.me`
  * proceeds regardless of whether this fetch ever completes.
  */
-export function trackWhatsappClick(productSlug: string) {
+export function trackWhatsappClick(productSlug: string, origin: OriginId | null) {
   fetch('/api/track-click', {
     method: 'POST',
     keepalive: true,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ productSlug, referrer: document.referrer || null }),
+    body: JSON.stringify({ productSlug, referrer: document.referrer || null, origin }),
   }).catch(() => {
     // Best-effort — a failed beacon must never surface to the visitor.
   });

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react';
 
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import styles from '@/modules/representatives/presentation/commercial-pages/commercial-page-base.module.css';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { buildWhatsappHref, trackWhatsappClick } from '@/modules/representatives/presentation/commercial-pages/whatsapp';
@@ -21,6 +22,7 @@ export function HeroSection({
   ctaLabel,
   heroNote,
   widget,
+  origin,
 }: {
   representative: Representative;
   product: RepresentativeProduct;
@@ -31,6 +33,7 @@ export function HeroSection({
   ctaLabel: string;
   heroNote: string;
   widget: ReactNode;
+  origin: OriginId | null;
 }) {
   return (
     <section className={styles.hero} id="topo">
@@ -47,7 +50,7 @@ export function HeroSection({
                 href={buildWhatsappHref(representative.phone, ctaMessage)}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => trackWhatsappClick(product.slug)}
+                onClick={() => trackWhatsappClick(product.slug, origin)}
               >
                 {ctaLabel}
               </a>

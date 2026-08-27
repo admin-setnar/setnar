@@ -1,5 +1,6 @@
 import { formatE164ToBRPhone } from '@/shared/domain/br-phone';
 import { generateQrCodeDataUrl } from '@/shared/lib/generate-qr-code-data-url';
+import type { OriginId } from '@/modules/analytics/domain/origin';
 import type { Representative, RepresentativeProduct } from '@/modules/representatives/domain/representative';
 import { buildCommercialPageUrl } from '@/modules/representatives/presentation/commercial-page-url';
 
@@ -38,8 +39,13 @@ export function buildMarketingMaterialProps(
   representative: Pick<Representative, 'slug' | 'name' | 'authorizationId' | 'phone' | 'city'>,
   product: Pick<RepresentativeProduct, 'slug' | 'companySlug'>,
   qrCodeDataUrl: string,
+  // SET-84: optional 4th param, defaults to the canonical derivation every
+  // existing caller already got — `/app/paginas/marketing` (SET-65) is
+  // unaffected. Only the Divulgação flow passes an explicit `?src=`-tagged
+  // URL here, so a material's embedded link/QR match the channel the
+  // representative picked, not the bare canonical URL.
+  publicUrl: string = buildCommercialPageUrl(representative, product),
 ): MarketingMaterialProps {
-  const publicUrl = buildCommercialPageUrl(representative, product);
   const formattedPhone = representative.phone ? formatE164ToBRPhone(representative.phone) || null : null;
 
   return {
@@ -60,4 +66,23 @@ export async function buildMarketingMaterialPropsWithQrCode(
   const publicUrl = buildCommercialPageUrl(representative, product);
   const qrCodeDataUrl = await generateQrCodeDataUrl(publicUrl);
   return buildMarketingMaterialProps(representative, product, qrCodeDataUrl);
+}
+
+/**
+ * SET-84 D3/D4 (docs/plans/SET-84_DIVULGACAO_LEAN_PLAN.md) — same shape as
+ * `buildMarketingMaterialPropsWithQrCode`, but the link/QR carry `?src=<origin>`
+ * instead of the bare canonical URL. Only the Divulgação flow calls this: the
+ * origin comes from the channel the representative picked in that flow, never
+ * from anywhere persisted, so it cannot live in `buildMarketingMaterialPropsWithQrCode`
+ * itself without changing that function's existing contract for
+ * `/app/paginas/marketing` (SET-65), which stays exactly as it is (D4).
+ */
+export async function buildMarketingMaterialPropsForOrigin(
+  representative: Pick<Representative, 'slug' | 'name' | 'authorizationId' | 'phone' | 'city'>,
+  product: Pick<RepresentativeProduct, 'slug' | 'companySlug'>,
+  origin: OriginId,
+): Promise<MarketingMaterialProps> {
+  const publicUrl = `${buildCommercialPageUrl(representative, product)}?src=${origin}`;
+  const qrCodeDataUrl = await generateQrCodeDataUrl(publicUrl);
+  return buildMarketingMaterialProps(representative, product, qrCodeDataUrl, publicUrl);
 }

@@ -52,11 +52,12 @@ export default async function PagesPage({
   // the same batch instead of waiting on it first (a prior version awaited
   // value-perception only after the first-publication check, serializing a
   // read that did not need to be).
-  const [catalog, subscriptionActive, valuePerceptionEligible, analyticsByProduct] = await Promise.all([
+  const [catalog, subscriptionActive, valuePerceptionEligible, analyticsByProduct, originBreakdown] = await Promise.all([
     catalogRepository.listOwnCatalog(user.id),
     catalogRepository.isSubscriptionActive(representative.id),
     resolveValuePerceptionFeedbackEligibility(representative.id),
     analyticsRepository.listOwnSummaryByProduct(representative.id, periodDays),
+    analyticsRepository.listOwnBreakdownByOrigin(representative.id, periodDays),
   ]);
 
   // SET-61's own check needs `catalog`, so it cannot join the batch above.
@@ -77,6 +78,7 @@ export default async function PagesPage({
         showFirstPublicationFeedback={showFirstPublicationFeedback}
         showValuePerceptionFeedback={showValuePerceptionFeedback}
         analyticsByProduct={analyticsByProduct}
+        originBreakdown={originBreakdown}
         periodDays={periodDays}
       />
     </div>

@@ -1,3 +1,5 @@
+import type { OriginId } from '@/modules/analytics/domain/origin';
+
 export interface SubmitLeadInput {
   readonly representativeId: string;
   readonly productId: string;
@@ -8,6 +10,7 @@ export interface SubmitLeadInput {
   readonly origem: string | null;
   readonly referrer: string | null;
   readonly ip: string | null;
+  readonly origin: OriginId | null;
 }
 
 /**

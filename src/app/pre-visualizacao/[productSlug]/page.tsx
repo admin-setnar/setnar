@@ -88,11 +88,13 @@ export default async function CommercialPagePreviewPage({
         </div>
       </div>
 
+      {/* SET-84: preview never carries a real ?src= visitor link, so origin is always null here. */}
       <DispatchCommercialPage
         representative={representative}
         product={product}
         productSlug={productSlug}
         leadFormDisabled
+        origin={null}
       />
     </div>
   );
