@@ -142,8 +142,92 @@ Para que a matriz fique completa, os pontos abaixo — todos citados como obriga
 
 ---
 
+## Addendum — segunda passada investigativa (2026-08-27)
+
+Escopo: os seis pontos levantados pelo Product Owner sobre a primeira versão desta auditoria. Nenhum código ou documento normativo foi alterado nesta passada — apenas investigação adicional. `PRODUCT_CONSTITUTION.md` não foi tocado nem se propõe tocá-lo.
+
+### A1. Reavaliação do Core Value Proposition
+
+**Conclusão: o texto atual não contradiz a Constitution, mas não estabelece por que materiais, leads e analytics pertencem ao produto.**
+
+`docs/PRODUCT.md` § *Core Value Proposition* (linhas 111–120) afirma que o valor do SETNAR é a confiança entre representante e organização autorizante — "not creating pages". Isso é fiel à Constitution (Core Belief 5: progresso não se mede em artefatos) e não deveria mudar. Mas a seção não conecta essa confiança a nada distribuível ou verificável: quem lê só esse parágrafo não tem base textual para saber por que materiais de divulgação, QR Codes, captura de leads ou analytics básico fazem parte do produto, em vez de serem scope creep acidental sobre um "gerador de páginas confiável".
+
+A seção *Solution*, logo abaixo, já cobre parcialmente isso ("together with the links and QR Codes needed to distribute them" / "the representative shares one professional address"), mas capture de leads e analytics não são mencionados em nenhuma das duas seções — só aparecem, sem conexão explícita, em *Success Metrics* e *What Exists Today*.
+
+**Ação proposta (nova, adicional ao Achado 3 original)**: acrescentar um parágrafo curto ao final de *Core Value Proposition* — não substituir o existente — estabelecendo que a confiança só tem valor se for **distribuível** e **verificável**, e que por isso materiais/links/QR (distribuição) e leads/analytics básico (verificação) integram a mesma proposta de valor hoje, sem torná-la uma plataforma de marketing. Texto sugerido para a Parte 2:
+
+> A presence a customer never finds, or that a representative can never confirm produced real interest, would not test this value proposition — it would only test whether a page can be generated. This is why distributing that presence (links, QR Codes, ready-made materials) and closing the loop on it (captured leads, basic analytics of visits and clicks) are part of what "infrastructure that makes a representative's presence credible" means in practice today — not a marketing platform grafted onto a page generator, and not a promise that any of these capabilities will expand beyond what *What Exists Today* states.
+
+### A2. Reavaliação do MVP Goal
+
+**Conclusão: "Nothing else" mistura duas afirmações diferentes — disciplina de escopo e composição do que está sendo validado — e isso vai além de só corrigir a frase do payment gateway (Achado 1 original).**
+
+O parágrafo atual ("Validate whether independent representatives are willing to pay for a Digital Office. Nothing else. [...] It only validates demand.") é correto ao dizer que o MVP não resolve todo problema comercial do representante. Mas "Nothing else" pode ser lido como se o "Digital Office" sendo validado fosse só a página — o que não é o que a hipótese realmente testa. Se a Constitution e o próprio `PRODUCT.md` (definição formal de "Digital Office", linha 94) já incluem identidade, produtos, páginas, links, QR Codes e canais de contato como parte do mesmo conjunto, então validar "disposição a pagar" precisa necessariamente incluir a capacidade de distribuir e de medir — do contrário a oferta testada não é a mesma que o representante de fato usaria.
+
+Isto é distinto do achado sobre billing (Achado 1): aquele corrige um fato factualmente errado (billing manual vs. automatizado); este é sobre a formulação do objetivo do MVP em si, que continua incompleta mesmo depois de corrigir a frase do billing.
+
+**Ação proposta (nova, adicional ao Achado 1)**: acrescentar uma frase ao parágrafo de MVP Goal, sem remover "Nothing else" (que continua correto como disciplina de escopo). Texto sugerido para a Parte 2:
+
+> "Nothing else" bounds the objective, not the Digital Office itself: this is a demand-validation exercise, not a mandate to solve every commercial problem a representative has (CRM, campaigns, AI and automation remain excluded — see *Non-Goals* and *Long-Term Vision*). The presence being validated already includes the distribution, capture and measurement described under *What Exists Today*, because a representative asked to pay for a page nobody can find, share or measure would not be evaluating the same offer this hypothesis tests.
+
+### A3. Divergência SET-84 / Attribution — resolução factual
+
+**Situação B, confirmada com evidência de código e git — não há divergência sem explicação restante.**
+
+1. **`git branch --contains 766652a`** (commit final da SET-84) retorna só `worktree-set-84-divulgacao-atribuicao-origem`. **`git merge-base --is-ancestor 766652a HEAD`** (baseline `b1cd1da`, `develop`) retorna falso — **não está no baseline**.
+2. Branch: `worktree-set-84-divulgacao-atribuicao-origem`, 11 commits próprios (`3bede93`…`766652a`), divergindo de `develop` em `a8ab2de` (2026-08-26). `develop` só recebeu, dessa linha de trabalho, o commit de documentação `43e6450` (plano + relatório de validação de funil) — nenhum código.
+3–6. Migrations da branch (`20260908000000` a `20260908000003`, incluindo `add_origin_to_analytics_events`/`add_origin_to_leads`/`add_origin_write_functions`) e o parsing de `?src=` em `[productSlug]/page.tsx` **não existem em `develop`** — confirmado por `git diff --name-status develop worktree-set-84-divulgacao-atribuicao-origem -- supabase/migrations/` e por busca de `searchParams` em `src/app/[productSlug]`, que não retorna nada no baseline atual.
+7. Read paths/breakdown: implementados na branch (passo 7/D5, commit `7bf40bb`, breakdown de visitas/leads por origem em `/app/paginas`) — também ausentes do baseline.
+8. Testes: `tests/divulgacao-page.test.ts` (20 casos) e `divulgacao-attribution.spec.ts` (E2E, desktop + mobile) existem só na branch.
+
+**Achado adicional, não solicitado mas relevante para a decisão**: a própria branch documenta, em `docs/plans/SET-84_DIVULGACAO_LEAN_PLAN.md` § 13.5 (na ponta da branch), uma regressão real e não corrigida — a migration `20260908000002` recriou `record_page_visit`/`record_whatsapp_click` restaurando o corpo anterior ao ADR-065 e **parou de chamar `private.is_page_publicly_accessible`**, a checagem canônica de acesso público. O próprio texto da branch registra: *"Isso bloqueia merge/release até uma migration forward-only restaurar o contrato canônico [...]"*. Ou seja, SET-84 não é apenas "ainda não mesclada" — está explicitamente marcada como bloqueada para merge por uma regressão de segurança conhecida e não corrigida.
+
+**Conclusão**: `PRODUCT.md` não precisa de nenhuma correção sobre attribution — o texto atual ("no breakdown by referrer... remains Advanced Analytics, Future vision") já está correto para o baseline `b1cd1da`. A auditoria original (achado "attribution é só Referer bruto") estava certa; o que faltava era explicar a divergência com a evidência da SET-84, o que este addendum faz. Nenhuma mudança de texto é necessária neste ponto — mas ver ação opcional abaixo para *In validation or development*.
+
+**Ação proposta (opcional, mesma classe do Achado 5 original)**: acrescentar uma linha a *In validation or development* registrando o estado real, para não deixar um trabalho já implementado e testado invisível ao leitor:
+
+> Origin/channel attribution for visits and leads (SET-84): implemented and E2E-validated on a separate branch, not merged into `develop` — blocked by a known regression in the canonical public-access check inside `record_page_visit`/`record_whatsapp_click`, introduced by one of its own migrations. Not part of *What Exists Today* until merged and the regression is fixed.
+
+### A4. Terminologia — Marketing Materials × futura Material/Media Library
+
+**Conclusão: existe uma omissão (não uma contradição direta como o Achado 4 original) em `Product Capabilities` § *Marketing*.**
+
+`docs/PRODUCT.md` § *Product Capabilities* (linha ~466) lista, sob "Marketing": Material Library, Campaigns e Smart Links, todos *future vision* — sem qualquer bullet reconhecendo que uma versão mínima de materiais de divulgação (SET-65, 21 materiais) **já existe hoje**. Isso contradiz silenciosamente `What Exists Today`, que já é cuidadoso sobre a diferença ("Pulled forward from Stage 2's Material Library [...] not the full Media Library"). Um leitor que consultasse só a tabela de `Product Capabilities` concluiria, incorretamente, que nenhuma capacidade de marketing existe ainda.
+
+**Ação proposta**: adicionar uma linha a essa lista, deixando explícita a distinção entre a capacidade mínima já existente e a futura biblioteca completa — sem antecipar Campaigns nem qualquer capacidade nova:
+
+> - Marketing Materials (personalized Post/Story/Poster per Product, SET-65) — *available now*, the minimal distribution kit the Stage 1 hypothesis needs
+> - Material Library (campaign creation, visual editor, user-generated artwork, upload, its own analytics) — *future vision*, not the same capability as the row above
+
+### A5. QR Code e Landing Page — confirmação de não-ação
+
+Conforme orientação do Product Owner: **nenhuma ação proposta** para o Achado 6 (granularidade de UX do QR Code — pertence a `DESIGN_SYSTEM.md`/SET-90) nem para o Achado 7 (rota da landing page — já governada por *Public Positioning and Communication*, não precisa de bullet em *What Exists Today*). Ambos permanecem registrados no corpo principal desta auditoria apenas como observação, sem virar item de patch.
+
+---
+
+## Matriz atualizada (somente pontos afetados por este addendum)
+
+| # | Documentado hoje | Realidade verificada | Ação proposta |
+|---|---|---|---|
+| 1 (estendido) | MVP Goal nega billing automatizado; "Nothing else" não distingue objetivo de composição do Digital Office | Billing automatizado (Achado 1 original) **+** "Nothing else" ambíguo sobre se distribuição/captura/medição integram a oferta validada | Corrigir parágrafo de billing (já proposto) **+** acrescentar frase de escopo (A2) |
+| 3 (contexto) | Core Value Proposition não liga confiança a distribuição/verificação | Materiais, QR, leads e analytics existem hoje mas não têm justificativa textual na proposta de valor | Acrescentar parágrafo de fechamento (A1) |
+| 8 (novo) | `PRODUCT.md` não menciona SET-84 em nenhuma seção | Implementado e validado por E2E em branch separada, bloqueado por regressão de segurança conhecida, não mesclado | Opcional — linha em *In validation or development* (A3) |
+| 9 (novo) | `Product Capabilities` § Marketing só lista itens *future vision* | Materiais mínimos (SET-65) já existem, distintos da futura Library | Adicionar bullet distinguindo as duas (A4) |
+
+---
+
+## Veredito desta passada
+
+**`READY_FOR_PRODUCT_EDIT`**
+
+Todos os pontos levantados foram investigados e resolvidos com evidência de código/git — nenhuma divergência ficou sem explicação. A SET-84 está confirmada como Situação B (branch separada, bloqueada por regressão conhecida, corretamente ausente de `What Exists Today`) e não bloqueia a edição de `PRODUCT.md`; ao contrário, confirma que o texto atual sobre attribution já está certo. Os pontos A1/A2/A4 são adições de clareza, não acharam nenhuma nova contradição factual que exija mais investigação.
+
+A Parte 2 pode ser executada cobrindo, no total: Achados 1 (com a extensão A2), 2, 3, 4, 5 (com a adição opcional A3) do corpo principal, mais A1 e A4 deste addendum. Achados 6 e 7 do corpo principal permanecem sem ação, por decisão do Product Owner.
+
+---
+
 ## Próximo passo
 
-Esta auditoria não altera `PRODUCT.md`. Conforme o padrão já estabelecido no projeto (`docs/plans/AUDIT_MVP_LAUNCH.md`, `docs/plans/AUDIT_PRE_LAUNCH_CONSISTENCY.md`) e conforme a própria SET-87 ("Só então alterar PRODUCT.md"), a Parte 2 — aplicar os Achados 1 a 5 (obrigatórios) e decidir sobre 6 e 7 (opcionais) diretamente em `docs/PRODUCT.md`, com baseline `b1cd1da`/2026-08-27 — só deve ser executada após aprovação do Product Owner.
+Esta auditoria não altera `PRODUCT.md`. Conforme o padrão já estabelecido no projeto (`docs/plans/AUDIT_MVP_LAUNCH.md`, `docs/plans/AUDIT_PRE_LAUNCH_CONSISTENCY.md`) e conforme a própria SET-87 ("Só então alterar PRODUCT.md"), a Parte 2 — aplicar os Achados 1 a 5 (obrigatórios, com as extensões A1–A4 deste addendum) e decidir sobre 6 e 7 (opcionais) diretamente em `docs/PRODUCT.md`, com baseline `b1cd1da`/2026-08-27 — só deve ser executada após aprovação explícita do Product Owner ao conteúdo deste addendum.
 
 **Aguardando aprovação.**
