@@ -14,6 +14,17 @@ import {
 test.describe('sete Commercial Pages profissionais (SET-78)', () => {
   test.skip(!canRunE2E, e2eSkipReason);
 
+  // O timeout global de 90s (playwright.config.ts) já é justo para o resto
+  // da suíte (ver o comentário lá sobre critical-path.spec.ts), mas este
+  // spec faz 14 navegações reais (7 produtos × 2 viewports), cada uma com
+  // várias asserções de layout/CSS computado, mais uma segunda passada de
+  // interação por produto no fim — achado medindo isoladamente com um
+  // timeout ampliado: uma execução real, sem nenhum bug, levou ~108s
+  // (1.8min). 90s nunca teve margem para este spec especificamente, não é
+  // flakiness — é mais trabalho por teste do que o orçamento padrão cobre.
+  // 240s dá folga confortável acima do pior caso observado.
+  test.describe.configure({ timeout: 240_000 });
+
   const fixture = buildE2ERepresentative('templates');
   const service = canRunE2E ? serviceClient() : null;
 

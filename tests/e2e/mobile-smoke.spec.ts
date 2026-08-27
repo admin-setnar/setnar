@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  API_ROUTE_SETTLE_TIMEOUT,
   buildE2ERepresentative,
   canRunE2E,
   cleanupRepresentative,
@@ -61,6 +62,6 @@ test.describe('caminho essencial do MVP (E2E, mobile)', () => {
     await publicPage.getByLabel('Nome').fill('Visitante Mobile E2E');
     await publicPage.getByLabel('Telefone').fill('(21) 96666-5555');
     await leadSubmit.click();
-    await expect(publicPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: 10_000 });
+    await expect(publicPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: API_ROUTE_SETTLE_TIMEOUT });
   });
 });

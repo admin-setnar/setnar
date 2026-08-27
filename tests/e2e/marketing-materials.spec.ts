@@ -6,6 +6,7 @@ import {
   cleanupRepresentative,
   completeOnboarding,
   e2eSkipReason,
+  HUB_RENDER_SETTLE_TIMEOUT,
   serviceClient,
   signUp,
 } from './support/fixtures';
@@ -41,7 +42,7 @@ test.describe('materiais de marketing (E2E, desktop)', () => {
     await test.step('cadastro e onboarding', async () => {
       await signUp(page, fixture);
       await completeOnboarding(page, fixture);
-      await expect(page.getByRole('heading', { name: 'Suas páginas' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Suas páginas' })).toBeVisible({ timeout: HUB_RENDER_SETTLE_TIMEOUT });
     });
 
     await test.step('ativa e publica o primeiro produto do catálogo', async () => {

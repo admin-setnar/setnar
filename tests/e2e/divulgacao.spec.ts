@@ -1,11 +1,13 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  API_ROUTE_SETTLE_TIMEOUT,
   buildE2ERepresentative,
   canRunE2E,
   cleanupRepresentative,
   completeOnboarding,
   e2eSkipReason,
+  HUB_RENDER_SETTLE_TIMEOUT,
   publicPageOrigin,
   serviceClient,
   signUp,
@@ -59,7 +61,7 @@ test.describe('fluxo completo de Divulgação com atribuição de origem (E2E, d
     await test.step('cadastro e onboarding', async () => {
       await signUp(page, fixture);
       await completeOnboarding(page, fixture);
-      await expect(page.getByRole('heading', { name: 'Suas páginas' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Suas páginas' })).toBeVisible({ timeout: HUB_RENDER_SETTLE_TIMEOUT });
     });
 
     await test.step('ativa e publica o primeiro produto do catálogo', async () => {
@@ -143,7 +145,7 @@ test.describe('fluxo completo de Divulgação com atribuição de origem (E2E, d
       await visitorPage.getByLabel('Nome').fill('Visitante Divulgação E2E');
       await visitorPage.getByLabel('Telefone').fill('(21) 97777-6666');
       await visitorPage.locator('#quero-simular').getByRole('button').click();
-      await expect(visitorPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: 10_000 });
+      await expect(visitorPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: API_ROUTE_SETTLE_TIMEOUT });
     });
 
     await test.step('o visitante clica no WhatsApp — a navegação real para wa.me não é seguida', async () => {
@@ -167,7 +169,7 @@ test.describe('fluxo completo de Divulgação com atribuição de origem (E2E, d
               .eq('origin', 'instagram_post');
             return count ?? 0;
           },
-          { timeout: 10_000 },
+          { timeout: API_ROUTE_SETTLE_TIMEOUT },
         )
         .toBeGreaterThan(0);
 
@@ -183,7 +185,7 @@ test.describe('fluxo completo de Divulgação com atribuição de origem (E2E, d
               .eq('origin', 'instagram_post');
             return count ?? 0;
           },
-          { timeout: 10_000 },
+          { timeout: API_ROUTE_SETTLE_TIMEOUT },
         )
         .toBeGreaterThan(0);
 
