@@ -72,6 +72,7 @@ export default defineConfig({
         'commercial-pages.spec.ts',
         'marketing-materials.spec.ts',
         'publication-management.spec.ts',
+        'divulgacao.spec.ts',
       ],
     },
     {
