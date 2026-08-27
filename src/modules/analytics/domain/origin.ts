@@ -31,3 +31,20 @@ export function resolveOrigin(rawSrc: string | readonly string[] | undefined | n
   if (typeof rawSrc !== 'string') return null;
   return (ORIGIN_IDS as readonly string[]).includes(rawSrc) ? (rawSrc as OriginId) : null;
 }
+
+/**
+ * SET-84 D5 — display labels for the "De onde vieram seus resultados"
+ * breakdown (`RepresentativeHub`). A `null` origin (no `?src=` at all —
+ * organic traffic, or any visit/lead from before this feature) gets its own
+ * label here rather than being hidden; it is a real, expected row, not an
+ * error state.
+ */
+export const ORIGIN_LABELS: Record<OriginId, string> = {
+  instagram_post: 'Instagram Post',
+  instagram_story: 'Instagram Story',
+  whatsapp: 'WhatsApp',
+  qrcode: 'QR Code',
+  direct: 'Link direto',
+};
+
+export const UNKNOWN_ORIGIN_LABEL = 'Origem não identificada';
