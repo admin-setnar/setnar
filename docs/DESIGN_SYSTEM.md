@@ -577,6 +577,8 @@ Never distort data.
 
 QR Codes are a core product feature.
 
+**The QR Code is rendered on demand, inside a dialog opened by an explicit action ("Generate QR Code"), not always visible on the page.** For a published Product, it sits alongside two other equal-weight sharing actions — Copy link, Open site — rather than being permanently rendered inline; generation is lazy, triggered only when the dialog opens (ADR-091). This does not change any requirement below — it changes when generation happens, never what it must support once it does.
+
 A QR Code component **must** support:
 
 - **Download** — implemented
@@ -607,7 +609,9 @@ The authenticated surface, where a representative works.
 - Motion is restricted to microinteractions and component transitions.
 - Nothing is sold here. The representative has already decided; this surface helps them execute.
 - Empty states explain what happened, why, and what to do next — this surface is where a new representative is most likely to be lost.
-- The Stage 1 App Shell exposes only **Pages**, **Contacts** and **Account**. Contacts is the read-only inbox for interest already captured by the representative's pages — not a CRM. Desktop uses a compact sidebar; mobile uses an always-visible labeled header navigation. Both carry visible focus and `aria-current`; links to unimplemented capabilities are prohibited.
+- The Stage 1 App Shell exposes **Pages**, **Materials**, **Contacts** and **Account**. Materials is a nested destination alongside Pages, not a fourth unrelated domain — it delivers the 21 personalized marketing pieces gated by the same publication rule as the Commercial Page itself (SET-65/ADR-090; see `PRODUCT.md` for what it delivers). Contacts is the read-only inbox for interest already captured by the representative's pages — not a CRM. Desktop uses a compact sidebar; mobile uses an always-visible labeled header navigation, four items. Both carry visible focus and `aria-current`; links to unimplemented capabilities are prohibited.
+- **A published page's sharing actions carry equal visual weight: Copy link, Open site, Generate QR Code** (ADR-091). Unpublishing is a separate, visually de-emphasized action gated behind an explicit confirmation step — a destructive action never sits at the same visual weight as the three actions above it, and never fires from a single click.
+- **Materials** presents the 21 pieces per Product with a preview before download and one clear primary action per piece (download); it reuses the same availability gate as the Commercial Page (`is_subscription_active`/publication), never a separate rule. No editing, no upload — that remains the future Material Library, `DOMAIN_MODEL.md` § 8.11.
 
 ---
 
