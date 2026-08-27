@@ -296,8 +296,8 @@ It is also the single largest misreading risk in this repository. **Detail is no
 
 This is the Core Domain, and not, for example, Catalog Management or Analytics, because:
 
-- PRODUCT.md is explicit that SETNAR's value is not "creating pages" but "helping professionals generate more business opportunities." The mechanism for that — turning an identity + a set of authorized products into something a stranger will trust enough to act on — is the one thing SETNAR does that a generic tool (Linktree, a PDF, a website builder) cannot do as well, because those tools have no concept of "authorized representative of a real company selling a real regulated product."
-- It is the only domain area explicitly named in the MVP Goal ("validate whether independent representatives are willing to pay for a Digital Office") and is the sole subject of Stage 1 of the Roadmap.
+- PRODUCT.md is explicit that SETNAR's value is not "creating pages" (§ *Core Value Proposition*) and that every feature answers whether it helps users "generate more business opportunities" (§ *Product Philosophy*). The mechanism for that — turning an identity + a set of authorized products into something a stranger will trust enough to act on — is the one thing SETNAR does that a generic tool (Linktree, a PDF, a website builder) cannot do as well, because those tools have no concept of "authorized representative of a real company selling a real regulated product."
+- It is the domain area the MVP Goal exists to validate — whether representatives perceive enough recurring value in a Digital Office to adopt it and pay for it (`PRODUCT.md` § *MVP Goal*) — and is the sole subject of Stage 1 of the Roadmap.
 - Every later stage (Optimize, Sell, Automate, Enterprise, Ecosystem) is explicitly framed as *increasing the value of the same Commercial Page and the traffic it generates* — better marketing materials for it, a CRM to work the Leads it produces, AI to help write its content, White Label to let more Companies produce it. No later stage replaces it.
 
 Supporting and Generic Domains exist to make the Core Domain credible (Company/Catalog governance), measurable (Analytics), and eventually monetizable (Billing) and manageable at scale (Administration) — but none of them is the reason a customer pays.
@@ -468,7 +468,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Relationships:** Belongs to exactly one Company at a time; has exactly one Profile; has many Product Activations; owns one or more Commercial Pages; owns many Campaigns; owns many Leads.
 **Behaviors:** Complete/update Profile, activate/deactivate a Product, publish/unpublish a Commercial Page, create a Campaign, update a Lead's Pipeline Status.
 **Invariants:** A Representative cannot exist without a Company. A Representative cannot activate a Product that does not belong to their Company's Catalog.
-**Creation rules:** Created through a self-service registration flow scoped to a specific Company (per PRODUCT.md's "self-service and automatic activation").
+**Creation rules:** Created through a self-service registration flow scoped to a specific Company — see `PRODUCT.md` § *What Exists Today*.
 **Deletion rules:** Deactivating a Representative unpublishes their Commercial Pages but preserves their historical Leads and Analytics for the Company's record-keeping — subject to the same time-based retention window as any other Representative's (`docs/plans/DATA_RETENTION_DECISIONS_PLAN.md`), not an indefinite promise. Independent of that retention, the Representative retains the right to export their own historical Leads, Analytics, and Commercial Page content in a portable form — per PRODUCT_CONSTITUTION.md Core Belief 3 ("a professional who leaves must be able to take their history and credibility with them").
 **Example:** A licensed iGreen representative.
 **Future evolution:** In Stage 5, a Representative may be assigned a Role beyond the default (e.g., Team Manager), without changing the entity's core shape.
@@ -519,7 +519,7 @@ Each Bounded Context corresponds to a business capability area and maps directly
 **Relationships:** Belongs to exactly one Representative; references exactly one Product (via that Representative's Activation of it) — never several (ADR-029, "no hub"); has one derived QR Code (§ 8.7 — not a persisted entity of its own); is the origin of Analytics events and Leads.
 **Behaviors:** Compose/edit content, publish, unpublish, render/download its QR Code.
 **Invariants:** Cannot exist without a Representative (per ROADMAP.md and the explicit example in ARCHITECTURE.md). Cannot reference a Product the owning Representative has not activated. Cannot be published without a complete-enough Representative Profile — **today, name and phone; not photo, which is not implemented** (§ 11, Rule 7) — and its one activated Product.
-**Creation rules:** Created automatically as part of Representative onboarding (per PRODUCT.md's "automatic generation" and "automatic activation").
+**Creation rules:** Created automatically as part of Representative onboarding — see `PRODUCT.md` § *What Exists Today*.
 **Deletion rules:** Unpublishing removes public visibility but preserves the page and its historical Analytics/Leads.
 **Example:** `joao-silva.igreen.setnar.com` — the address is `<representative-slug>.<company-slug>.<tenant-root>`; the Company label is part of the canonical public address, not merely a validation detail (ADR-092).
 **Future evolution:** Stage 2 allows richer content (Material Library assets embedded); Stage 4 allows AI-suggested copy; Stage 6 may support Company-branded, White-Labeled page templates.
@@ -757,7 +757,7 @@ Domain Services represent business processes that do not belong naturally to a s
 
 > **Status (§ 3.1).** Representative Onboarding, Commercial Page Publication and Catalog Compliance exist in some form today. **Lead Attribution, Pipeline Progression, Subscription Enforcement and AI Content Suggestion do not exist** — Subscription enforcement today is a read-time check, not a service that reacts to status changes. Naming a service here does not schedule it.
 
-- **Representative Onboarding Service** — orchestrates the self-service registration flow: creating the Representative, linking them to the correct Company, and automatically generating their initial Commercial Page (per PRODUCT.md's "self-service and automatic activation").
+- **Representative Onboarding Service** — orchestrates the self-service registration flow: creating the Representative, linking them to the correct Company, and automatically generating their initial Commercial Page.
 - **Commercial Page Publication Service** — validates all publication preconditions across the Representative, Product Activation, and Subscription Aggregates (Profile completeness, its one active Product Activation, active or trialing Subscription) before allowing a Page's Status to move to Published.
 - **Lead Attribution Service** — determines, at the moment a conversion-intent Visitor Event occurs (e.g., a WhatsApp click), whether it should be attributed to a Campaign or to the Commercial Page directly, and creates the corresponding Lead.
 - **Pipeline Progression Service** — enforces the allowed Pipeline Status transitions for a Lead and ensures each transition produces a corresponding Activity Timeline entry.
