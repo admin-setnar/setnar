@@ -19,6 +19,45 @@ export const canRunE2E = Boolean(SUPABASE_URL && SERVICE_ROLE_KEY && ASAAS_WEBHO
 export const e2eSkipReason =
   'Configure NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e ASAAS_WEBHOOK_TOKEN (.env.local) para rodar a suíte E2E.';
 
+/**
+ * Timeout para qualquer `expect`/`expect.poll` que só resolve depois de uma
+ * requisição a uma rota de API que pode nunca ter sido servida antes nesta
+ * execução do `next dev` (`/api/leads`, `/api/track-click` — ambas atrás de
+ * `webServer` no `playwright.config.ts`, sempre um processo novo em CI:
+ * `reuseExistingServer: !process.env.CI`). Um `10_000` bastava numa rota já
+ * compilada, mas achado depurando esta suíte: o primeiro `POST /api/leads`
+ * de uma execução compilou a rota em 14.7s antes de sequer processar a
+ * requisição (`POST /api/leads 200 in 16616ms` no log do `next dev`) — quase
+ * o dobro de um timeout de 10s, então qualquer spec cujo primeiro hit a uma
+ * dessas rotas caia dentro de uma dessas asserções falha por lentidão de
+ * compilação a frio, não por regressão real. `30_000` dá margem confortável
+ * acima do pior caso observado sem mascarar uma lentidão genuína de
+ * segundos — não minutos.
+ *
+ * Não se aplica a tudo: só asserções logo depois de um `POST` real a uma
+ * dessas rotas (ou a um `expect.poll` no banco que só resolve depois de uma
+ * delas rodar) — não a interações puramente client-side (ex.: o QR Code de
+ * `publication-management.spec.ts`, gerado no navegador, sem rota de API).
+ */
+export const API_ROUTE_SETTLE_TIMEOUT = 30_000;
+
+/**
+ * Timeout para a primeira asserção de conteúdo em `/app/paginas` logo após
+ * `completeOnboarding()`. `completeOnboarding()` só espera a URL mudar
+ * (`page.waitForURL`), não que o conteúdo já tenha renderizado — e essa
+ * primeira renderização de `/app/paginas` dispara 5 leituras reais em
+ * paralelo (`listOwnCatalog`, `isSubscriptionActive`,
+ * `resolveValuePerceptionFeedbackEligibility`, `listOwnSummaryByProduct`,
+ * `listOwnBreakdownByOrigin` — a última, SET-84, é a mais nova das cinco).
+ * Achado depurando esta suíte: com a rota já compilada (não é o mesmo
+ * problema de `API_ROUTE_SETTLE_TIMEOUT`), essa asserção ainda assim
+ * estourou o timeout padrão do Playwright (5s) numa execução, e passou de
+ * primeira na tentativa seguinte — margem real contra variação normal de
+ * rede/Postgres, não uma regressão. `15_000` dá folga sem mascarar uma
+ * lentidão de segundos incomum.
+ */
+export const HUB_RENDER_SETTLE_TIMEOUT = 15_000;
+
 export function serviceClient(): SupabaseClient {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
     throw new Error('serviceClient() called without NEXT_PUBLIC_SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY configured.');

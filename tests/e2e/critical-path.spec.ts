@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 import {
+  API_ROUTE_SETTLE_TIMEOUT,
   ASAAS_WEBHOOK_TOKEN,
   buildE2ERepresentative,
   canRunE2E,
@@ -8,6 +9,7 @@ import {
   completeOnboarding,
   e2eSkipReason,
   generateSyntheticCPF,
+  HUB_RENDER_SETTLE_TIMEOUT,
   publicPageOrigin,
   serviceClient,
   signUp,
@@ -39,6 +41,21 @@ import {
 test.describe('caminho crítico do MVP (E2E, desktop)', () => {
   test.skip(!canRunE2E, e2eSkipReason);
 
+  // O timeout global de 90s (playwright.config.ts) não sobra margem real
+  // para este spec: além do cadastro/onboarding/publicação (compila várias
+  // rotas pela primeira vez num `next dev` novo, sempre o caso em CI —
+  // `reuseExistingServer: !process.env.CI`), o passo de checkout faz uma
+  // chamada de verdade à API do Asaas Sandbox (latência de rede real, fora
+  // do controle deste projeto) e o passo seguinte compila `/api/billing/
+  // asaas-webhook` a frio pela primeira vez. Achado depurando esta suíte:
+  // uma execução real, sem bug nenhum, contra um servidor genuinamente frio
+  // e com ASAAS_API_KEY configurada corretamente (ver `.env.example`, o
+  // valor precisa escapar o `$` literal do formato de chave do Asaas), levou
+  // ~102s — acima do orçamento de 90s por si só, sem nenhuma regressão.
+  // 180s dá folga confortável para variação de rede real, sem mascarar uma
+  // lentidão de minutos.
+  test.describe.configure({ timeout: 180_000 });
+
   const fixture = buildE2ERepresentative('desktop');
   const service = canRunE2E ? serviceClient() : null;
 
@@ -60,7 +77,7 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
       // segundo lugar (o preview de URL do próprio formulário de onboarding),
       // tornando esse "coincide 1x" ainda mais frágil. O sinal real de que o
       // onboarding terminou é a troca de tela para o hub de páginas.
-      await expect(page.getByRole('heading', { name: 'Suas páginas' })).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'Suas páginas' })).toBeVisible({ timeout: HUB_RENDER_SETTLE_TIMEOUT });
     });
 
     await test.step('ativa o primeiro produto do catálogo', async () => {
@@ -119,7 +136,7 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
       await publicPage.getByLabel('Nome').fill('Visitante de Teste E2E');
       await publicPage.getByLabel('Telefone').fill('(21) 97777-6666');
       await publicPage.locator('#quero-simular').getByRole('button').click();
-      await expect(publicPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: 10_000 });
+      await expect(publicPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: API_ROUTE_SETTLE_TIMEOUT });
     });
 
     await test.step('um visitante clica no WhatsApp — a navegação real para wa.me não é seguida', async () => {
@@ -142,7 +159,7 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
               .eq('event_type', 'visit');
             return count ?? 0;
           },
-          { timeout: 10_000 },
+          { timeout: API_ROUTE_SETTLE_TIMEOUT },
         )
         .toBeGreaterThan(0);
 
@@ -157,7 +174,7 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
               .eq('event_type', 'whatsapp_click');
             return count ?? 0;
           },
-          { timeout: 10_000 },
+          { timeout: API_ROUTE_SETTLE_TIMEOUT },
         )
         .toBeGreaterThan(0);
 
