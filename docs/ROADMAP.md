@@ -82,17 +82,15 @@ Definitions of both terms: `DOMAIN_MODEL.md` § 3.
 
 ## Objective
 
-Validate that independent representatives are willing to pay for a Digital Office.
+Validate that independent representatives perceive enough recurring value in a Digital Office to adopt it and pay for it (see `PRODUCT.md` § *MVP Goal*).
 
-This stage focuses exclusively on solving one problem:
-
-Professional Digital Presence.
+This stage focuses on one problem: a professional digital presence a representative can distribute, that captures the interest it generates, and that shows them it worked — not on solving every commercial need a representative might have (see *Explicitly out of scope for Stage 1*, below).
 
 ---
 
 ## Business Hypothesis
 
-Representatives need a professional way to present themselves and their products online, and will pay for it.
+Representatives need a professional digital presence — distributable and measurable, not just a page — and will pay for it.
 
 ---
 
@@ -110,7 +108,7 @@ None — this is the first stage.
 - Organic referrals
 - **Recurring use consistent with how the product is actually meant to be used**
 
-**No numeric target has been set for any of these.** They are qualitative validation markers until the Product Owner defines thresholds. Inventing numbers here would be worse than leaving them open.
+**Numeric thresholds exist and are approved.** `docs/plans/PILOT_SUCCESS_THRESHOLDS_PLAN.md` (Product Owner, 2026-08-12) sets 🟢/🟡/🔴 targets for Activation, Result, paid conversion, MRR, D30/D60 retention and qualitative feedback, anchored to the 30-slot founding cohort; `docs/plans/STAGE_1_KPI_SPECIFICATION.md` (2026-08-14) is the canonical definition of each metric. The numbers themselves live in those plans, not duplicated here — whether real pilot data has been evaluated against them is a separate question this reconciliation does not answer.
 
 **"Daily usage" was removed as a criterion, deliberately.** SETNAR's product is a presence that works while the representative is doing something else: they publish a page, share a link, and the page does its job without them logging in. A representative who signs in once a month and receives leads every week is a *success*, not a retention problem. Adopting daily usage as a target would have pushed the product toward manufacturing reasons to log in — notifications, streaks, dashboards that must be checked — which is precisely the "complexity exported to the customer" that PRODUCT_CONSTITUTION.md Core Belief 9 prohibits.
 
@@ -123,31 +121,31 @@ The honest question is not "did they come back today?" but **"is the presence st
 Stage 1 is complete when, at minimum:
 
 1. Representatives can publish and share their pages without assistance — **met**;
-2. the product can charge, and can measure who paid — **not met** (see *Still open*);
+2. the product can charge, and can measure who paid — **met** (Asaas hosted checkout, webhook and the Subscription record; see `PRODUCT.md` § *MVP Goal*). No in-product view surfaces it to a representative or the founder yet — see *Still open*;
 3. representatives can see that their presence produces results — **met** (visits, WhatsApp clicks and leads shown per Product in `/app/paginas`, SET-37/ADR-082);
-4. there is qualitative evidence that they consider it worth paying for — **pending**.
+4. there is qualitative evidence that they consider it worth paying for — **pending**. Criteria and thresholds are defined (`docs/plans/PILOT_SUCCESS_THRESHOLDS_PLAN.md`); whether real pilot data meets them has not been evaluated in this reconciliation.
 
-Advancing to Stage 2 with items 2 and 3 open would mean optimizing a hypothesis that was never measured.
+Items 2 and 3 are now met; advancing to Stage 2 while item 4 is still pending would mean optimizing a hypothesis before the qualitative evidence for it exists.
 
 ---
 
 ## Risks
 
-- **Measuring the wrong thing.** Without billing and without visible statistics, the payment hypothesis is judged on impressions rather than evidence.
+- **Measuring the wrong thing.** Billing and basic statistics both exist now, but no representative- or founder-facing view of business metrics (paying customers, MRR, churn) does — the payment hypothesis is still read from the database directly, not from an in-product read path (see *Still open*).
 - **Single-organization bias.** Everything validated so far was validated with one authorizing organization, one catalog, one market.
-- **Third-party brand dependency.** Visual identity on generated pages is blocked on an authorization SETNAR does not control (`COMMERCIAL_PAGE_CONTENT_PLAN.md` § 3.3).
+- **Third-party brand dependency, resolved for the current scope.** The Product Owner confirmed the iGreen brand authorization for the seven Commercial Pages on 2026-08-13 (`PRODUCT.md` § *Brand authorization — current status*); it remains scoped to that controlled surface, not a blanket permission.
 
 ---
 
 ## Explicitly out of scope for Stage 1
 
-CRM; campaigns; material library; artificial intelligence; advanced analytics; multi-organization administration; white label; marketplace; public APIs; and any capability from Stages 2–6.
+CRM; campaigns; the full Material Library (a minimal, already-shipped slice of 21 personalized materials was pulled forward into this stage as its own distribution mechanism — see § *Authenticated application*, below; campaign creation, a visual editor, user-generated artwork and upload remain out of scope); artificial intelligence; advanced analytics; multi-organization administration; white label; marketplace; public APIs; and any capability from Stages 2–6.
 
 ---
 
 ## Capabilities
 
-Status verified against the Parte 2 working tree based on commit `df8db50` on 2026-08-06. `PRODUCT.md` § *What Exists Today* is the authority; this list is the sequencing view of the same facts.
+Status verified against the working tree based on commit `b1cd1da` on 2026-08-27 (SET-88). `PRODUCT.md` § *What Exists Today* is the authority; this list is the sequencing view of the same facts.
 
 ### Authentication — **done**
 
@@ -181,7 +179,7 @@ Status verified against the Parte 2 working tree based on commit `df8db50` on 20
 - Authorized-representative identification and per-product compliance notice
 - Responsive design
 - WhatsApp CTA and lead capture form
-- URL: `<representative-slug>.<domain>` — subdomain per representative, not a path ([`ADR-026`](adr/ADR-026-representative-pages-resolve-by-subdomain-slugdomain-not-by.md))
+- Public address: subdomain-and-path, per (representative × product) — canonical current format and its ADR trail in `PRODUCT.md` § *What Exists Today* and [`ADR-092`](adr/ADR-092-endereco-publico-da-commercial-page-passa-a-incluir-a-company.md); do not restate the format here, it has changed once already
 
 ---
 
@@ -195,7 +193,7 @@ Status verified against the Parte 2 working tree based on commit `df8db50` on 20
 
 - Visits — recorded
 - WhatsApp clicks — recorded
-- Referrer source — recorded, not yet surfaced as a breakdown (Stage 2)
+- Referrer source — recorded, not yet surfaced as a breakdown (Stage 2). Any future lightweight per-visit origin/channel signal stays this stage's concern only while it remains a single untracked value with no Campaign entity or lifecycle attached — see Stage 2 § *Campaign Links*
 - Leads — recorded (Lead Capture, above)
 - Read path: visits, WhatsApp clicks and leads shown per Product, per 7/30-day window, in `/app/paginas` (SET-37/ADR-082)
 - **No breakdown by referrer, device or city, and no conversion rate.** That is Advanced Analytics, Stage 2 — not this capability
@@ -212,12 +210,11 @@ Status verified against the Parte 2 working tree based on commit `df8db50` on 20
 
 ---
 
-### Subscription / billing — **partly done, and it is the gate on this whole stage**
+### Subscription / billing — **done**
 
-- Subscription record — done
-- Enforcement when a Commercial Page is served — done
-- Enforcement at publication time — done, using the same Subscription rule as public read
-- **Payment gateway, billing flow, automated lifecycle — not implemented.** Activation is manual
+- Subscription lifecycle (hosted checkout, authenticated/idempotent webhook, representative-initiated cancellation, 30-day free trial, manual reconciliation) — done; see `PRODUCT.md` § *MVP Goal* for the current billing state
+- Enforcement when a Commercial Page is published and when it is served, through the same Subscription rule — done
+- **A representative- or founder-facing view of who paid, MRR or churn — not implemented.** The Subscription record itself can answer whether a trial converted; there is no in-product read path for it (`PRODUCT.md` § *Success Metrics*) — see *Still open*
 
 ---
 
@@ -237,6 +234,10 @@ Activate products
 
 ↓
 
+Subscribe (checkout, trial or paid)
+
+↓
+
 Share pages
 
 ↓
@@ -247,7 +248,7 @@ Receive leads
 
 Track basic statistics
 
-**Currently met through "receive leads."** The final step is not met: statistics are recorded and never displayed. And "pay" is absent from this flow entirely, even though it is the stage's actual hypothesis.
+**All seven steps are met at this baseline** — see `PRODUCT.md` § *What Exists Today* (SET-37/ADR-082 for statistics) and § *MVP Goal* (the Asaas billing lifecycle for the Subscribe step). What is not yet met: nothing in the product itself surfaces whether a trial actually *converted* to paid — the stage's real hypothesis — that still has to be read from the database directly (see *Still open*).
 
 ---
 
@@ -255,12 +256,9 @@ Track basic statistics
 
 | Item | Where it is tracked |
 |---|---|
-| Show visit/click statistics to the representative | `docs/plans/QR_ANALYTICS_PLAN.md` AN6 |
-| Analytics retention/purge | `docs/plans/QR_ANALYTICS_PLAN.md` AN7 |
-| Manual subscription activation/reactivation | `docs/plans/SPRINT_E_PLAN.md` E3 |
 | Profile photo and social links | No plan — undecided whether Stage 1 needs them |
-| Payment gateway | No plan — the largest gap in the stage's own hypothesis |
-| iGreen brand authorization | `docs/plans/COMMERCIAL_PAGE_CONTENT_PLAN.md` CP1 |
+| Representative-/founder-facing view of business metrics (paying customers, MRR, churn) beyond the existing manual runbook | `docs/plans/ANALYTICS_DATA_LAYER_METABASE_READINESS.md` (D8–D12 approved 2026-08-14, not yet built) |
+| Whether real pilot data meets the approved success thresholds | `docs/plans/PILOT_SUCCESS_THRESHOLDS_PLAN.md` — thresholds exist; evaluating real data against them was not part of this reconciliation |
 
 ---
 
@@ -330,13 +328,13 @@ CRM lifecycle and lead working state — status, notes, tasks, pipeline, assignm
 
 ### Campaign Links
 
-Create campaign-specific URLs.
+Create campaign-specific URLs, backed by a Campaign entity with its own lifecycle (creation, editing, reporting across links). This is a different capability from tagging where a single visit entered from — a lightweight, per-visit origin signal with no Campaign entity and no lifecycle remains Stage 1 scope (see Stage 1 § *Analytics (Basic)*), not evidence that Campaigns exist.
 
 ---
 
 ### Smart QR Codes
 
-Track campaign performance.
+Track campaign performance — requires the Campaign entity above. A QR Code carrying only a per-visit origin tag, with no campaign behind it, is not this capability.
 
 ---
 
