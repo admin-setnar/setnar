@@ -12,9 +12,15 @@ import { FormAlert } from '@/shared/ui/form-alert';
  * (and publicly available) Product Activation: "Copiar link", "Abrir site",
  * "Gerar QR Code". Replaces the old always-visible QR card + duplicated URL
  * block in `RepresentativeHub`/`ProductActivationCard` — `url` is the same
- * `buildCommercialPageUrl()` string those callers already computed, passed
- * through unchanged so copy/open/QR always resolve to the exact same public
- * link.
+ * `buildCommercialPageUrl()` string those callers already computed, the
+ * bare canonical link every derived URL below is built from.
+ *
+ * SET-105 (AUDIT_SET-101 §8) — "Copiar link" and "Gerar QR Code" are known
+ * distribution mechanisms, so each tags `url` with its own `?src=` before
+ * using it (`direct`/`qrcode`, same allowlist Divulgação already writes to).
+ * "Abrir site" keeps the bare `url`: it is the representative inspecting
+ * their own live page, not a distribution action — `isViewerOwner`
+ * (`a8ab2de`) already excludes that click from analytics regardless.
  *
  * Stacks to one action per row on narrow viewports, sits side by side from
  * `sm` up — same `fullWidth` + `sm:w-auto` pattern `LeadInbox`'s WhatsApp
@@ -33,10 +39,13 @@ export function PublishedPageActions({
   const [copyFailed, setCopyFailed] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
 
+  const copyLinkUrl = `${url}?src=direct`;
+  const qrCodeUrl = `${url}?src=qrcode`;
+
   async function handleCopy() {
     setCopyFailed(false);
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(copyLinkUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -83,13 +92,13 @@ export function PublishedPageActions({
         <FormAlert
           tone="error"
           title="Não foi possível copiar automaticamente"
-          description={`Copie manualmente: ${url}`}
+          description={`Copie manualmente: ${copyLinkUrl}`}
         />
       ) : null}
 
       <span className="sr-only" aria-live="polite">{copied ? 'Link copiado.' : ''}</span>
 
-      <QrCodeDialog open={qrOpen} onOpenChange={setQrOpen} url={url} fileName={fileName} productName={productName} />
+      <QrCodeDialog open={qrOpen} onOpenChange={setQrOpen} url={qrCodeUrl} fileName={fileName} productName={productName} />
     </div>
   );
 }

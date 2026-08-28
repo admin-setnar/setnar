@@ -16,15 +16,20 @@ import {
  * o comportamento introduzido pela refatoração de UX do card publicado
  * (`ProductActivationCard`/`PublishedPageActions`/`QrCodeDialog`).
  *
+ * SET-105 (AUDIT_SET-101 §8) — "Copiar link" e "Gerar QR Code" passaram a
+ * tagear a URL com `?src=direct`/`?src=qrcode` respectivamente; "Abrir site"
+ * continua com a URL canônica, sem `?src=` — não é ação de distribuição, é o
+ * representante inspecionando a própria página.
+ *
  * O que este spec NÃO tenta provar, de propósito, porque já está provado na
  * camada certa:
- * - Fidelidade do link por trás do QR Code (mesma string de `Abrir site`/
- *   `Copiar link` — decodificar a imagem do QR exigiria uma dependência nova
- *   só para o teste, o que o escopo desta tarefa proíbe). Este spec confirma
- *   que a imagem gerada é um `data:` URI de verdade, não que o payload
- *   decodifica para a URL — isso é responsabilidade de `generateQrCodeDataUrl`
- *   (`shared/lib`), que recebe a mesma `url` que os outros dois controles
- *   usam.
+ * - Que a imagem do QR Code decodifica para `<url>?src=qrcode` —
+ *   decodificá-la exigiria uma dependência nova só para o teste, o que o
+ *   escopo desta tarefa proíbe. `tests/published-page-actions.test.ts` prova
+ *   estruturalmente qual URL o componente constrói e passa para
+ *   `QrCodeDialog`; este spec confirma apenas que a imagem gerada é um
+ *   `data:` URI de verdade, e que "Copiar link"/"Abrir site" — que só um
+ *   navegador real prova — resolvem para a URL certa.
  * - Cálculo/semântica de analytics — `analytics-hub-ui.test.ts`.
  */
 test.describe('gerenciamento de página publicada (E2E, desktop)', () => {
@@ -79,14 +84,14 @@ test.describe('gerenciamento de página publicada (E2E, desktop)', () => {
       await expect(page.getByRole('img', { name: 'QR Code da página pública' })).toHaveCount(0);
     });
 
-    await test.step('"Copiar link" copia a URL pública e dá feedback visível', async () => {
+    await test.step('"Copiar link" copia a URL pública com atribuição ?src=direct e dá feedback visível', async () => {
       await page.getByRole('button', { name: 'Copiar link' }).click();
       await expect(page.getByRole('button', { name: 'Link copiado' })).toBeVisible();
       const clipboardText = await page.evaluate(() => navigator.clipboard.readText());
-      expect(clipboardText).toBe(expectedUrl);
+      expect(clipboardText).toBe(`${expectedUrl}?src=direct`);
     });
 
-    await test.step('"Abrir site" aponta para a URL pública e preserva o painel (nova aba)', async () => {
+    await test.step('"Abrir site" aponta para a URL pública sem atribuição e preserva o painel (nova aba)', async () => {
       // Não segue a navegação de verdade: `buildCommercialPageUrl` monta um
       // host de subdomínio (`<slug>.<rootHost>`) que só resolve de fato em
       // produção — o mesmo motivo pelo qual `critical-path.spec.ts` navega a
@@ -94,7 +99,8 @@ test.describe('gerenciamento de página publicada (E2E, desktop)', () => {
       // explicitamente, nunca clicando o link renderizado pelo hub.
       // `target="_blank"`/`rel="noopener noreferrer"` são o contrato
       // observável de "abre em nova aba sem afetar o painel" sem depender
-      // de DNS/porta do ambiente de teste.
+      // de DNS/porta do ambiente de teste. SET-105: `href` continua a URL
+      // canônica — "Abrir site" não é uma ação de distribuição.
       const openSiteLink = page.getByRole('link', { name: 'Abrir site' });
       await expect(openSiteLink).toHaveAttribute('href', expectedUrl);
       await expect(openSiteLink).toHaveAttribute('target', '_blank');
@@ -104,7 +110,9 @@ test.describe('gerenciamento de página publicada (E2E, desktop)', () => {
 
     await test.step('"Gerar QR Code" abre o dialog com a imagem e permite baixar', async () => {
       await page.getByRole('button', { name: 'Gerar QR Code' }).click();
-      await expect(page.getByRole('heading', { name: 'QR Code da sua página' })).toBeVisible();
+      // Título nomeia o produto desde a SET-100 (F-14) — regex em vez do
+      // nome literal do produto para não depender de outra query ao banco.
+      await expect(page.getByRole('heading', { name: /^QR Code — .+$/ })).toBeVisible();
       const qrImage = page.getByRole('img', { name: 'QR Code da página pública' });
       await expect(qrImage).toBeVisible({ timeout: 10_000 });
       await expect(qrImage).toHaveAttribute('src', /^data:image\//);
@@ -119,7 +127,7 @@ test.describe('gerenciamento de página publicada (E2E, desktop)', () => {
       // `Dialog.Close`, sempre presente) e o botão secundário do rodapé —
       // `.last()` mira o do rodapé, a ação secundária desta tarefa.
       await page.getByRole('button', { name: 'Fechar' }).last().click();
-      await expect(page.getByRole('heading', { name: 'QR Code da sua página' })).not.toBeVisible();
+      await expect(page.getByRole('heading', { name: /^QR Code — .+$/ })).not.toBeVisible();
     });
 
     await test.step('"Despublicar" abre confirmação; cancelar não despublica', async () => {

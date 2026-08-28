@@ -3,7 +3,7 @@ import Link from 'next/link';
 import type { Representative } from '@/modules/representatives/domain/representative';
 import type { RepresentativeCatalogEntry } from '@/modules/representatives/domain/representative-catalog-repository';
 import { isRepresentativeProfileComplete } from '@/modules/representatives/domain/representative-rules';
-import { buildMarketingMaterialPropsWithQrCode } from '@/modules/marketing-materials/material-props';
+import { buildMarketingMaterialPropsForOrigin } from '@/modules/marketing-materials/material-props';
 import { selectAvailableProductsWithMaterials } from '@/modules/marketing-materials/select-available-materials';
 import { ProductMaterialsCard } from '@/modules/marketing-materials/presentation/product-materials-card';
 import { Card } from '@/shared/ui/card';
@@ -16,6 +16,11 @@ import { Text } from '@/shared/ui/typography';
  * §2.6). `representative` is always resolved by the caller from
  * `auth.uid()` (never a client-supplied id), same tenancy guarantee every
  * other `/app` route already has.
+ *
+ * SET-105 (AUDIT_SET-101 §8) — the QR Code embedded in each poster is a
+ * known distribution mechanism, so it carries `?src=qrcode`
+ * (`buildMarketingMaterialPropsForOrigin`) instead of the bare canonical
+ * link `buildMarketingMaterialPropsWithQrCode` used to produce.
  */
 export async function MarketingMaterialsPage({
   representative,
@@ -46,7 +51,7 @@ export async function MarketingMaterialsPage({
       key: entry.product.id,
       productLabel: entry.product.name,
       productSlug: entry.product.slug,
-      materialProps: await buildMarketingMaterialPropsWithQrCode(representative, entry.product),
+      materialProps: await buildMarketingMaterialPropsForOrigin(representative, entry.product, 'qrcode'),
     })),
   );
 
