@@ -1,3 +1,4 @@
+import { AuthTriggerButton } from '@/modules/auth/presentation/auth-trigger-button';
 import { LAUNCH_PRICE_LABEL } from '@/modules/billing/domain/billing-rules';
 import type { PricingContent } from '@/modules/marketing/domain/marketing-content';
 import { SectionHeading } from '@/modules/marketing/presentation/section-heading';
@@ -44,6 +45,9 @@ export function Pricing({ id, content }: { id: string; content: PricingContent }
         <Text variant="body" className="mt-6 font-medium text-content">
           {content.trialNote}
         </Text>
+        <AuthTriggerButton view="sign-up" size="lg" fullWidth className="mt-6">
+          {content.ctaLabel}
+        </AuthTriggerButton>
       </Card>
     </Section>
   );

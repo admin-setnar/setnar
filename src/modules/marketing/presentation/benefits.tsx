@@ -36,7 +36,7 @@ export function Benefits({ id, content }: { id: string; content: BenefitsContent
               as="li"
               key={benefit.title}
               delay={index * 0.04}
-              className={index === 0 ? 'sm:col-span-2 lg:col-span-1' : undefined}
+              className={index === 0 ? 'sm:col-span-2' : undefined}
             >
               <Card padding="lg" interactive className="h-full">
                 <IconWrapper icon={Icon} variant="subtle" />

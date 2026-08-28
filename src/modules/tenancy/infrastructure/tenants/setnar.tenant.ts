@@ -147,6 +147,7 @@ export const setnarTenant: Tenant = {
         'Nada de níveis ou recursos escondidos atrás de um plano mais caro — todo representante tem acesso a tudo.',
       priceQualifier: 'Preço de Fundador garantido enquanto sua assinatura permanecer ativa.',
       trialNote: 'Primeiros 30 dias grátis, sem cartão de crédito.',
+      ctaLabel: 'Criar minha conta',
     },
 
     callToAction: {
