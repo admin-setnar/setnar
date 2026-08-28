@@ -156,6 +156,7 @@ export const setnarTenant: Tenant = {
         'Crie sua conta, ative um produto e compartilhe o link ainda hoje.',
       action: 'Criar minha conta',
       footnote: 'Criar conta leva menos de dois minutos.',
+      independenceNote: 'Setnar é uma plataforma independente — não é canal oficial das marcas que você representa.',
     },
 
     footer: {
