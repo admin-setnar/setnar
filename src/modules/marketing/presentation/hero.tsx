@@ -18,7 +18,10 @@ import { Text } from '@/shared/ui/typography';
  */
 export function Hero({ content }: { content: HeroContent }) {
   return (
-    <section id="top" className="relative overflow-hidden pt-28 sm:pt-32 lg:pt-40">
+    <section
+      id="top"
+      className="relative overflow-hidden pb-20 pt-28 sm:pb-24 sm:pt-32 lg:pb-28 lg:pt-40"
+    >
       <BackdropGrid />
 
       <Container className="relative">
