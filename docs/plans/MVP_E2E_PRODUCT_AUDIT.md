@@ -15,28 +15,35 @@
 ## 1. Executive Summary
 
 Of the **12 historical findings** raised in SET-86's comments (landing,
-public commercial page, authenticated product, auth), **5 are `RESOLVED`**,
-**6 remain `CONFIRMED`**, and **1 is `NOT_REPRODUCED`** against the current
+public commercial page, authenticated product, auth), **4 are `RESOLVED`**,
+**7 remain `CONFIRMED`**, and **1 is `NOT_REPRODUCED`** against the current
 baseline. None of the 12 is a P0. Two — `PUB-02` and `PUB-03` — were
 re-confirmed with live, measured evidence stronger than the original
 (uncalibrated) observation.
 
-**The most significant thing this audit surfaces is not on the historical
-list.** `PRODUCT.md` § *What Exists Today* — the one section every other
-normative document defers to on "does this exist?" — is now stale: **SET-84**
-shipped a new authenticated route (`/app/divulgacao`) and a referrer/origin
-breakdown for analytics, and neither is reflected there. The document still
-asserts "no breakdown by referrer, device or city" for analytics, which is no
-longer true. Per `docs/README.md`'s own rule, no release should ship while
-this section is out of date — this is flagged as `DOC-01`, P1, and is a
-**documentation-only** issue, structurally identical to SET-87 through
-SET-92.
+**A new finding surfaced that is not on the historical list.** `PRODUCT.md`
+§ *What Exists Today* — the one section every other normative document
+defers to on "does this exist?" — does not document two things **SET-84**
+shipped: the authenticated route `/app/divulgacao`, and an analytics
+breakdown by `origin`/`source` (the channel-attribution mechanism SET-84
+introduced via `?src=`). This is a distinct concept from the HTTP `Referer`
+header — `PRODUCT.md`'s existing claim that there is no breakdown *by
+referrer* is not addressed by this finding, and is neither confirmed nor
+refuted here (see `DOC-01`, § 17, for the exact distinction). Per
+`docs/README.md`'s own rule, no release should ship while this section is
+out of date — this is flagged as `DOC-01`, **P2 documental** (it affects
+documentation reliability and governance, not activation, distribution or
+conversion directly), and is a **documentation-only** issue, structurally
+identical to SET-87 through SET-92.
 
 Nothing found here blocks continued MVP validation with real users today.
 The confirmed findings are friction and polish, not correctness or safety
 defects — the one item closest to a trust/perception risk (`PUB-02`,
 competing CTAs with no visual hierarchy on the page whose only job is
-conversion) is P2, not P0/P1.
+conversion) is P2, not P0/P1. There is no confirmed `P1` in this round
+either. None of the twelve historical findings, nor the two new ones
+(`DOC-01`, `DOC-02`), require pausing validation with real users — every
+recommended change can proceed in parallel with it.
 
 **Verdict: `GO`** — see § 24 for the full reasoning and § 23 for exactly what
 this audit did not cover and why.
@@ -467,10 +474,22 @@ lidos e são consistentes com o resto do produto.
 Coberto em `APP-03` (§ 9) para a caixa de contatos. Para analytics:
 `src/app/app/paginas/page.tsx:55-60` já lê
 `analyticsRepository.listOwnBreakdownByOrigin(...)` e passa
-`originBreakdown` para `RepresentativeHub` — **isso é exatamente o
-breakdown que `PRODUCT.md` § *Success Metrics* afirma não existir.** Ver
-`DOC-01`, § 17 — o achado de maior severidade desta rodada, mas de
-natureza puramente documental.
+`originBreakdown` para `RepresentativeHub`.
+
+**Distinção necessária, antes de qualquer conclusão:** `origin`/`source`
+(a atribuição de canal introduzida pela SET-84, via `?src=` e a
+persistência correspondente) **não é sinônimo** de HTTP `referrer` (o
+cabeçalho `Referer` enviado pelo navegador). `listOwnBreakdownByOrigin(...)`
+e `originBreakdown` provam a existência de um breakdown **por
+origem/canal atribuído** — não provam nada, por si só, sobre a afirmação
+específica de `PRODUCT.md` § *Success Metrics* de que não há breakdown
+**por HTTP referrer**. Essa segunda afirmação não foi verificada nesta
+rodada e deve ser tratada como não confirmada nem refutada, não como
+falsa.
+
+O que é fato, e o que `DOC-01` (§ 17) registra: a rota `/app/divulgacao` e
+o breakdown por `origin`/`source` existem no código e não estão
+documentados em `PRODUCT.md` § *What Exists Today*. Essa é a lacuna real.
 
 ---
 
@@ -651,9 +670,7 @@ estrutura obrigatória do relatório.
 
 ### P1
 
-| ID | Resumo | Status |
-|---|---|---|
-| `DOC-01` | `PRODUCT.md` § *What Exists Today* desatualizado pós-SET-84 (rota `/app/divulgacao` e breakdown por origem não documentados; afirmação "no breakdown by referrer" agora falsa) | **Novo, CONFIRMED** |
+Nenhum `P1` confirmado nesta rodada.
 
 ### P2
 
@@ -662,6 +679,7 @@ estrutura obrigatória do relatório.
 | `LP-02` | Card de preço sem CTA próprio | CONFIRMED |
 | `LP-03` | Disclaimer de compliance isolado no rodapé | CONFIRMED |
 | `PUB-02` | CTAs concorrentes sem hierarquia (Commercial Pages) | CONFIRMED |
+| `DOC-01` (**P2 documental**) | `PRODUCT.md` § *What Exists Today* desatualizado pós-SET-84 — não documenta `/app/divulgacao` nem o breakdown por `origin`/`source`. Não faz nenhuma afirmação sobre a claim de breakdown por HTTP `referrer`, que permanece não verificada nesta rodada (§ 11) | **Novo, CONFIRMED** |
 
 ### P3
 
@@ -693,104 +711,206 @@ estrutura obrigatória do relatório.
 ## 18. TO-BE Conceitual Mínimo
 
 Não há necessidade de um TO-BE estrutural novo — a jornada E2E (§ 5) já é
-coerente ponta a ponta. O TO-BE mínimo é: **os textos e a documentação
-alcançam o que o código já faz.** Concretamente:
+coerente ponta a ponta. Nenhuma nova entidade, tabela ou capacidade é
+necessária para nenhum dos achados confirmados. O TO-BE mínimo é: **reduzir
+fricção e ambiguidade, e alinhar a documentação ao que o código já faz**,
+nas cinco frentes propostas em § 19:
 
-- `PRODUCT.md` reflete `/app/divulgacao` e o breakdown por origem
-  (`DOC-01`).
-- A página de preços tem um caminho de ação direto no ponto de decisão
-  (`LP-02`).
-- As Commercial Pages comunicam visualmente qual é *a* ação a tomar,
-  não três ações de peso igual (`PUB-02`).
+1. `PRODUCT.md` reflete `/app/divulgacao` e o breakdown por `origin`/
+   `source` (`DOC-01`), com a distinção `origin`/`source` × HTTP
+   `referrer` explícita.
+2. A landing tem uma seção Recursos visualmente equilibrada em desktop e
+   um caminho de ação direto no card de preço (`LP-01` + `LP-02`).
+3. O aviso de independência institucional ganha um ponto de reforço antes
+   do rodapé, sem enfraquecer o disclaimer existente (`LP-03`).
+4. As Commercial Pages comunicam visualmente qual é a ação primária por
+   contexto, com textos de ações diferentes não-ambíguos — preservando as
+   diferenças legítimas entre as 7 árvores, não um CTA único forçado
+   (`PUB-02` + `PUB-03`).
+5. O formulário de assinatura reaproveita dados já cadastrados, eliminando
+   retrabalho de digitação (`APP-02`).
 
-Nenhuma nova entidade, tabela ou capacidade é necessária para nenhum dos
-achados confirmados.
+Isto não é um redesign — é polimento e coerência documental sobre uma
+jornada que já funciona ponta a ponta.
 
 ---
 
 ## 19. Proposta de Decomposição em Issues Pequenas
 
-Organizadas por jornada/capacidade, não por camada técnica. Nenhuma será
-criada automaticamente por esta issue — ficam aqui como proposta para
-aprovação do Product Owner.
+Organizadas por jornada/capacidade, não por camada técnica. **Cinco
+issues, não sete** — `LP-01`+`LP-02` e `PUB-02`+`PUB-03` foram agrupadas
+por serem mudanças pequenas na mesma jornada, de risco comparável e
+validáveis em conjunto, não por estarem na mesma tela. Nenhuma será criada
+automaticamente por esta issue — ficam aqui como proposta para aprovação
+do Product Owner.
 
-1. **Corrigir o grid assimétrico da seção "Recursos" da landing em
-   desktop (`LP-01`)** — o `col-span-2` do primeiro card deve persistir
-   (ou uma alternativa deve ser escolhida) também no breakpoint `lg`, não
-   só em `sm`.
-2. **Adicionar um CTA de conversão dentro do card de preço da landing
-   (`LP-02`)**.
-3. **Reforçar a visibilidade do aviso de compliance da landing perto do
-   ponto de decisão (`LP-03`)** — depende de aprovação de compliance para
-   a redação.
-4. **Pré-preencher nome e e-mail no formulário de assinatura (`APP-02`)**.
-5. **Definir e aplicar hierarquia visual entre os CTAs de WhatsApp das
-   Commercial Pages (`PUB-02`)** — decisão de design primeiro
-   (qual é o CTA primário por seção), depois implementação no módulo CSS
-   compartilhado; avaliar impacto nas 7 árvores.
-6. **Diferenciar o texto do CTA do hero e do formulário de lead,
-   começando pelo Conexão Club (`PUB-03`)** — avaliar, ao decidir o
-   escopo, se generaliza para as outras 6 árvores.
-7. **Reconciliar `PRODUCT.md` § *What Exists Today* com o baseline
-   pós-SET-84 (`DOC-01`)** — issue documentacional, mesmo padrão de
-   SET-87/88/89/90/91/92: investigação → aprovação do Product Owner →
-   edição do documento. Não é uma issue de código.
+### Issue proposta 1 — Documentação: reconciliar `PRODUCT.md` com Divulgação e attribution pós-SET-84 (`DOC-01`)
 
-Fora do backlog do MVP por decisão explícita desta auditoria: `APP-03`
-(Future) e `DOC-02` (observação de arquitetura de informação, sem
-recomendação de ação concreta ainda).
+Escopo:
+- documentar a superfície autenticada `/app/divulgacao`;
+- documentar o breakdown analítico por `origin`/`source`;
+- distinguir explicitamente, no próprio texto de `PRODUCT.md`: `src` (o
+  parâmetro de URL), `source`/`origin` (a atribuição de canal), HTTP
+  `referrer` (o cabeçalho do navegador) e o breakdown que o produto
+  realmente exibe hoje ao representante;
+- atualizar baseline/data/verificador de `PRODUCT.md` quando esta issue
+  for executada;
+- **não altera código.**
+
+Primeira da ordem de execução (§ 21).
+
+### Issue proposta 2 — Landing: otimizar pontos de decisão e composição (`LP-01` + `LP-02`)
+
+Escopo futuro:
+- corrigir a composição do grid de Recursos em desktop;
+- adicionar CTA direto no card do Plano Fundador;
+- preservar responsividade;
+- preservar o posicionamento atual das seções;
+- não mudar pricing;
+- não adicionar novas promessas;
+- não redesenhar a landing inteira.
+
+Justificativa do agrupamento: duas alterações pequenas, localizadas na
+mesma superfície, de baixo risco, passíveis de validação visual conjunta.
+
+### Issue proposta 3 — Landing: reforçar transparência de independência institucional (`LP-03`)
+
+Escopo futuro:
+- avaliar uma versão resumida do aviso de independência antes do rodapé;
+- posicioná-la em um ponto de decisão adequado (ex.: perto do preço ou do
+  CTA final);
+- preservar o disclaimer integral já existente no rodapé;
+- não usar copy alarmista ou excessivamente jurídica;
+- garantir alinhamento com as regras de marca e posicionamento de
+  `PRODUCT.md`.
+
+Não inventar texto final nesta auditoria — a implementação futura precisa
+passar por revisão de compliance/posicionamento antes de ir ao ar.
+
+### Issue proposta 4 — Commercial Pages: corrigir hierarquia visual e semântica dos CTAs (`PUB-02` + `PUB-03`)
+
+Antes de qualquer implementação futura, esta issue exige:
+
+1. inventário dos CTAs das 7 árvores — Conexão Club, Telecom, ConexãoGreen,
+   ConexãoLivre, ConexãoPlacas, ConexãoSolar, GreenSeguros — identificando,
+   em cada uma: ação, texto, hierarquia visual, posição, destino, e se há
+   ambiguidade semântica;
+2. definição de qual ação é primária por contexto — não necessariamente a
+   mesma em todas as árvores;
+3. só depois, alteração de CSS/copy.
+
+Não assumir que as sete árvores têm exatamente o mesmo problema de copy
+apenas por compartilharem estrutura ou classe CSS — isso foi confirmado
+com evidência ao vivo apenas para o Conexão Club nesta rodada (§ 23).
+
+### Issue proposta 5 — Billing: pré-preencher dados conhecidos no início da assinatura (`APP-02`)
+
+Escopo futuro:
+- pré-preencher nome e e-mail já existentes no perfil do representante;
+- campos continuam editáveis;
+- nenhuma alteração na regra de assinatura;
+- nenhuma alteração em webhook;
+- nenhuma alteração na fonte de verdade de billing sem investigação
+  específica.
+
+---
+
+Fora do backlog do MVP por decisão explícita desta auditoria:
+
+- **`APP-03`** (`Future`) — ausência de busca, filtro, status, notas,
+  pipeline ou automação de contatos não é um bug do MVP atual; já é um
+  limite documentado (§ 9, § 11). Só deve ser reconsiderado com evidência
+  de volume real ou necessidade recorrente dos usuários — não deve virar
+  CRM por extensão.
+- **`DOC-02`** — a coexistência de `/app/divulgacao` e
+  `/app/paginas/marketing` não é automaticamente uma falha: são
+  capacidades diferentes (distribuição rastreável por link/QR/copy vs.
+  materiais visuais prontos para divulgação). Fica registrada como
+  possível fricção de arquitetura de informação, sem recomendação de
+  unificação sem evidência comportamental de usuários reais.
 
 ---
 
 ## 20. Dependências entre as Issues Propostas
 
-- **#3** (LP-03) depende de aprovação externa (compliance/jurídico) antes
-  da implementação — pode começar a tramitar em paralelo às demais.
-- **#5** (PUB-02) precisa de uma decisão de design (qual CTA é primário)
-  antes de qualquer código, e toca um módulo CSS compartilhado pelas 7
-  árvores de Commercial Page — maior risco de ripple das sete propostas.
-- **#6** (PUB-03) não depende de #5 tecnicamente, mas resolvê-las juntas
-  evita retrabalho de copy se a hierarquia de #5 mudar qual botão é
-  "principal".
-- **#1, #2, #4, #7** são independentes entre si e das demais.
+- **#1** (documentação) não depende de nenhuma outra — é a mais barata e
+  deve restabelecer a fonte canônica antes das demais.
+- **#3** (transparência institucional) depende de aprovação externa
+  (compliance/jurídico) antes da implementação — pode começar a tramitar
+  em paralelo às demais, assim que #1 estiver encaminhada.
+- **#4** (Commercial Pages) precisa do inventário das 7 árvores e de uma
+  decisão de design (qual ação é primária, por contexto) antes de
+  qualquer código, e toca um módulo CSS compartilhado pelas 7 árvores —
+  maior risco de ripple das cinco propostas. `PUB-02` e `PUB-03` foram
+  agrupadas aqui porque resolvê-las juntas evita retrabalho de copy caso
+  a hierarquia definida no inventário mude qual CTA é "principal" em cada
+  árvore.
+- **#2** (landing) e **#5** (billing) são independentes entre si e das
+  demais.
+
+**#3** e **#4** podem ser preparadas em paralelo, uma vez encaminhada **#1**.
 
 ---
 
 ## 21. Ordem Recomendada de Execução
 
-1. **#7 (`DOC-01`)** — mais barata, sem risco de código, e restaura a
-   confiabilidade do documento do qual todo o resto depende.
-2. **#1, #2, #4** — em paralelo, mudanças pequenas e independentes.
-3. **#3** — iniciar a aprovação de compliance em paralelo ao passo 2,
-   implementar assim que aprovado.
-4. **#5** — agendar a decisão de design; é a maior das sete.
-5. **#6** — resolver junto com ou logo após #5, para o Conexão Club, com
-   decisão explícita sobre generalizar às outras 6 árvores.
+1. **#1 — Reconciliação documental pós-SET-84** — restabelece a fonte
+   canônica da qual as demais decisões dependem.
+2. **#2 — Landing: composição + ponto de conversão**
+3. **#3 — Landing: transparência/compliance**
+4. **#4 — Commercial Pages: hierarquia + semântica dos CTAs**
+5. **#5 — Billing: pré-preenchimento**
+
+**#3** e **#4** podem ser preparadas em paralelo, uma vez concluída **#1**.
+
+**Justificativa:** documentação primeiro, para restabelecer a fonte
+canônica; landing e Commercial Pages impactam diretamente
+aquisição/conversão e, portanto, a validação em andamento; billing remove
+uma fricção pequena, mas não é mais importante do que aquisição/conversão.
 
 ---
 
 ## 22. Critérios de Aceite das Issues Propostas
 
-1. **LP-01** — em viewport ≥1024px, a seção Recursos não deixa nenhuma
-   célula de grid vazia; a seção mantém-se sem overflow em nenhum
-   breakpoint testado.
-2. **LP-02** — o card "Plano Fundador" tem um botão de ação visível sem
-   scroll adicional, levando ao mesmo destino do CTA final existente.
-3. **LP-03** — o texto de compliance (ou uma versão resumida aprovada)
-   aparece antes do rodapé, em local revisado e aprovado por
-   compliance/jurídico; o texto do rodapé permanece intacto.
-4. **APP-02** — ao abrir `/app/conta`, os campos "Nome completo" e
-   "E-mail" do formulário de assinatura já vêm preenchidos com os dados
-   do representante, permanecendo editáveis.
-5. **PUB-02** — em pelo menos uma árvore de Commercial Page, existe uma
-   diferença visual clara (não apenas textual) entre o CTA primário e os
-   demais; decisão de qual é o primário está registrada.
-6. **PUB-03** — no Conexão Club, o texto do CTA do hero e o do botão de
-   envio do formulário de lead não são idênticos.
-7. **DOC-01** — `PRODUCT.md` § *What Exists Today* lista `/app/divulgacao`
-   e o breakdown por origem, com baseline/data/verificador atualizados,
-   seguindo o mesmo processo investigação → aprovação → edição das
-   issues SET-87 a SET-92.
+1. **Documentação (`DOC-01`)** — `PRODUCT.md` § *What Exists Today* lista
+   `/app/divulgacao` e o breakdown por `origin`/`source`, distinguindo
+   explicitamente `src`, `source`/`origin`, HTTP `referrer` e o breakdown
+   realmente exibido; baseline/data/verificador atualizados; nenhuma
+   afirmação existente sobre `referrer` é alterada sem verificação
+   específica própria; segue o mesmo processo investigação → aprovação →
+   edição das issues SET-87 a SET-92.
+
+2. **Landing — composição + conversão (`LP-01` + `LP-02`)** — a seção
+   Recursos fica visualmente equilibrada em desktop, sem célula de grid
+   vazia, em nenhum breakpoint testado; mobile preservado; o card "Plano
+   Fundador" tem um CTA visível sem scroll adicional, levando ao mesmo
+   fluxo de cadastro já usado pela landing; nenhum novo pricing,
+   benefício ou promessa introduzido; nenhuma regressão nos demais CTAs
+   da página.
+
+3. **Landing — transparência institucional (`LP-03`)** — o texto de
+   compliance (ou uma versão resumida aprovada) aparece antes do rodapé,
+   em local revisado e aprovado por compliance/jurídico; o texto integral
+   do rodapé permanece intacto.
+
+4. **Commercial Pages — hierarquia e semântica dos CTAs (`PUB-02` +
+   `PUB-03`)** — fecha somente com cobertura das 7 árvores: inventário
+   prévio dos CTAs de todas elas; implementação conforme a necessidade de
+   cada uma (não um CTA único forçado para todas); validação em desktop e
+   mobile; ausência de regressão visual nas 7; CTA primário/secundário
+   claramente distinguível onde aplicável; textos de ações diferentes
+   (ex. abrir WhatsApp vs. enviar formulário) não-ambíguos
+   semanticamente; nenhuma árvore alterada por efeito colateral
+   inesperado do CSS compartilhado
+   (`commercial-page-base.module.css`). O objetivo é coerência sem apagar
+   diferenças legítimas entre produtos — não obriga todas as árvores a
+   terem exatamente o mesmo CTA primário.
+
+5. **Billing (`APP-02`)** — ao abrir `/app/conta`, os campos "Nome
+   completo" e "E-mail" do formulário de assinatura já vêm preenchidos
+   com os dados do representante, permanecendo editáveis; nenhuma
+   alteração na regra de assinatura, no webhook, ou na fonte de verdade
+   de billing.
 
 ---
 
@@ -808,7 +928,10 @@ Registrados com honestidade, não escondidos atrás do veredito `GO`:
    Club; a extensão a Telecom, ConexãoGreen, ConexãoLivre, ConexãoPlacas,
    ConexãoSolar e GreenSeguros é inferida do padrão de código compartilhado
    (mesma classe CSS, mesmo padrão de props), não verificada árvore por
-   árvore.
+   árvore. **Por isso a issue proposta #4 (§ 19) exige um inventário das 7
+   árvores como primeiro passo, antes de qualquer mudança de CSS/copy** —
+   esta auditoria não autoriza fechar essa issue com base em apenas uma
+   árvore testada.
 3. **Nenhum Lighthouse/axe real foi rodado.** A métrica de performance
    usada (Long Tasks) é um proxy razoável para "há bloqueio grave de main
    thread", não uma medição de Core Web Vitals.
@@ -831,11 +954,14 @@ antes de tratar este relatório como cobertura exaustiva.
 
 **Critérios de saída da SET-93, verificados um a um:**
 
-- ✅ Todos os 12 findings históricos têm status atual comprovado (§ 6).
+- ✅ Todos os 12 findings históricos têm status atual comprovado (§ 6): 4
+  `RESOLVED`, 7 `CONFIRMED`, 1 `NOT_REPRODUCED`.
 - ✅ As superfícies obrigatórias tiveram cobertura suficiente: landing e
   auth ao vivo e completos; produto autenticado por código + testes E2E
   existentes (não ao vivo, por desenho — ver § 23 item 1); Commercial
-  Pages com 1 de 7 árvores ao vivo e as outras 6 por código estrutural.
+  Pages com 1 de 7 árvores ao vivo e as outras 6 por código estrutural —
+  cobertura suficiente para *identificar* o problema, não para fechar a
+  futura issue de implementação sem o inventário das 7 (§ 19, issue #4).
 - ✅ Mobile foi de fato verificado — ao vivo, não apenas assumido por
   responsividade (landing e Commercial Page, 375×812, sem overflow).
 - ✅ O relatório consolidado existe (este arquivo).
@@ -844,19 +970,25 @@ antes de tratar este relatório como cobertura exaustiva.
 - ✅ Está claro quais mudanças ainda são necessárias antes de continuar a
   validação — nenhuma delas é bloqueante; todas são de polimento/coerência
   documental, não de correção ou segurança.
-- ✅ Existe uma proposta revisável de issues-filhas (§ 19–22), sem
+- ✅ Existe uma proposta revisável de **5** issues-filhas (§ 19–22), sem
   nenhuma delas ter sido implementada nesta issue.
 
-**Por que `GO` e não `NO_GO`:** nenhum P0 existe. O único P1 (`DOC-01`) é
-uma correção documental, não um risco ao usuário ou ao negócio — o produto
-já faz o que o documento deveria dizer que faz. Os gaps de cobertura
-listados em § 23 são reais, mas nenhum deles deixa uma pergunta em aberto
-sobre "o que fazer a seguir" — eles apenas limitam a *certeza* de que os
-outros 6 produtos de Commercial Page se comportam exatamente como o
-Conexão Club, o que é uma verificação barata e independente a fazer antes
-de qualquer mudança em `PUB-02`/`PUB-03` se espalhar às 7 árvores (já
-recomendado em § 20).
+**Por que `GO` e não `NO_GO`:** nenhum `P0` existe, e nenhum `P1` está
+confirmado nesta rodada — `DOC-01`, o único finding novo, é
+**`P2 documental`**: importante para a confiabilidade da documentação e de
+agentes que a consultam, mas não prejudica ativação, distribuição,
+compreensão ou conversão do produto em si. O produto já faz o que o
+documento deveria dizer que faz; o que falta é o documento acompanhar o
+código. Os gaps de cobertura listados em § 23 são reais, mas nenhum deles
+deixa uma pergunta em aberto sobre "o que fazer a seguir" — eles apenas
+limitam a *certeza* de que os outros 6 produtos de Commercial Page se
+comportam exatamente como o Conexão Club, e é exatamente por isso que a
+issue proposta para `PUB-02`/`PUB-03` (§ 19, issue #4) exige um inventário
+das 7 árvores como primeiro passo, antes de qualquer alteração de
+CSS/copy — nenhuma mudança pode se apoiar em apenas uma árvore testada.
 
 **Recomendação para continuar validando o MVP com usuários reais:** nada
-neste relatório justifica pausar o piloto. As sete issues propostas em
-§ 19 podem ser trabalhadas em paralelo à validação em andamento.
+neste relatório justifica pausar o piloto. Não há evidência suficiente
+para classificar qualquer achado restante como bloqueador. As **cinco**
+issues propostas em § 19 podem ser trabalhadas em paralelo à validação em
+andamento; itens `Future` (`APP-03`) continuam fora do escopo do MVP.
