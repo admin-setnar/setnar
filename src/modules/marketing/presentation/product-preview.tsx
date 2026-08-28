@@ -141,7 +141,7 @@ function ProductRow({
         <div className="min-w-0 flex-1 space-y-2">
           <SkeletonLine className="w-3/4" />
           <SkeletonLine className="w-1/2 opacity-70" />
-          <div className="flex gap-2 pt-1">
+          <div className="flex flex-wrap gap-2 pt-1">
             <MetricChip label="Visitas" value={visits} />
             <MetricChip label="Cliques" value={clicks} />
             <MetricChip label="Leads" value={leads} />
