@@ -83,7 +83,7 @@ export function ConexaoClubPage({
             representativeId={representative.id}
             title="Prefere que a gente te chame?"
             description="Deixe seus dados que entramos em contato, sem compromisso."
-            submitLabel="Quero ativar meu Club"
+            submitLabel="Prefiro que me chamem"
             privacyNote="Seus dados são usados apenas para entrarmos em contato sobre a ativação. Nada de spam."
             successDescription="Nossa equipe entra em contato em breve para ativar seu acesso ao clube de benefícios, sem compromisso."
             disabled={leadFormDisabled}

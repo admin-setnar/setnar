@@ -36,7 +36,7 @@ export function ConsultorSection({
           </div>
           {representative.phone ? (
             <a
-              className={styles.btnWhats}
+              className={`${styles.btnWhats} ${styles.btnSecondary}`}
               id="cta-consultor"
               href={buildWhatsappHref(representative.phone, message)}
               target="_blank"

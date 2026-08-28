@@ -292,6 +292,24 @@
   }
 }
 
+/* CTA secundario (SET-97, PUB-02) — mesma forma/tamanho do .btnWhats,
+   so troca preenchimento solido por contorno, reaproveitando os tokens
+   de verde ja existentes. Usado para rebaixar Header/Consultor e, em
+   algumas arvores, o Widget, sem introduzir cor ou componente novo. */
+.btnSecondary {
+  background: transparent;
+  border: 2px solid var(--verde-vivo);
+  box-shadow: none;
+}
+.page .btnSecondary,
+.page .btnSecondary:visited {
+  color: var(--verde-vivo-escuro);
+}
+.page .btnSecondary:hover {
+  background: var(--verde-vivo);
+  color: #fff;
+}
+
 /* ===== HERO ===== */
 .hero {
   padding: 56px 0 64px;
@@ -973,18 +991,18 @@
   opacity: 0.85;
 }
 
-/* Botão flutuante mobile */
+/* Botão flutuante mobile — desativado (SET-97, achado de competição
+   estrutural): `.header` é `position: sticky; top: 0`, então o CTA do
+   header já fica visível o tempo todo em qualquer largura mobile, com
+   a mesma ação. O flutuante nunca aparecia sozinho — sempre empilhado
+   sobre o header, competindo consigo mesmo. Componente mantido no JSX
+   (não removido), só a exibição em mobile é desligada aqui. */
 .floatWhats {
   position: fixed;
   bottom: 18px;
   right: 18px;
   z-index: 200;
   display: none;
-}
-@media (max-width: 760px) {
-  .floatWhats {
-    display: block;
-  }
 }
 
 /* ===== Telas ultra estreitas (ex: 200-360px) =====

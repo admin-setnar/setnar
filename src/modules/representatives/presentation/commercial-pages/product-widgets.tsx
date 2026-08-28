@@ -8,9 +8,17 @@ import styles from '@/modules/representatives/presentation/commercial-pages/comm
 import widgetStyles from '@/modules/representatives/presentation/commercial-pages/product-widgets.module.css';
 import { buildWhatsappHref, trackWhatsappClick } from '@/modules/representatives/presentation/commercial-pages/whatsapp';
 
-function ProductWhatsapp({ representative, product, message, label, origin }: { representative: Representative; product: RepresentativeProduct; message: string; label: string; origin: OriginId | null }) {
+/**
+ * SET-97 (PUB-02): `variant="secondary"` rebaixa o CTA do widget para o
+ * mesmo contorno usado em Header/Consultor, nas arvores onde o widget e
+ * exploratorio, nao a interacao mais proxima da decisao comercial
+ * (Telecom, Solar, Placas). Green/Livre/GreenSeguros mantem o padrao
+ * `"primary"` porque o widget ali ja e a ferramenta de qualificacao
+ * (calculadora, quiz, seletor) — decisao registrada na issue.
+ */
+function ProductWhatsapp({ representative, product, message, label, origin, variant = 'primary' }: { representative: Representative; product: RepresentativeProduct; message: string; label: string; origin: OriginId | null; variant?: 'primary' | 'secondary' }) {
   if (!representative.phone) return null;
-  return <a className={`${styles.btnWhats} ${styles.billCta}`} href={buildWhatsappHref(representative.phone, message)} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsappClick(product.slug, origin)}>{label}</a>;
+  return <a className={`${styles.btnWhats} ${styles.billCta}${variant === 'secondary' ? ` ${styles.btnSecondary}` : ''}`} href={buildWhatsappHref(representative.phone, message)} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsappClick(product.slug, origin)}>{label}</a>;
 }
 
 export function TelecomHeroWidget({ representative, product, origin }: { representative: Representative; product: RepresentativeProduct; origin: OriginId | null }) {
@@ -24,7 +32,7 @@ export function TelecomHeroWidget({ representative, product, origin }: { represe
   return <div className={styles.billCard}>
     <div className={styles.billHeader}><span>O que vem no chip</span><span className={styles.badgeDesconto}>Todos os planos</span></div>
     <ul className={styles.heroFeatureList}>{benefits.map((item) => <li key={item}><span className={styles.check}>✓</span><span>{item}</span></li>)}</ul>
-    <ProductWhatsapp representative={representative} product={product} message="Olá! Quero ver os planos da iGreen Telecom." label="Ver planos no WhatsApp" origin={origin} />
+    <ProductWhatsapp representative={representative} product={product} message="Olá! Quero ver os planos da iGreen Telecom." label="Ver planos no WhatsApp" origin={origin} variant="secondary" />
   </div>;
 }
 
@@ -39,7 +47,7 @@ export function SolarHeroWidget({ representative, product, origin }: { represent
   return <div className={styles.billCard}>
     <div className={styles.billHeader}><span>O que você recebe</span><span className={styles.badgeDesconto}>Sem custo</span></div>
     <ul className={styles.heroFeatureList}>{benefits.map((item) => <li key={item}><span className={styles.check}>✓</span><span>{item}</span></li>)}</ul>
-    <ProductWhatsapp representative={representative} product={product} message="Olá! Quero iniciar minha análise na Conexão Solar." label="Quero minha análise" origin={origin} />
+    <ProductWhatsapp representative={representative} product={product} message="Olá! Quero iniciar minha análise na Conexão Solar." label="Quero minha análise" origin={origin} variant="secondary" />
     <p className={styles.billCtaNote}>Leva 2 minutos para começar — a documentação vem depois.</p>
   </div>;
 }
@@ -88,7 +96,7 @@ const PAYMENTS = [
 ] as const;
 export function PlacasPaymentSelector({ representative, product, origin }: { representative: Representative; product: RepresentativeProduct; origin: OriginId | null }) {
   const [active,setActive]=useState(0); const selected=PAYMENTS[active]??PAYMENTS[0];
-  return <div className={styles.billCard}><div className={styles.billHeader}><span>Como prefere pagar?</span><span className={styles.badgeDesconto}>4 opções</span></div><div className={widgetStyles.tabs} role="tablist" aria-label="Formas de pagamento">{PAYMENTS.map(([label],index)=><button type="button" role="tab" aria-selected={active===index} className={active===index?widgetStyles.active:undefined} key={label} onClick={()=>setActive(index)}>{label}</button>)}</div><p className={widgetStyles.description} aria-live="polite">{selected[1]}</p><ProductWhatsapp representative={representative} product={product} message={selected[2]} label="Simular esta opção" origin={origin} /></div>;
+  return <div className={styles.billCard}><div className={styles.billHeader}><span>Como prefere pagar?</span><span className={styles.badgeDesconto}>4 opções</span></div><div className={widgetStyles.tabs} role="tablist" aria-label="Formas de pagamento">{PAYMENTS.map(([label],index)=><button type="button" role="tab" aria-selected={active===index} className={active===index?widgetStyles.active:undefined} key={label} onClick={()=>setActive(index)}>{label}</button>)}</div><p className={widgetStyles.description} aria-live="polite">{selected[1]}</p><ProductWhatsapp representative={representative} product={product} message={selected[2]} label="Simular esta opção" origin={origin} variant="secondary" /></div>;
 }
 
 const INSURANCE = {
