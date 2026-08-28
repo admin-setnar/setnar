@@ -69,6 +69,8 @@ export interface CallToActionContent {
   readonly description: string;
   readonly action: string;
   readonly footnote: string;
+  /** LP-03/SET-96 — short reinforcement of the same independence claim the footer states in full; never a substitute for it. */
+  readonly independenceNote: string;
 }
 
 export interface FooterLinkGroup {

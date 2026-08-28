@@ -39,6 +39,10 @@ export function FinalCta({ id, content }: { id: string; content: CallToActionCon
         </AuthTriggerButton>
 
         <p className="mt-4 text-sm text-content-inverted/55">{content.footnote}</p>
+        {/* LP-03/SET-96 — short reinforcement of the footer's full independence
+            disclaimer, at the last decision point before it. Never a substitute:
+            the footer keeps its own full-text notice unchanged. */}
+        <p className="mt-1 text-sm text-content-inverted/55">{content.independenceNote}</p>
       </div>
     </Section>
   );
