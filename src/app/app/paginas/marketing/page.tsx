@@ -12,9 +12,9 @@ export const metadata: Metadata = { title: 'Materiais' };
 function PageHeading() {
   return (
     <div className="space-y-2">
-      <Text as="h1" variant="heading">Materiais de divulgação</Text>
+      <Text as="h1" variant="heading">Materiais</Text>
       <Text as="p" variant="body">
-        Post, Story e Poster já personalizados com seus dados — baixe e compartilhe.
+        Biblioteca de Posts, Stories e Posters já com seus dados — baixe o que precisar e poste do seu jeito.
       </Text>
     </div>
   );

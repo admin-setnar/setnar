@@ -16,7 +16,7 @@ function PageHeading() {
     <div className="space-y-2">
       <Text as="h1" variant="heading">Divulgação</Text>
       <Text as="p" variant="body">
-        Escolha o produto e o canal — o material, o texto e o link já saem prontos.
+        Escolha o produto e o canal, e o SETNAR prepara pra você o material, o texto e o link prontos.
       </Text>
     </div>
   );
