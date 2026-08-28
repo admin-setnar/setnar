@@ -22,7 +22,7 @@ export function Hero({ content }: { content: HeroContent }) {
       <BackdropGrid />
 
       <Container className="relative">
-        <div className="grid items-center gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-12">
+        <div className="grid grid-cols-[minmax(0,1fr)] items-center gap-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-12">
           <div className="max-w-2xl">
             <Text variant="eyebrow" className="text-content-muted">
               {content.eyebrow}
@@ -38,7 +38,7 @@ export function Hero({ content }: { content: HeroContent }) {
             </Text>
 
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <AuthTriggerButton view="sign-up" size="lg" className="sm:w-auto">
+              <AuthTriggerButton view="sign-up" size="lg" className="min-w-0 whitespace-normal sm:w-auto">
                 {content.primaryAction}
               </AuthTriggerButton>
               <AuthTriggerButton view="sign-in" size="lg" variant="secondary" className="sm:w-auto">

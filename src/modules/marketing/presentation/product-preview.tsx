@@ -45,11 +45,11 @@ export function ProductPreview({ className }: { className?: string }) {
 
           <div className="min-w-0 flex-1 space-y-4 p-5">
             <div className="flex items-center justify-between gap-3">
-              <div className="space-y-1">
+              <div className="min-w-0 space-y-1">
                 <p className="text-[13px] font-semibold text-content">Minhas páginas</p>
-                <p className="text-[11px] text-content-subtle">joao-silva.empresa.setnar.com</p>
+                <p className="truncate text-[11px] text-content-subtle">joao-silva.empresa.setnar.com</p>
               </div>
-              <Badge variant="success">Publicadas</Badge>
+              <Badge variant="success" className="shrink-0">Publicadas</Badge>
             </div>
 
             <div className="space-y-3">
