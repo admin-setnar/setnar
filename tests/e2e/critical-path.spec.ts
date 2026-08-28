@@ -207,6 +207,11 @@ test.describe('caminho crítico do MVP (E2E, desktop)', () => {
     // `start-checkout.ts`), não a navegação até o Asaas em si.
     await test.step('iniciar checkout reserva a vaga local antes de tentar o Asaas', async () => {
       await page.goto('/app/conta');
+      // SET-98: "Nome completo" e "E-mail" já vêm pré-preenchidos do perfil
+      // do representante — verificado ANTES de qualquer .fill() abaixo, que
+      // senão mascararia uma regressão (fill() sempre limpa o campo primeiro).
+      await expect(page.getByLabel('Nome completo')).toHaveValue(fixture.displayName);
+      await expect(page.getByLabel('E-mail')).toHaveValue(fixture.email);
       await page.getByLabel('Nome completo').fill(fixture.displayName);
       await page.getByLabel('CPF ou CNPJ').fill(generateSyntheticCPF());
       await page.getByLabel('E-mail').fill(fixture.email);
