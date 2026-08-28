@@ -45,7 +45,7 @@ export function AppNavigation({ mobile = false }: { mobile?: boolean }) {
             )}
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="max-w-full truncate">{label}</span>
+            <span className="max-w-full break-words text-center leading-tight">{label}</span>
           </Link>
         );
       })}

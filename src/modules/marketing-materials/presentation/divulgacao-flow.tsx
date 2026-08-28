@@ -247,7 +247,7 @@ function KitStep({
 
       {copy ? (
         <div className="space-y-2">
-          <Text as="p" variant="body" className="whitespace-pre-wrap rounded-md border border-line bg-surface-sunken p-3">
+          <Text as="p" variant="body" className="whitespace-pre-wrap break-words rounded-md border border-line bg-surface-sunken p-3">
             {copy.text}
           </Text>
           <Button type="button" variant="secondary" size="sm" onClick={() => void handleCopyText()}>
