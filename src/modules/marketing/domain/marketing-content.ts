@@ -61,6 +61,7 @@ export interface BenefitsContent extends SectionHeading {
 export interface PricingContent extends SectionHeading {
   readonly priceQualifier: string;
   readonly trialNote: string;
+  readonly ctaLabel: string;
 }
 
 export interface CallToActionContent {
