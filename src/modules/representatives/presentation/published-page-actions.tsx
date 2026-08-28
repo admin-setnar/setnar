@@ -20,7 +20,15 @@ import { FormAlert } from '@/shared/ui/form-alert';
  * `sm` up — same `fullWidth` + `sm:w-auto` pattern `LeadInbox`'s WhatsApp
  * button already uses for the same mobile-first reason.
  */
-export function PublishedPageActions({ url, fileName }: { url: string; fileName: string }) {
+export function PublishedPageActions({
+  url,
+  fileName,
+  productName,
+}: {
+  url: string;
+  fileName: string;
+  productName: string;
+}) {
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [qrOpen, setQrOpen] = useState(false);
@@ -81,7 +89,7 @@ export function PublishedPageActions({ url, fileName }: { url: string; fileName:
 
       <span className="sr-only" aria-live="polite">{copied ? 'Link copiado.' : ''}</span>
 
-      <QrCodeDialog open={qrOpen} onOpenChange={setQrOpen} url={url} fileName={fileName} />
+      <QrCodeDialog open={qrOpen} onOpenChange={setQrOpen} url={url} fileName={fileName} productName={productName} />
     </div>
   );
 }

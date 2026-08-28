@@ -49,7 +49,7 @@ export function CommercialPageHeader({
             href={buildWhatsappHref(representative.phone, headerMessage)}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Falar agora no WhatsApp"
+            aria-label="Falar no WhatsApp"
             onClick={() => trackWhatsappClick(product.slug, origin)}
           >
             <WhatsAppIcon />

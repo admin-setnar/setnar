@@ -22,11 +22,13 @@ export function QrCodeDialog({
   onOpenChange,
   url,
   fileName,
+  productName,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   url: string;
   fileName: string;
+  productName: string;
 }) {
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [generationFailed, setGenerationFailed] = useState(false);
@@ -56,7 +58,7 @@ export function QrCodeDialog({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="QR Code da sua página"
+      title={`QR Code — ${productName}`}
       description="Escaneie para acessar sua página."
       footer={
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
