@@ -157,7 +157,9 @@ export default async function AccountPage({
             {checkoutParam === 'expired' ? (
               <FormAlert tone="error" title="O link de pagamento expirou" description="Tente novamente para gerar um novo link." />
             ) : null}
-            {subscriptionPanel.showCheckoutForm ? <CheckoutForm /> : null}
+            {subscriptionPanel.showCheckoutForm ? (
+              <CheckoutForm defaultName={representative.name} defaultEmail={user.email} />
+            ) : null}
             {subscriptionPanel.canCancel ? <CancelSubscriptionPanel /> : null}
           </Card>
         </section>

@@ -23,8 +23,12 @@ import { Input } from '@/shared/ui/input';
  * `startCheckoutAction` já faz o `redirect()` para lá — este componente só
  * precisa tratar a falha; não existe um branch de "sucesso" para renderizar,
  * a navegação acontece antes disso.
+ *
+ * `defaultName`/`defaultEmail` (SET-98) pré-preenchem "Nome completo" e
+ * "E-mail" com o que já existe no perfil do representante — os campos
+ * continuam editáveis, isto não é validação nem trava nada.
  */
-export function CheckoutForm() {
+export function CheckoutForm({ defaultName, defaultEmail }: { defaultName: string; defaultEmail: string }) {
   const [failure, setFailure] = useState<StartCheckoutFailure | null>(null);
 
   const {
@@ -35,6 +39,7 @@ export function CheckoutForm() {
     resolver: zodResolver(checkoutSchema),
     mode: 'onBlur',
     shouldFocusError: true,
+    defaultValues: { holderName: defaultName, holderEmail: defaultEmail },
   });
 
   async function onSubmit(values: CheckoutFormValues) {
