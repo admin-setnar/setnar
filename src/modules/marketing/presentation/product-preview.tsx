@@ -71,7 +71,7 @@ export function ProductPreview({ className }: { className?: string }) {
           <MessageCircle size={16} aria-hidden="true" />
         </span>
         <div>
-          <p className="text-[13px] font-semibold leading-tight text-content">Novo contato</p>
+          <p className="text-[13px] font-semibold leading-tight text-content">Novo clique</p>
           <p className="text-[11px] leading-tight text-content-subtle">
             chamou você no WhatsApp agora
           </p>
