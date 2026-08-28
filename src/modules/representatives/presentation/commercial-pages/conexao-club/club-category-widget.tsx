@@ -54,7 +54,7 @@ export function ClubCategoryWidget({
       </p>
       {representative.phone ? (
         <a
-          className={`${styles.btnWhats} ${styles.billCta}`}
+          className={`${styles.btnWhats} ${styles.billCta} ${styles.btnSecondary}`}
           href={buildWhatsappHref(representative.phone, 'Olá! Quero ativar meu Conexão Club.')}
           target="_blank"
           rel="noopener noreferrer"

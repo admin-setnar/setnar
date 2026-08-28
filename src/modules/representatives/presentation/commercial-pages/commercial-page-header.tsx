@@ -44,7 +44,7 @@ export function CommercialPageHeader({
         </a>
         {representative.phone ? (
           <a
-            className={styles.btnWhats}
+            className={`${styles.btnWhats} ${styles.btnSecondary}`}
             id="cta-header"
             href={buildWhatsappHref(representative.phone, headerMessage)}
             target="_blank"
