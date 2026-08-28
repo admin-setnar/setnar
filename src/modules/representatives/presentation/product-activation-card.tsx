@@ -196,7 +196,7 @@ export function ProductActivationCard({
       ) : null}
 
       {showSharePanel ? (
-        <PublishedPageActions url={pageUrl} fileName={qrFileName} />
+        <PublishedPageActions url={pageUrl} fileName={qrFileName} productName={product.name} />
       ) : (
         <div className="flex flex-wrap gap-2">
           {state === 'not_activated' ? (

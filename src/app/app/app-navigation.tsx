@@ -34,18 +34,26 @@ export function AppNavigation({ mobile = false }: { mobile?: boolean }) {
             key={href}
             href={href}
             aria-current={active ? 'page' : undefined}
+            aria-label={mobile ? label : undefined}
             className={cn(
-              'flex min-h-11 min-w-0 items-center justify-center rounded-md font-medium transition-colors duration-fast',
+              'flex min-h-11 min-w-0 items-center rounded-md font-medium transition-colors duration-fast',
               active
                 ? 'bg-brand text-brand-contrast'
                 : 'text-content-muted hover:bg-surface-sunken hover:text-content',
               mobile
-                ? 'flex-col gap-1 px-1 py-1.5 text-[11px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2 sm:text-sm'
-                : 'gap-3 px-3 py-2 text-sm',
+                ? 'flex-col justify-center gap-1 px-1 py-1.5 text-[11px] sm:flex-row sm:gap-2 sm:px-3 sm:py-2 sm:text-sm'
+                : 'justify-start gap-3 px-3 py-2 text-sm',
             )}
           >
             <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span className="max-w-full break-words text-center leading-tight">{label}</span>
+            <span
+              className={cn(
+                'max-w-full break-words text-center leading-tight',
+                mobile ? 'max-[387px]:hidden' : undefined,
+              )}
+            >
+              {label}
+            </span>
           </Link>
         );
       })}
