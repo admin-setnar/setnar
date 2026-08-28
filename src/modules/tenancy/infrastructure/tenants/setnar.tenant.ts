@@ -115,9 +115,9 @@ export const setnarTenant: Tenant = {
         },
         {
           icon: 'chat',
-          title: 'Contato direto',
+          title: 'Sem intermediário',
           description:
-            'Sem intermediário: quem se interessa fala com você, não com um formulário genérico de empresa.',
+            'Quem se interessa fala com você — não com uma central de atendimento genérica.',
         },
         {
           icon: 'centralize',
