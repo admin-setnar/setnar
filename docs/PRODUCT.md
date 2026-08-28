@@ -213,7 +213,7 @@ These are the metrics against which the MVP is to be judged. Listing a metric he
 - WhatsApp clicks
 - Returning visitors
 
-**Instrumentation status.** Page visits, WhatsApp clicks and leads are recorded and are shown to the representative, per Product, over a 7- or 30-day window (SET-37/ADR-082) — see *What Exists Today*. There is no breakdown by referrer, device or city, and no conversion rate. Every Business Metric above — paying customers, monthly recurring revenue, retention, referral rate — is still obtained outside the product; none of them has a representative- or founder-facing read path today. Any statement implying that a representative can track referral, retention or revenue results today is false; visits, WhatsApp clicks and leads are the one exception already available to them.
+**Instrumentation status.** Page visits, WhatsApp clicks and leads are recorded and are shown to the representative, per Product, over a 7- or 30-day window (SET-37/ADR-082), together with a breakdown by `origin` — the normalized, allow-listed channel-attribution value derived from the `?src=` query parameter — and a per-origin conversion rate (SET-84) — see *What Exists Today*. There is still no breakdown by HTTP referrer, device or city. Every Business Metric above — paying customers, monthly recurring revenue, retention, referral rate — is still obtained outside the product; none of them has a representative- or founder-facing read path today. Any statement implying that a representative can track referral, retention or revenue results today is false; visits, WhatsApp clicks, leads and the origin breakdown are the exceptions already available to them.
 
 ---
 
@@ -351,9 +351,9 @@ The single authoritative answer to "what does the product do?" Three categories 
 
 | | |
 |---|---|
-| Baseline | Working tree based on commit `b1cd1da`, branch `develop` |
-| Date | 2026-08-27 |
-| Performed by | Documentation governance audit (SET-87), approved by the Product Owner |
+| Baseline | Working tree based on commit `e3fda55`, branch `develop` |
+| Date | 2026-08-28 |
+| Performed by | Documentation governance audit (SET-94), approved by the Product Owner |
 | Method | Direct reading of `src/`, `supabase/migrations/` and `package.json`. A capability is listed only where a code path was found that a user can actually reach |
 | Not covered | Runtime behaviour in production, and whether any real representative has used any of it |
 | Re-verified | At every sprint close, and before every release — `docs/README.md` § *When this documentation is re-verified* |
@@ -363,7 +363,7 @@ The single authoritative answer to "what does the product do?" Three categories 
 - Account creation, sign-in, sign-out, and password recovery (request link and set a new password).
 - Representative onboarding: creating the representative's own record, with public name prefilled from the account, mandatory commercial phone, authorization identifier and public address (slug).
 - Editing own profile: display name, authorization identifier, phone, city. **These four fields are the whole of it.**
-- Authenticated App Shell with `/app/paginas` for page management, `/app/paginas/marketing` for downloadable marketing materials (SET-65, ADR-090 — see below), `/app/contatos` for the read-only inbox of captured contacts, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance destination exists.
+- Authenticated App Shell with `/app/paginas` for page management, `/app/paginas/marketing` for downloadable marketing materials (SET-65, ADR-090 — see below), `/app/divulgacao` for a guided product → channel → kit flow that pairs a marketing material with a shareable, origin-tagged link (SET-84 — see below), `/app/contatos` for the read-only inbox of captured contacts, `/app/conta` for professional/access data, and `/app` redirecting to Pages. No Performance destination exists.
 - Reading the products of the authorizing organization's catalog. The catalog is seeded by migration; there is no interface to manage it.
 - Product activation and deactivation by the representative.
 - Publication of a commercial page per activated product, subject to four ordered preconditions: active representative, active SETNAR Subscription, name filled in, phone filled in. Only the first failure is reported.
@@ -373,7 +373,8 @@ The single authoritative answer to "what does the product do?" Three categories 
 - Lead capture, with an IP rate limit and attribution to the originating page.
 - Read-only contact inbox in `/app/contatos`, owner-scoped by RLS, with Product/date attribution and user-initiated WhatsApp/e-mail actions. There is no status, note, edit, assignment, search or automation.
 - Recording of page visits and WhatsApp clicks, with referrer and a hashed IP.
-- Basic analytics shown to the representative in `/app/paginas`: visits, WhatsApp clicks and leads, counted per Product over a 7- or 30-day window (SET-37/ADR-082, `QR_ANALYTICS_PLAN.md` AN6). **No breakdown by referrer, device or city, and no conversion rate** — that remains Advanced Analytics, Future vision.
+- Divulgação (`/app/divulgacao`, SET-84): a guided product → channel → kit flow offering four channel options in the interface (Instagram Post, Instagram Story, WhatsApp/Status, Link direto/QR Code), each pairing one of the 21 SET-65 materials with a shareable link/QR Code tagged for that channel. The tag is `origin`: a normalized, allow-listed value derived from the link's `?src=` query parameter, validated client-side (`resolveOrigin`) and by a matching Postgres constraint (`is_valid_origin`), and used both for attribution and for the analytics breakdown below. There are five `origin` values, not four, because the fourth UI option — "Link direto/QR Code" — is a single interface surface whose two actions tag differently: the embedded QR Code carries `qrcode`, while that option's own "Copiar link" action carries `direct`. `origin` is a channel-attribution concept distinct from the HTTP `Referer` header covered below, and is not derived from it.
+- Basic analytics shown to the representative in `/app/paginas`: visits, WhatsApp clicks and leads, counted per Product over a 7- or 30-day window (SET-37/ADR-082, `QR_ANALYTICS_PLAN.md` AN6), plus a breakdown by `origin` (SET-84 D5): visits, leads and a per-origin conversion rate (leads ÷ visits), same window, one row per attributed origin plus an "Origem não identificada" row for traffic with no `?src=`. **This is a breakdown by assigned `origin`, not by HTTP `referrer`: there is still no breakdown by referrer, device or city** — that remains Advanced Analytics, Future vision.
 - Subscription checked through the same `is_subscription_active` rule both when a Commercial Page is published and when it is served.
 - `/app/paginas` reads that same Subscription and profile-completeness decision: it blocks publication, offers an actionable path to `/app/conta`, suppresses public links/QR Codes for inaccessible pages, and never labels an inaccessible stored `published` row as “Publicado.”
 - 21 marketing materials (7 products × Post/Story/Poster), personalized with the representative's own name, authorization ID, phone and city, plus a QR Code to their Commercial Page, downloadable as PNG from `/app/paginas/marketing` (SET-65, ADR-090). Pulled forward from Stage 2's Material Library as the minimal distribution mechanism the Stage 1 hypothesis needs — **not** the full Media Library: no campaign creation, no visual editor, no user-generated artwork, no upload, no analytics of its own. A material only shows for a product the same `is_subscription_active`/publication rule already makes publicly available — same gate as the Commercial Page itself, not a separate flag.
@@ -455,7 +456,7 @@ permanently, independent of when it ships.
 
 - Visits — *available now* (shown per Product, over a 7- or 30-day window)
 - Clicks — *available now* (WhatsApp clicks, same window)
-- Sources — *collected, not shown* (referrer is recorded; no breakdown by referrer, device or city — that remains Advanced Analytics, future vision)
+- Sources — *available now* for `origin` channel attribution (`/app/paginas`, "De onde vieram seus resultados": visits, leads and a conversion rate per origin, derived from `?src=`, SET-84). HTTP `referrer` is a separate, already-recorded signal with no breakdown shown — no breakdown by referrer, device or city, which remains Advanced Analytics, future vision.
 
 **Marketing** — helping the representative generate traffic, not just receive it.
 
