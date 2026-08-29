@@ -11,6 +11,18 @@ import {
   signUp,
 } from './support/fixtures';
 
+/**
+ * SET-106 — os 4 primeiros `btnWhats` de cada árvore (nessa ordem no DOM:
+ * Header → Hero → Widget → Consultor) não são mais uniformemente sólidos
+ * desde a SET-97 (PUB-02, `commercial-page-base.module.css:295-311`):
+ * Header e Consultor são sempre `.btnSecondary` (contorno); Hero é sempre
+ * sólido; o Widget varia por árvore (`product-widgets.tsx`'s própria
+ * `variant`, e `club-category-widget.tsx` para Club). Ver o comentário na
+ * `productsExpected` abaixo para a variante de cada árvore.
+ */
+const PRIMARY_WHATSAPP_STYLE = { background: 'rgb(0, 179, 89)', color: 'rgb(255, 255, 255)' };
+const SECONDARY_WHATSAPP_STYLE = { background: 'rgba(0, 0, 0, 0)', color: 'rgb(0, 137, 63)' };
+
 test.describe('sete Commercial Pages profissionais (SET-78)', () => {
   test.skip(!canRunE2E, e2eSkipReason);
 
@@ -88,20 +100,25 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
           return { background: style.backgroundColor, color: style.color };
         }));
         expect(firstWhatsappButtons).toHaveLength(4);
-        expect(firstWhatsappButtons).toEqual(Array.from({ length: 4 }, () => ({
-          background: 'rgb(0, 179, 89)',
-          color: 'rgb(255, 255, 255)',
-        })));
+        expect(firstWhatsappButtons).toEqual([
+          SECONDARY_WHATSAPP_STYLE, // Header — sempre secundário (SET-97 PUB-02)
+          PRIMARY_WHATSAPP_STYLE, // Hero — sempre sólido
+          template.widgetStyle, // Widget — varia por árvore
+          SECONDARY_WHATSAPP_STYLE, // Consultor — sempre secundário
+        ]);
         const visualIdentity = await publicPage.locator('main#conteudo').evaluate((main) => {
           const style = getComputedStyle(main);
           const header = main.querySelector('header');
-          const primaryAction = main.querySelector('header a[id="cta-header"]');
+          // Mesmo elemento checado em firstWhatsappButtons[0] — id="cta-header"
+          // é secundário desde a SET-97 (PUB-02), não mais o "primaryAction"
+          // que o nome antigo desta variável sugeria.
+          const headerCta = main.querySelector('header a[id="cta-header"]');
           return {
             surface: style.getPropertyValue('--fundo').trim(),
             brand: style.getPropertyValue('--verde-vivo').trim(),
             sun: style.getPropertyValue('--amarelo-sol').trim(),
             headerBackground: header ? getComputedStyle(header).backgroundColor : '',
-            actionBackground: primaryAction ? getComputedStyle(primaryAction).backgroundColor : '',
+            actionBackground: headerCta ? getComputedStyle(headerCta).backgroundColor : '',
           };
         });
         expect(visualIdentity).toEqual({
@@ -109,7 +126,7 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
           brand: '#00b359',
           sun: '#f2a70b',
           headerBackground: 'rgba(246, 248, 244, 0.94)',
-          actionBackground: 'rgb(0, 179, 89)',
+          actionBackground: SECONDARY_WHATSAPP_STYLE.background,
         });
         expect(await publicPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
       }
@@ -148,12 +165,22 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
     await expect(firstInteractiveButton).toBeFocused();
   });
 });
+  // widgetStyle (SET-106): secundário em Club (club-category-widget.tsx,
+  // hardcoded), Telecom/Solar/Placas (product-widgets.tsx, variant="secondary")
+  // — árvores onde o widget é exploratório. Sólido em Green/Livre/GreenSeguros
+  // (product-widgets.tsx, variant padrão "primary") — onde o widget já é a
+  // própria ferramenta de qualificação (calculadora/quiz/seletor).
+  // leadButton: texto do botão de ENVIO do formulário (#quero-simular), não
+  // do CTA do Hero. A SET-97 (PUB-03) deu texto próprio ao botão do
+  // formulário em Club/Livre/Placas/Solar — antes duplicava literalmente o
+  // texto do Hero; Green/GreenSeguros/Telecom já tinham texto distinto e
+  // não mudaram.
   const productsExpected = [
-    { slug:'conexao-club', headline:'Economize todos os dias em mais de 600 mil produtos e serviços, no Brasil inteiro.', leadButton:'Quero ativar meu Club' },
-    { slug:'conexao-green', headline:'Cansado de ver a conta de luz subir todo mês? Dá pra pagar menos, sem obra e sem trocar de distribuidora.', leadButton:'Quero saber meu desconto' },
-    { slug:'conexao-livre', headline:'Sua empresa é Grupo A? Migre para o Mercado Livre de Energia e reduza o custo da sua conta.', leadButton:'Quero simular minha migração' },
-    { slug:'conexao-placas', headline:'Tenha suas próprias placas solares e pare de depender só do desconto na conta de luz.', leadButton:'Quero minha proposta' },
-    { slug:'conexao-solar', headline:'Energia solar com 50% de desconto na primeira fatura e uma central dedicada do início ao fim.', leadButton:'Quero iniciar minha análise' },
-    { slug:'green-seguros', headline:'Seguro pro seu carro, mês a mês, sem anuidade e sem multa de cancelamento.', leadButton:'Quero simular meu seguro' },
-    { slug:'telecom', headline:'Leve seu número de graça e ganhe internet que acumula todo mês.', leadButton:'Quero saber mais' },
+    { slug:'conexao-club', headline:'Economize todos os dias em mais de 600 mil produtos e serviços, no Brasil inteiro.', leadButton:'Prefiro que me chamem', widgetStyle: SECONDARY_WHATSAPP_STYLE },
+    { slug:'conexao-green', headline:'Cansado de ver a conta de luz subir todo mês? Dá pra pagar menos, sem obra e sem trocar de distribuidora.', leadButton:'Quero saber meu desconto', widgetStyle: PRIMARY_WHATSAPP_STYLE },
+    { slug:'conexao-livre', headline:'Sua empresa é Grupo A? Migre para o Mercado Livre de Energia e reduza o custo da sua conta.', leadButton:'Quero ser contatado sobre a migração', widgetStyle: PRIMARY_WHATSAPP_STYLE },
+    { slug:'conexao-placas', headline:'Tenha suas próprias placas solares e pare de depender só do desconto na conta de luz.', leadButton:'Quero ser contatado sobre a proposta', widgetStyle: SECONDARY_WHATSAPP_STYLE },
+    { slug:'conexao-solar', headline:'Energia solar com 50% de desconto na primeira fatura e uma central dedicada do início ao fim.', leadButton:'Quero ser contatado sobre a análise', widgetStyle: SECONDARY_WHATSAPP_STYLE },
+    { slug:'green-seguros', headline:'Seguro pro seu carro, mês a mês, sem anuidade e sem multa de cancelamento.', leadButton:'Quero simular meu seguro', widgetStyle: PRIMARY_WHATSAPP_STYLE },
+    { slug:'telecom', headline:'Leve seu número de graça e ganhe internet que acumula todo mês.', leadButton:'Quero saber mais', widgetStyle: SECONDARY_WHATSAPP_STYLE },
   ] as const;
