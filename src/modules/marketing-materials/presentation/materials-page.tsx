@@ -10,17 +10,17 @@ import { Card } from '@/shared/ui/card';
 import { Text } from '@/shared/ui/typography';
 
 /**
- * `/app/paginas/marketing` (SET-65). Server Component: resolves which
- * products are real materials for, in real time, from the same source of
- * truth `/app/paginas` itself uses — never a bespoke `isActive` flag (plan
- * §2.6). `representative` is always resolved by the caller from
- * `auth.uid()` (never a client-supplied id), same tenancy guarantee every
- * other `/app` route already has.
+ * `/app/divulgacao/biblioteca` (SET-65; moved from `/app/paginas/marketing`
+ * by ADR-094, reverting SET-104). Server Component: resolves which products
+ * are real materials for, in real time, from the same source of truth
+ * `/app/paginas` itself uses — never a bespoke `isActive` flag (plan §2.6).
+ * `representative` is always resolved by the caller from `auth.uid()`
+ * (never a client-supplied id), same tenancy guarantee every other `/app`
+ * route already has.
  *
  * SET-105 (AUDIT_SET-101 §8) — the QR Code embedded in each poster is a
  * known distribution mechanism, so it carries `?src=qrcode`
- * (`buildMarketingMaterialPropsForOrigin`) instead of the bare canonical
- * link `buildMarketingMaterialPropsWithQrCode` used to produce.
+ * (`buildMarketingMaterialPropsForOrigin`) instead of an untracked link.
  */
 export async function MarketingMaterialsPage({
   representative,

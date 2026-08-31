@@ -60,7 +60,7 @@ describe('buildMarketingMaterialProps (SET-65)', () => {
 });
 
 describe('buildMarketingMaterialPropsForOrigin (SET-84 D4)', () => {
-  it('tags publicUrl with ?src=<origin>, same shape otherwise as buildMarketingMaterialPropsWithQrCode', async () => {
+  it('tags publicUrl with ?src=<origin>, same shape otherwise as buildMarketingMaterialProps', async () => {
     const props = await buildMarketingMaterialPropsForOrigin(REPRESENTATIVE, PRODUCT, 'instagram_post');
     assert.match(props.publicUrl, /^https:\/\/mariana-souza\.igreen\..+\/conexao-green\?src=instagram_post$/);
     assert.equal(props.representativeName, 'Mariana Souza');

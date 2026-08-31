@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ComponentType } from 'react';
+import Link from 'next/link';
 import { ArrowLeft, Check, Copy, Instagram, MessageCircle, QrCode, Share2 } from 'lucide-react';
 
 import type { OriginId } from '@/modules/analytics/domain/origin';
@@ -117,6 +118,13 @@ function ProductStep({
           </button>
         ))}
       </div>
+      {/* Alternativa C (AUDIT_SET-101 §7, ADR-094): entrada para a
+          biblioteca plana de todos os produtos de uma vez — a capacidade
+          que Materiais tinha e que um fluxo guiado por produto único não
+          reproduz sozinho. */}
+      <Button asChild variant="ghost" size="sm">
+        <Link href="/app/divulgacao/biblioteca">Ver biblioteca completa</Link>
+      </Button>
     </div>
   );
 }

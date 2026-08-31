@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
-This is the index of every ADR in the project: 93 decisions, numbered `ADR-001`
-through `ADR-093`, one file per decision. This folder is the authority on
+This is the index of every ADR in the project: 94 decisions, numbered `ADR-001`
+through `ADR-094`, one file per decision. This folder is the authority on
 **why the code is the way it is** — see `docs/README.md` § *Which document
 wins* on how an ADR relates to the normative documents.
 
@@ -137,6 +137,7 @@ ADR from here on, in `docs/adr/` exactly as it did in the old log.
 | 091 | Card de página publicada: QR Code sob demanda, URL única, "Despublicar" atrás de confirmação (SET-91) | DESIGN_SYSTEM.md | Reuses ADR-049's QR infrastructure and `generateQrCodeDataUrl`; qualifies ADR-080's "Ver prévia" rule for the `published` state; reuses the confirmation pattern SET-32 already established for `CancelSubscriptionPanel` | [`ADR-091-card-de-pagina-publicada-qr-code-sob-demanda-e-despublicar-atras-de-confirmacao.md`](ADR-091-card-de-pagina-publicada-qr-code-sob-demanda-e-despublicar-atras-de-confirmacao.md) |
 | 092 | Endereço público da Commercial Page passa a incluir a Company: `<representative>.<company>.setnar.com`, sem transformar Company em Tenant (SET-83) | ARCHITECTURE.md / DOMAIN_MODEL.md | Extends ADR-026, ADR-031 | [`ADR-092-endereco-publico-da-commercial-page-passa-a-incluir-a-company.md`](ADR-092-endereco-publico-da-commercial-page-passa-a-incluir-a-company.md) |
 | 093 | Calculadora da Conexão Green aplica 10% flat sobre o valor total da conta informado, não sobre uma base compensável deduzida de impostos e taxas | — | Qualifies ADR-088/ADR-089 (`GreenCalculator`) | [`ADR-093-calculadora-da-conexao-green-aplica-10-flat-sobre-o-valor-total-da-conta.md`](ADR-093-calculadora-da-conexao-green-aplica-10-flat-sobre-o-valor-total-da-conta.md) |
+| 094 | Materiais é absorvido por Divulgação; navegação autenticada cai de 5 para 4 itens (reverte SET-104) | PRODUCT.md / ARCHITECTURE.md / DESIGN_SYSTEM.md / ROADMAP.md | Reverts SET-104 (ADR's own Alternativa A); implements Alternativa C of `AUDIT_SET-101_ARQUITETURA_SEMANTICA.md` §7; qualifies ADR-090 (export mechanism, unchanged) | [`ADR-094-materiais-absorvido-por-divulgacao-nav-cai-de-5-para-4-itens.md`](ADR-094-materiais-absorvido-por-divulgacao-nav-cai-de-5-para-4-itens.md) |
 
 ## Existing code and migration comments still say `README.md`
 
