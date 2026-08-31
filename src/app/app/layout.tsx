@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { AppNavigation } from '@/app/app/app-navigation';
 import { getCurrentUser } from '@/modules/auth/infrastructure/auth-gateway-factory';
+import { TrialBannerSlot } from '@/modules/billing/presentation/trial-banner-slot';
 import { Logo } from '@/shared/brand/logo';
 
 export const metadata: Metadata = {
@@ -16,6 +17,9 @@ export default async function AuthenticatedAppLayout({ children }: { children: R
 
   return (
     <div className="min-h-screen bg-surface-sunken md:grid md:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="md:col-span-2">
+        <TrialBannerSlot />
+      </div>
       <aside className="hidden border-r border-line bg-surface-raised md:flex md:min-h-screen md:flex-col md:p-5">
         <Logo name="SETNAR" className="px-2 py-3" />
         <div className="mt-8 flex-1">
