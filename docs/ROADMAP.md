@@ -206,7 +206,7 @@ Status verified against the working tree based on commit `b1cd1da` on 2026-08-27
 - Products, links, QR Codes — done in `/app/paginas`
 - Read-only delivery of captured contacts — done in `/app/contatos` (SET-77/ADR-087); this does not activate CRM lifecycle
 - Basic statistics — done in `/app/paginas` (SET-37/ADR-082)
-- 21 downloadable marketing materials (7 products × Post/Story/Poster), personalized and gated by the same publication rule — done in `/app/paginas/marketing` (SET-65/ADR-090). Pulled forward from Stage 2's Material Library, below, as the distribution mechanism this stage's own hypothesis needs — see `MARKETING_MATERIALS_PLAN.md` §0 for the recorded reason. Scoped to exactly these 21 existing pieces, not the full Material Library
+- 21 downloadable marketing materials (7 products × Post/Story/Poster), personalized and gated by the same publication rule — done in `/app/divulgacao/biblioteca` (SET-65/ADR-090; moved here from `/app/paginas/marketing` by ADR-094). Pulled forward from Stage 2's Material Library, below, as the distribution mechanism this stage's own hypothesis needs — see `MARKETING_MATERIALS_PLAN.md` §0 for the recorded reason. Scoped to exactly these 21 existing pieces, not the full Material Library
 
 ---
 

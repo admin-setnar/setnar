@@ -14,8 +14,10 @@ import {
 /**
  * SET-65 — caminho real de materiais de marketing num navegador real:
  * cadastro → onboarding → ativação/publicação de um produto → o material
- * correspondente aparece em `/app/paginas/marketing`, já personalizado →
- * baixar produz um arquivo de verdade (evento `download` do navegador).
+ * correspondente aparece em `/app/divulgacao/biblioteca` (movida de
+ * `/app/paginas/marketing` pela ADR-094, reverte SET-104), já
+ * personalizado → baixar produz um arquivo de verdade (evento `download`
+ * do navegador).
  *
  * O que este spec NÃO tenta provar, de propósito, porque já está provado na
  * camada certa:
@@ -52,8 +54,8 @@ test.describe('materiais de marketing (E2E, desktop)', () => {
       await expect(page.getByRole('button', { name: 'Despublicar' })).toBeVisible({ timeout: 15_000 });
     });
 
-    await test.step('o material do produto publicado aparece em /app/paginas/marketing, já personalizado', async () => {
-      await page.goto('/app/paginas/marketing');
+    await test.step('o material do produto publicado aparece em /app/divulgacao/biblioteca, já personalizado', async () => {
+      await page.goto('/app/divulgacao/biblioteca');
       const card = page.getByRole('tablist').first();
       await expect(card).toBeVisible({ timeout: 15_000 });
       // Dado real do representante, não um placeholder — prova que o mapper

@@ -26,9 +26,8 @@ describe('authenticated App Shell contract', () => {
     assert.match(rootPage, /redirect\('\/app\/paginas'\)/);
   });
 
-  it('exposes only live Pages, Materials, Divulgação, Contacts and Account destinations with active-state semantics', () => {
+  it('exposes only live Pages, Divulgação, Contacts and Account destinations with active-state semantics', () => {
     assert.match(navigation, /href: '\/app\/paginas'/);
-    assert.match(navigation, /href: '\/app\/paginas\/marketing'/);
     assert.match(navigation, /href: '\/app\/divulgacao'/);
     assert.match(navigation, /href: '\/app\/contatos'/);
     assert.match(navigation, /href: '\/app\/conta'/);
@@ -36,8 +35,13 @@ describe('authenticated App Shell contract', () => {
     assert.doesNotMatch(navigation, /desempenho|preview/i);
   });
 
-  it('resolves exactly one active nav destination for the nested /app/paginas/marketing route (SET-65)', () => {
+  it('resolves exactly one active nav destination via longest-match, defensively, even with no nested destination in the menu today (ADR-094)', () => {
     assert.match(navigation, /sort\(\(a, b\) => b\.length - a\.length\)/);
+  });
+
+  it('redirects the retired Materiais route to its new home under Divulgação (ADR-094, reverts SET-104)', () => {
+    const marketingRedirect = source('src/app/app/paginas/marketing/page.tsx');
+    assert.match(marketingRedirect, /redirect\('\/app\/divulgacao\/biblioteca'\)/);
   });
 
   it('keeps route-specific data outside the shared layout', () => {

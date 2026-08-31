@@ -21,7 +21,7 @@ const page = source('src/app/app/divulgacao/page.tsx');
 const flow = source('src/modules/marketing-materials/presentation/divulgacao-flow.tsx');
 
 describe('/app/divulgacao route (SET-84 D4)', () => {
-  it('reuses the same availability rule and catalog as /app/paginas/marketing — no bespoke isActive flag', () => {
+  it('reuses the same availability rule and catalog as /app/divulgacao/biblioteca — no bespoke isActive flag', () => {
     assert.match(page, /selectAvailableProductsWithMaterials/);
     assert.match(page, /getRepresentativeCatalogRepository/);
     assert.match(page, /isRepresentativeProfileComplete/);
