@@ -28,6 +28,7 @@ import { isRepresentativeProfileComplete } from '@/modules/representatives/domai
 import { Card } from '@/shared/ui/card';
 import { FeedbackPrompt } from '@/shared/ui/feedback-prompt';
 import { FormAlert } from '@/shared/ui/form-alert';
+import { ScrollToHash } from '@/shared/ui/scroll-to-hash';
 import { Text } from '@/shared/ui/typography';
 
 export const metadata: Metadata = { title: 'Conta' };
@@ -80,6 +81,7 @@ export default async function AccountPage({
 
   return (
     <div className="space-y-8">
+      <ScrollToHash targetId="assinatura" />
       <div className="space-y-2">
         <Text as="h1" variant="heading">Conta</Text>
         <Text as="p" variant="body">Mantenha seus dados profissionais e de acesso atualizados.</Text>
