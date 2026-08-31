@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ComponentType } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Check, Copy, Instagram, MessageCircle, QrCode, Share2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Check, Copy, Instagram, MessageCircle, QrCode, Share2 } from 'lucide-react';
 
 import type { OriginId } from '@/modules/analytics/domain/origin';
 import { resolveDivulgacaoCopy } from '@/modules/marketing-materials/divulgacao-copy';
@@ -192,9 +192,10 @@ function KitStep({
   }, []);
 
   const slot = getMaterialsForProduct(product.slug).find((candidate) => candidate.format === channel.format);
-  const copy = resolveDivulgacaoCopy(channel.origin, product.slug, {
-    productName: product.name,
+  const copy = resolveDivulgacaoCopy(product.slug, {
     link: materialProps?.publicUrl ?? '',
+    representativeName: representative.name,
+    representativeId: representative.authorizationId,
   });
   const copyLinkOrigin = COPY_LINK_ORIGIN[channel.key] ?? channel.origin;
   const shareLink = `${materialProps?.publicUrl?.split('?')[0] ?? ''}?src=${copyLinkOrigin}`;
@@ -238,6 +239,13 @@ function KitStep({
         <Text as="p" variant="body" className="text-danger">
           Não foi possível montar o material agora. Tente novamente em instantes.
         </Text>
+      ) : null}
+
+      {copy?.note ? (
+        <div className="flex items-start gap-2.5 rounded-md border border-warning/20 bg-warning-subtle p-3 text-sm text-warning">
+          <AlertTriangle aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+          <Text as="p" variant="body" className="text-warning">{copy.note}</Text>
+        </div>
       ) : null}
 
       {materialProps && slot ? (
