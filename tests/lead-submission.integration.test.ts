@@ -4,6 +4,8 @@ import { after, before, describe, it } from 'node:test';
 
 import { createClient, type PostgrestError, type SupabaseClient } from '@supabase/supabase-js';
 
+import { createIntegrationServiceRoleClient } from './support/service-role-client';
+
 /**
  * Integration tests for the final `submit_lead` contract. Browser roles are
  * denied before the function body runs; trusted backend calls retain the
@@ -28,11 +30,7 @@ function freshIpHash(label: string): string {
 }
 
 const anon = canRunPublic ? createClient(SUPABASE_URL!, SUPABASE_KEY!) : null;
-const service = canRunPrivileged
-  ? createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    })
-  : null;
+const service = canRunPrivileged ? createIntegrationServiceRoleClient() : null;
 let fixtureUserId = '';
 let fixtureRepresentativeId = '';
 let fixtureActivationId = '';

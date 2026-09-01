@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, it } from 'node:test';
 
-import { createClient } from '@supabase/supabase-js';
+import { createIntegrationServiceRoleClient } from './support/service-role-client';
 
 /**
  * SET-21: submit_lead must reject exactly when the page is not publicly
@@ -17,7 +17,7 @@ import { createClient } from '@supabase/supabase-js';
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const canRun = Boolean(url && serviceKey);
-const service = canRun ? createClient(url!, serviceKey!, { auth: { persistSession: false } }) : null;
+const service = canRun ? createIntegrationServiceRoleClient() : null;
 
 let userId = '';
 let representativeId = '';

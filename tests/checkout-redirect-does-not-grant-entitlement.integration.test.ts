@@ -6,6 +6,8 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 import { getSubscriptionViewState } from '@/modules/billing/presentation/subscription-view-state';
 
+import { createIntegrationServiceRoleClient } from './support/service-role-client';
+
 /**
  * SET-34, critério "redirect sem webhook não ativa entitlement" — prova na
  * fronteira real que `/app/conta` consome, não com fixtures fabricadas:
@@ -24,7 +26,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const canRun = Boolean(url && publicKey && serviceKey);
-const service = canRun ? createClient(url!, serviceKey!, { auth: { persistSession: false } }) : null;
+const service = canRun ? createIntegrationServiceRoleClient() : null;
 
 let userId = '';
 let representativeId = '';
