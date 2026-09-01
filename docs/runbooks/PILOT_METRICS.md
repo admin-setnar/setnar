@@ -8,6 +8,22 @@ sem job — coerente com "sem sistema de roles/admin"
 (`docs/plans/SPRINT_E_PLAN.md` §2.4) e com o escopo do SET-50 ("sem cohorts,
 funis configuráveis, BI ou exportação sofisticada").
 
+> **SET-116 (2026-09-01) — coletor canônico substitui o processo ad hoc.**
+> `docs/plans/AUDIT_STAGE_1_KPI_HISTORICAL_INTEGRITY_2026-09-01.md` (R2/R9)
+> apontou que nenhum snapshot histórico de KPI produzido pelo processo
+> abaixo tinha query/versão/timestamp de execução registrados — o snapshot
+> era a única prova, e não era reproduzível de forma independente.
+> `npm run kpis:collect` (`scripts/collect-stage-1-kpis.ts`) é agora a forma
+> canônica de coletar os KPIs oficiais do Stage 1 (`STAGE_1_KPI_SPECIFICATION.md`):
+> read-only por construção (GET puro contra a REST API, nunca escreve),
+> grava um JSON (e opcionalmente um Markdown) versionado com
+> `collected_at`/`spec_version` (SHA do `STAGE_1_KPI_SPECIFICATION.md`)/
+> `collector_version` (SHA do HEAD)/`environment` junto de cada número.
+> **As consultas manuais abaixo permanecem como referência histórica e
+> como roteiro para os KPIs que o coletor ainda não cobre** (nenhuma foi
+> apagada) — mas a coleta oficial, a partir de agora, é `npm run
+> kpis:collect`, não mais copiar/colar SQL no SQL Editor.
+
 **Pré-requisito:** acesso ao SQL Editor do projeto Supabase (mesmo requisito
 de `BILLING_OPERATIONS.md`). Todas as consultas abaixo leem `subscriptions`,
 `billing_events`-adjacentes e tabelas com RLS restrito a `service_role`
