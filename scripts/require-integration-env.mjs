@@ -14,7 +14,20 @@
  * script does not run as part of it. This script exists only in
  * `test:integration`/`verify`, so a plain `npm run test` locally is
  * unaffected either way.
+ *
+ * Anti-production check first, unconditionally: by the time this script
+ * runs, `npm run test` (which actually executes the privileged
+ * `*.integration.test.ts` files) has already run — see
+ * `scripts/preload-supabase-production-guard.mjs`'s doc comment for why the
+ * real enforcement point is a `--import` preload on the `test` script, not
+ * here. This call stays as defense-in-depth for anyone invoking
+ * `test:integration` directly, and to fail loud+early if it somehow runs
+ * before `test`.
  */
+import { assertSupabaseIntegrationTargetIsSafe } from './supabase-production-guard.mjs';
+
+assertSupabaseIntegrationTargetIsSafe();
+
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;

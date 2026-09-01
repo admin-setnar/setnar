@@ -4,6 +4,8 @@ import { after, before, describe, it } from 'node:test';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import { createIntegrationServiceRoleClient } from './support/service-role-client';
+
 /**
  * SET-10: automates the manual roteiro `supabase/README.md` §"Verificação
  * manual obrigatória — policies de leitura própria (passo 8)" has run by
@@ -22,7 +24,7 @@ const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publicKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const canRun = Boolean(url && publicKey && serviceKey);
-const service = canRun ? createClient(url!, serviceKey!, { auth: { persistSession: false } }) : null;
+const service = canRun ? createIntegrationServiceRoleClient() : null;
 const anon = canRun ? createClient(url!, publicKey!) : null;
 
 let userAId = '';

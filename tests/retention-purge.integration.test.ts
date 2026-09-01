@@ -4,6 +4,8 @@ import { describe, it, type TestContext } from 'node:test';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import { createIntegrationServiceRoleClient } from './support/service-role-client';
+
 /**
  * Integration test for `purge_expired_retention_data()` (SET-73), which
  * implements the retention periods decided in
@@ -20,11 +22,7 @@ const canRun = Boolean(SUPABASE_URL && SERVICE_ROLE_KEY);
 const skipReason =
   'Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, with all migrations applied, to run this suite.';
 
-const service = canRun
-  ? createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    })
-  : null;
+const service = canRun ? createIntegrationServiceRoleClient() : null;
 
 type ValidPair = { representativeId: string; productId: string };
 const pairSkipReason =

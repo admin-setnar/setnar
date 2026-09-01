@@ -1,7 +1,9 @@
 import { randomInt, randomUUID } from 'node:crypto';
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { type SupabaseClient } from '@supabase/supabase-js';
 import type { Page } from '@playwright/test';
+
+import { createIntegrationServiceRoleClient } from '../../support/service-role-client';
 
 /**
  * Suporte compartilhado dos specs E2E (SET-52). Mesmo padrão de fixture
@@ -59,10 +61,16 @@ export const API_ROUTE_SETTLE_TIMEOUT = 30_000;
 export const HUB_RENDER_SETTLE_TIMEOUT = 15_000;
 
 export function serviceClient(): SupabaseClient {
-  if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+  // createIntegrationServiceRoleClient() is the one place the anti-production
+  // guard runs — see docs/plans/AUDIT_PROFILE_REPRESENTATIVE_INTEGRITY_2026-09-01.md
+  // §14/§15. Also protected one layer up by playwright.config.ts, evaluated
+  // before any spec/fixture loads — this is the last-resort boundary in case
+  // this module is ever imported outside of a Playwright run.
+  const client = createIntegrationServiceRoleClient();
+  if (!client) {
     throw new Error('serviceClient() called without NEXT_PUBLIC_SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY configured.');
   }
-  return createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+  return client;
 }
 
 export interface E2ERepresentative {

@@ -2,6 +2,8 @@ import { randomInt } from 'node:crypto';
 
 import { defineConfig, devices } from '@playwright/test';
 
+import { assertSupabaseIntegrationTargetIsSafe } from './scripts/supabase-production-guard.mjs';
+
 /**
  * IP sintético por execução, não um valor fixo — achado rodando esta suíte
  * repetidamente: um `x-forwarded-for` fixo esgota o rate limit real de leads
@@ -22,6 +24,14 @@ try {
 } catch {
   // .env.local não existe — normal em CI.
 }
+
+// Guard central do E2E: toda spec importa `tests/e2e/support/fixtures.ts`
+// para `serviceClient()`/`cleanupRepresentative()` (service_role, apaga
+// `representatives` de verdade), mas este arquivo de config é avaliado pelo
+// próprio Playwright CLI antes de qualquer spec/fixture — ponto mais cedo
+// possível para abortar. Ver `scripts/supabase-production-guard.mjs` e
+// `docs/plans/AUDIT_PROFILE_REPRESENTATIVE_INTEGRITY_2026-09-01.md` §14/§15.
+assertSupabaseIntegrationTargetIsSafe();
 
 /**
  * SET-52. E2E do fluxo crítico do MVP, contra o mesmo projeto Supabase real

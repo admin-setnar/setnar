@@ -4,15 +4,15 @@ import { after, before, describe, it } from 'node:test';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import { createIntegrationServiceRoleClient } from './support/service-role-client';
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const canRunPublic = Boolean(url && publishableKey);
 const canRunPrivileged = Boolean(url && publishableKey && serviceRoleKey);
 const anon = canRunPublic ? createClient(url!, publishableKey!) : null;
-const service = canRunPrivileged
-  ? createClient(url!, serviceRoleKey!, { auth: { persistSession: false, autoRefreshToken: false } })
-  : null;
+const service = canRunPrivileged ? createIntegrationServiceRoleClient() : null;
 
 const rpcArgs = {
   p_representative_slug: `untrusted-${randomUUID()}`,

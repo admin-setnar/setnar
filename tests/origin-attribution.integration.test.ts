@@ -6,6 +6,8 @@ import { createClient, type PostgrestError, type SupabaseClient } from '@supabas
 
 import { ORIGIN_IDS } from '@/modules/analytics/domain/origin';
 
+import { createIntegrationServiceRoleClient } from './support/service-role-client';
+
 /**
  * SET-84 D3 (docs/plans/SET-84_DIVULGACAO_LEAN_PLAN.md §3, passo 3) —
  * testes de segurança/isolamento/regressão da atribuição mínima de origem,
@@ -33,11 +35,7 @@ const skipReason =
   'Set NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY and SUPABASE_SERVICE_ROLE_KEY, with all migrations applied, to run this suite.';
 
 const anon = canRunPublic ? createClient(SUPABASE_URL!, SUPABASE_KEY!) : null;
-const service = canRunPrivileged
-  ? createClient(SUPABASE_URL!, SERVICE_ROLE_KEY!, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    })
-  : null;
+const service = canRunPrivileged ? createIntegrationServiceRoleClient() : null;
 
 const generatedIpHashes = new Set<string>();
 function freshIpHash(label: string): string {
