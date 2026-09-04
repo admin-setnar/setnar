@@ -80,6 +80,7 @@ export default defineConfig({
       testMatch: [
         'critical-path.spec.ts',
         'commercial-pages.spec.ts',
+        'conexao-expansao.spec.ts',
         'marketing-materials.spec.ts',
         'publication-management.spec.ts',
         'divulgacao.spec.ts',
