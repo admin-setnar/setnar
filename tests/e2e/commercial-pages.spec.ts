@@ -145,6 +145,17 @@ test.describe('oito Commercial Pages profissionais (SET-78, ADR-095)', () => {
           actionBackground: SECONDARY_WHATSAPP_STYLE.background,
         });
         expect(await publicPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+
+        // Issue #76 — `.header`'s `position: sticky` must resolve against the
+        // real viewport, not against `.page` itself. Real scroll (mouse
+        // wheel, not `window.scrollTo`, which this embedded harness has
+        // shown to not always register a trusted scroll event), then the
+        // header must sit at top:0 regardless of how far the page scrolled.
+        await publicPage.mouse.wheel(0, 900);
+        await publicPage.waitForTimeout(100);
+        const headerStickyTop = await publicPage.locator('header').evaluate((header) => header.getBoundingClientRect().top);
+        expect(headerStickyTop).toBeGreaterThanOrEqual(-1);
+        expect(headerStickyTop).toBeLessThanOrEqual(1);
       }
     }
 
