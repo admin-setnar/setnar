@@ -7,16 +7,21 @@ const MIGRATION_PATH = path.join(
   process.cwd(),
   'supabase/migrations/20260731000000_create_representative_domain.sql',
 );
+const MIGRATIONS_DIR = path.join(process.cwd(), 'supabase/migrations');
 const APP_DIR = path.join(process.cwd(), 'src/app');
 
 /**
- * Single source of truth for the 7 Stage 1 product slugs is the prose
- * comment atop `products` in the migration itself — not re-typed here.
- * Parsed, not hand-copied, so this guard can never drift from the schema
- * comment it depends on; if that comment's wording ever changes, this
- * throws instead of silently checking against a stale list.
+ * Single source of truth for the 7 original Stage 1 product slugs is the
+ * prose comment atop `products` in the migration itself — not re-typed
+ * here. Parsed, not hand-copied, so this guard can never drift from the
+ * schema comment it depends on; if that comment's wording ever changes,
+ * this throws instead of silently checking against a stale list.
+ *
+ * Deliberately duplicated from `tests/catalog-seed.test.ts` rather than
+ * shared — see that file's own comment for why these two guards stay
+ * independently runnable.
  */
-function knownProductSlugs(): string[] {
+function originalProductSlugs(): string[] {
   const sql = readFileSync(MIGRATION_PATH, 'utf-8');
   const prose = sql
     .split('\n')
@@ -38,12 +43,39 @@ function knownProductSlugs(): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Every product slug added since the original 7, one per additive catalog
+ * migration (ADR-095's own filename convention, `*_add_..._product.sql`) —
+ * so a future 9th product is covered here without editing this test again.
+ * Parses the slug directly out of its `insert into public.products` select
+ * list, same shape `tests/catalog-seed.test.ts`'s
+ * `seededProductFromAdditiveMigration` parses.
+ */
+function additiveProductSlugs(): string[] {
+  const additiveMigrations = readdirSync(MIGRATIONS_DIR).filter((name) => /_add_.*_product\.sql$/.test(name));
+
+  return additiveMigrations.map((name) => {
+    const migrationPath = path.join(MIGRATIONS_DIR, name);
+    const sql = readFileSync(migrationPath, 'utf-8');
+    const match = sql.match(/insert into public\.products[\s\S]*?select[\s\S]*?'[0-9a-f-]{36}'::uuid,\s*company\.id,\s*'([a-z0-9-]+)'/);
+    if (!match?.[1]) {
+      throw new Error(`Could not parse a product slug from ${migrationPath} — has its insert shape changed?`);
+    }
+    return match[1];
+  });
+}
+
+function knownProductSlugs(): string[] {
+  return [...originalProductSlugs(), ...additiveProductSlugs()];
+}
+
 describe('root route collision guard', () => {
-  it('parses a non-empty slug list from the migration comment', () => {
-    // Sanity check on the parse itself, not a re-assertion of the 7 names —
-    // the point is to prove the regex still matches the comment's current
-    // wording, not to duplicate the list it already contains.
-    assert.equal(knownProductSlugs().length, 7);
+  it('parses a non-empty slug list from the migration comment, plus every additive catalog migration since (ADR-095)', () => {
+    // Sanity check on the parse itself, not a re-assertion of the names —
+    // the point is to prove the regexes still match their files' current
+    // wording/shape, not to duplicate the list they already contain.
+    assert.equal(originalProductSlugs().length, 7);
+    assert.ok(additiveProductSlugs().length > 0, 'expected at least the ADR-095 conexao-expansao migration');
   });
 
   it('has no top-level src/app/ route whose name matches a known product slug', () => {

@@ -80,8 +80,8 @@ This is the single authoritative vocabulary of the SETNAR business. Every future
 
 ### Product
 **Definition:** A specific offer a Company sells through its Representatives, with its own description, compliance requirements, and commercial terms.
-**Business meaning:** The sellable unit. Everything a Commercial Page ultimately promotes is a Product (or a set of Products).
-**Example:** "Conexão Solar" (subscription solar energy) and "iGreen Auto Mensal" (monthly car insurance) are two distinct Products in the same Catalog.
+**Business meaning:** The sellable unit. Everything a Commercial Page ultimately promotes is a Product (or a set of Products). Most Products are purchased by the Representative's own customer, but a Product's "sellable unit" is not required to be a good or service bought by the visitor — it may itself be a commercial opportunity the Representative offers (ADR-095), in which case what the visitor "buys into" is participating in that opportunity, not paying the Company.
+**Example:** "Conexão Solar" (subscription solar energy) and "iGreen Auto Mensal" (monthly car insurance) are two distinct Products in the same Catalog, both purchased by the Representative's customer. "Conexão Expansão" (ADR-095) is a third shape: a Product whose Commercial Page promotes the opportunity of becoming a Representative under the current one, not a good or service.
 **Relationships:** Belongs to exactly one Catalog; can be activated by many Representatives; is referenced by one or more Commercial Pages.
 
 ### Product Activation
@@ -214,6 +214,7 @@ Likewise, **Company** and **Authorizing Organization** denote the same thing: `C
 |---|---|
 | **SETNAR's paying customer** | Whoever pays SETNAR — today a Representative, in Stage 5 possibly a Company |
 | **The Representative's customer** (or *end consumer*) | The person who buys the Product the Representative represents |
+| **A prospective Representative** | The person a Commercial Page addresses when its Product is itself a commercial opportunity to join the Company's network, rather than a good or service (ADR-095) — a Visitor and, once identified, a Lead, exactly like any other Commercial Page's audience; not a distinct domain entity |
 
 Unqualified "customer" is only acceptable where the surrounding sentence makes the referent unmistakable. In a metric, a rule, or an invariant, it must be qualified — "paying customers" as a business metric means **SETNAR's** paying customers, and is written that way wherever it could be read otherwise.
 

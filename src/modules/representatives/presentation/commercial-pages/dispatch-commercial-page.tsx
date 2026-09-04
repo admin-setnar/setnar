@@ -1,4 +1,5 @@
 import { ConexaoClubPage } from '@/modules/representatives/presentation/commercial-pages/conexao-club/conexao-club-page';
+import { ConexaoExpansaoPage } from '@/modules/representatives/presentation/commercial-pages/conexao-expansao/conexao-expansao-page';
 import { ConexaoGreenPage } from '@/modules/representatives/presentation/commercial-pages/conexao-green/conexao-green-page';
 import { ConexaoLivrePage } from '@/modules/representatives/presentation/commercial-pages/conexao-livre/conexao-livre-page';
 import { ConexaoPlacasPage } from '@/modules/representatives/presentation/commercial-pages/conexao-placas/conexao-placas-page';
@@ -27,6 +28,7 @@ export function DispatchCommercialPage({
   switch (product.slug) {
     case 'conexao-club':
       return <ConexaoClubPage {...props} />;
+    case 'conexao-expansao': return <ConexaoExpansaoPage {...props} />;
     case 'conexao-green': return <ConexaoGreenPage {...props} />;
     case 'conexao-livre': return <ConexaoLivrePage {...props} />;
     case 'conexao-placas': return <ConexaoPlacasPage {...props} />;

@@ -1,0 +1,131 @@
+/*
+ * Product-specific styles for Conexão Expansão — the 8th Commercial Page
+ * (ADR-095), its own presentation tree per ADR-089. No reference template
+ * exists under `templates/commercial-pages/` for this product (unlike the
+ * other seven), because it was not ported from one — it is new content
+ * authored for this implementation (CONEXAO_EXPANSAO_PLAN_V2.md).
+ *
+ * Reuses design tokens defined on `.page` in `commercial-page-base.module.css`
+ * (`var(--verde-vivo)`, `var(--fundo-card)`, etc.) — inherited by every
+ * descendant of `.page`, same as every other product's own module.
+ */
+
+/* Hero secondary CTA — "Ver como funciona" scrolls to #como-funciona.
+   Deliberately not a second `.btnWhats`: it must not look like a WhatsApp
+   action (implementation instructions item 6, "não abrir WhatsApp no CTA
+   secundário"). Rendered outside `HeroSection` (a shared primitive used by
+   all 8 products unchanged) rather than by extending it, per ADR-089's rule
+   that shared components must not gain product-specific structure. */
+.heroSecondaryCta {
+  margin-top: 18px;
+}
+.heroSecondaryCta a {
+  color: var(--verde-vivo-escuro);
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--borda);
+  padding-bottom: 2px;
+}
+.heroSecondaryCta a:hover {
+  border-bottom-color: var(--verde-vivo);
+}
+
+/* Connect Plus × Connect Full — a review pass (implementation review item
+   11) found the original two-card comparison saying, in effect, "Plus is
+   one modality, Full is another, Full pays more" without enough verified
+   detail to help a visitor actually decide anything — more confusion than
+   clarity. Simplified to one paragraph in the page's own JSX; no dedicated
+   styles needed here anymore. */
+
+/* Formas de bonificação — três conceitos, mesma grade de card simples que
+   `.payGrid` (Conexão Placas) já usa para uma lista curta e não-numérica. */
+.bonusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+@media (max-width: 760px) {
+  .bonusGrid {
+    grid-template-columns: 1fr;
+  }
+}
+.bonusCard {
+  background: var(--fundo-card);
+  border: 1px solid var(--borda);
+  border-radius: var(--radius);
+  padding: 22px;
+}
+.bonusCard h3 {
+  font-size: 1.05rem;
+}
+.bonusCard p {
+  color: var(--cinza-texto);
+  font-size: 0.92rem;
+  margin: 0;
+}
+.proNote {
+  margin: 20px 0 0;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--cinza-texto);
+}
+
+/* Evolução — trilha horizontal no desktop, lista vertical no mobile
+   (implementation instructions item 11: "mobile deve ser tratado
+   explicitamente"). Só os 5 níveis principais — sem Pré-níveis, sem PML. */
+.ladderStrip {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .ladderStrip {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+.ladderStep {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .ladderStep {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+}
+.ladderStepLabel {
+  display: block;
+  background: var(--fundo-card);
+  border: 1px solid var(--borda);
+  border-radius: 100px;
+  padding: 12px 22px;
+  font-family: 'Manrope Variable', 'Manrope', sans-serif;
+  font-weight: 700;
+  color: var(--verde-profundo);
+  text-align: center;
+}
+@media (max-width: 640px) {
+  .ladderStepLabel {
+    border-radius: var(--radius);
+  }
+}
+.ladderArrow {
+  color: var(--verde-vivo);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+@media (max-width: 640px) {
+  .ladderArrow {
+    text-align: center;
+    transform: rotate(90deg);
+  }
+}

@@ -3,8 +3,16 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it } from 'node:test';
 
+// ADR-095: conexao-expansao is the 8th slug, added on top of the original
+// 7 (ADR-089/SET-78). It has no `templates/commercial-pages/*/index.html`
+// reference — its copy was authored directly for this implementation, not
+// ported — so its `referenceFolder` is `null` and it is excluded from the
+// "preserves the seven immutable references" fidelity test below, which
+// only makes sense for slugs that were actually ported from a reference
+// file. Its own copy has a separate, dedicated fidelity check instead.
 const PRODUCTS = [
   ['conexao-club','conexao-club','ConexaoClubPage','ConexaoClub'],
+  ['conexao-expansao','conexao-expansao','ConexaoExpansaoPage', null],
   ['conexao-green','conexao-green','ConexaoGreenPage','ConexaoGreen'],
   ['conexao-livre','conexao-livre','ConexaoLivrePage','ConexaoLivre'],
   ['conexao-placas','conexao-placas','ConexaoPlacasPage','ConexaoPlacas'],
@@ -12,6 +20,15 @@ const PRODUCTS = [
   ['green-seguros','green-seguros','GreenSegurosPage','GreenSeguros'],
   ['telecom','telecom','TelecomPage','Telecom'],
 ] as const;
+
+/** Literal markers from Conexão Expansão's own approved copy
+ * (`docs/plans/CONEXAO_EXPANSAO_PLAN_V2.md` §6, as implemented in
+ * `conexao-expansao-page.tsx`) — the equivalent of `FIDELITY_MARKERS` for a
+ * product with no ported reference template to diff against. */
+const EXPANSAO_MARKERS = [
+  'Construa sua própria rede. Expanda sua atuação com a iGreen.',
+  'Onde vejo as regras completas?',
+];
 
 const FIDELITY_MARKERS = {
   'conexao-club': ['Economize todos os dias em mais de 600 mil produtos e serviços, no Brasil inteiro.', 'O clube funciona em todo o Brasil?'],
@@ -29,13 +46,15 @@ describe('ADR-089 commercial page composition',()=>{
   const publicPage=source('src/app/[productSlug]/page.tsx');
   const previewPage=source('src/app/pre-visualizacao/[productSlug]/page.tsx');
 
-  it('dispatches exactly the seven approved slugs without a legacy fallback',()=>{
+  it('dispatches exactly the eight approved slugs without a legacy fallback',()=>{
     for(const [slug,folder,component] of PRODUCTS){
       assert.match(dispatcher,new RegExp(`case '${slug}'`));
       assert.match(dispatcher,new RegExp(`<${component}`));
       assert.ok(existsSync(resolve(process.cwd(),`src/modules/representatives/presentation/commercial-pages/${folder}/${folder}-page.tsx`)));
     }
-    assert.equal((dispatcher.match(/case '/g)??[]).length,7);
+    // ADR-095: was 7 (ADR-089's closed catalog); deliberately bumped to 8
+    // for conexao-expansao — not a silent regrowth, see the ADR.
+    assert.equal((dispatcher.match(/case '/g)??[]).length,8);
     assert.doesNotMatch(dispatcher,/CommercialPageContent|getCommercialPageTemplate/);
     assert.match(dispatcher,/default: return null/);
   });
@@ -66,8 +85,9 @@ describe('ADR-089 commercial page composition',()=>{
     }
   });
 
-  it('preserves the seven immutable references and their product-specific copy',()=>{
+  it('preserves the seven ported reference templates and their product-specific copy',()=>{
     for(const [slug,folder,,referenceFolder] of PRODUCTS){
+      if(referenceFolder===null) continue; // conexao-expansao — no reference template, see below
       const reference=source(`templates/commercial-pages/${referenceFolder}/index.html`);
       const page=source(`src/modules/representatives/presentation/commercial-pages/${folder}/${folder}-page.tsx`);
       for(const marker of FIDELITY_MARKERS[slug]){
@@ -79,5 +99,16 @@ describe('ADR-089 commercial page composition',()=>{
     assert.match(widgets,/const percentage = 10;/);
     assert.match(widgets,/\+5 GB de portabilidade/);
     assert.match(widgets,/RCF \(danos a terceiros\)/);
+  });
+
+  it('keeps Conexão Expansão\'s own approved copy markers — no ported reference template exists for it (ADR-095)',()=>{
+    const page=source('src/modules/representatives/presentation/commercial-pages/conexao-expansao/conexao-expansao-page.tsx');
+    for(const marker of EXPANSAO_MARKERS){
+      assert.match(page,new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+    }
+    // Product-decision guardrails (implementation instructions item 3/17):
+    // no exact R$ figures and no income promise ever land on this page.
+    assert.doesNotMatch(page,/R\$\s?\d/);
+    assert.doesNotMatch(page,/você recebe R\$|renda garantida|resultado garantido/i);
   });
 });

@@ -23,18 +23,19 @@ import {
 const PRIMARY_WHATSAPP_STYLE = { background: 'rgb(0, 179, 89)', color: 'rgb(255, 255, 255)' };
 const SECONDARY_WHATSAPP_STYLE = { background: 'rgba(0, 0, 0, 0)', color: 'rgb(0, 137, 63)' };
 
-test.describe('sete Commercial Pages profissionais (SET-78)', () => {
+test.describe('oito Commercial Pages profissionais (SET-78, ADR-095)', () => {
   test.skip(!canRunE2E, e2eSkipReason);
 
   // O timeout global de 90s (playwright.config.ts) já é justo para o resto
   // da suíte (ver o comentário lá sobre critical-path.spec.ts), mas este
-  // spec faz 14 navegações reais (7 produtos × 2 viewports), cada uma com
+  // spec faz 16 navegações reais (8 produtos × 2 viewports), cada uma com
   // várias asserções de layout/CSS computado, mais uma segunda passada de
   // interação por produto no fim — achado medindo isoladamente com um
   // timeout ampliado: uma execução real, sem nenhum bug, levou ~108s
-  // (1.8min). 90s nunca teve margem para este spec especificamente, não é
-  // flakiness — é mais trabalho por teste do que o orçamento padrão cobre.
-  // 240s dá folga confortável acima do pior caso observado.
+  // (1.8min) com 7 produtos. 90s nunca teve margem para este spec
+  // especificamente, não é flakiness — é mais trabalho por teste do que o
+  // orçamento padrão cobre. 240s dá folga confortável acima do pior caso
+  // observado, com margem para o 8º produto (ADR-095) não medido ainda.
   test.describe.configure({ timeout: 240_000 });
 
   const fixture = buildE2ERepresentative('templates');
@@ -65,7 +66,7 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
       .select('id, slug')
       .in('slug', productsExpected.map((item)=>item.slug));
     expect(productsError).toBeNull();
-    expect(products).toHaveLength(7);
+    expect(products).toHaveLength(8);
 
     const { error: activationError } = await service!.from('product_activations').upsert(
       products!.map((product) => ({
@@ -95,17 +96,32 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
           return Math.abs((rect.left + rect.width / 2) - window.innerWidth / 2);
         });
         expect(footerAlignment).toBeLessThanOrEqual(1);
-        const firstWhatsappButtons = await publicPage.locator('a[class*="btnWhats"]').evaluateAll((buttons) => buttons.slice(0, 4).map((button) => {
+        // conexao-expansao (ADR-095) has no Widget CTA — a review pass found
+        // the one originally added there existed only to satisfy this exact
+        // 4-button pattern, not a UX need (see expansion-hero-widget.tsx's
+        // own comment), and removed it. Its first 3 buttons are Header →
+        // Hero → Consultor, not 4; every other product keeps the 4-button
+        // Header → Hero → Widget → Consultor shape SET-106 established.
+        const expectedButtonCount = template.widgetStyle === null ? 3 : 4;
+        const firstWhatsappButtons = await publicPage.locator('a[class*="btnWhats"]').evaluateAll((buttons, count) => buttons.slice(0, count).map((button) => {
           const style = getComputedStyle(button);
           return { background: style.backgroundColor, color: style.color };
-        }));
-        expect(firstWhatsappButtons).toHaveLength(4);
-        expect(firstWhatsappButtons).toEqual([
-          SECONDARY_WHATSAPP_STYLE, // Header — sempre secundário (SET-97 PUB-02)
-          PRIMARY_WHATSAPP_STYLE, // Hero — sempre sólido
-          template.widgetStyle, // Widget — varia por árvore
-          SECONDARY_WHATSAPP_STYLE, // Consultor — sempre secundário
-        ]);
+        }), expectedButtonCount);
+        expect(firstWhatsappButtons).toHaveLength(expectedButtonCount);
+        expect(firstWhatsappButtons).toEqual(
+          template.widgetStyle === null
+            ? [
+                SECONDARY_WHATSAPP_STYLE, // Header — sempre secundário (SET-97 PUB-02)
+                PRIMARY_WHATSAPP_STYLE, // Hero — sempre sólido
+                SECONDARY_WHATSAPP_STYLE, // Consultor — sempre secundário
+              ]
+            : [
+                SECONDARY_WHATSAPP_STYLE, // Header — sempre secundário (SET-97 PUB-02)
+                PRIMARY_WHATSAPP_STYLE, // Hero — sempre sólido
+                template.widgetStyle, // Widget — varia por árvore
+                SECONDARY_WHATSAPP_STYLE, // Consultor — sempre secundário
+              ],
+        );
         const visualIdentity = await publicPage.locator('main#conteudo').evaluate((main) => {
           const style = getComputedStyle(main);
           const header = main.querySelector('header');
@@ -177,6 +193,7 @@ test.describe('sete Commercial Pages profissionais (SET-78)', () => {
   // não mudaram.
   const productsExpected = [
     { slug:'conexao-club', headline:'Economize todos os dias em mais de 600 mil produtos e serviços, no Brasil inteiro.', leadButton:'Prefiro que me chamem', widgetStyle: SECONDARY_WHATSAPP_STYLE },
+    { slug:'conexao-expansao', headline:'Construa sua própria rede. Expanda sua atuação com a iGreen.', leadButton:'Quero saber mais', widgetStyle: null },
     { slug:'conexao-green', headline:'Cansado de ver a conta de luz subir todo mês? Dá pra pagar menos, sem obra e sem trocar de distribuidora.', leadButton:'Quero saber meu desconto', widgetStyle: PRIMARY_WHATSAPP_STYLE },
     { slug:'conexao-livre', headline:'Sua empresa é Grupo A? Migre para o Mercado Livre de Energia e reduza o custo da sua conta.', leadButton:'Quero ser contatado sobre a migração', widgetStyle: PRIMARY_WHATSAPP_STYLE },
     { slug:'conexao-placas', headline:'Tenha suas próprias placas solares e pare de depender só do desconto na conta de luz.', leadButton:'Quero ser contatado sobre a proposta', widgetStyle: SECONDARY_WHATSAPP_STYLE },
