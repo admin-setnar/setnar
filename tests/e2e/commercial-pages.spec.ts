@@ -193,7 +193,7 @@ test.describe('oito Commercial Pages profissionais (SET-78, ADR-095)', () => {
   // não mudaram.
   const productsExpected = [
     { slug:'conexao-club', headline:'Economize todos os dias em mais de 600 mil produtos e serviços, no Brasil inteiro.', leadButton:'Prefiro que me chamem', widgetStyle: SECONDARY_WHATSAPP_STYLE },
-    { slug:'conexao-expansao', headline:'Construa sua própria rede. Expanda sua atuação com a iGreen.', leadButton:'Quero saber mais', widgetStyle: null },
+    { slug:'conexao-expansao', headline:'Construa uma renda recorrente com a iGreen.', leadButton:'Quero fazer parte', widgetStyle: null },
     { slug:'conexao-green', headline:'Cansado de ver a conta de luz subir todo mês? Dá pra pagar menos, sem obra e sem trocar de distribuidora.', leadButton:'Quero saber meu desconto', widgetStyle: PRIMARY_WHATSAPP_STYLE },
     { slug:'conexao-livre', headline:'Sua empresa é Grupo A? Migre para o Mercado Livre de Energia e reduza o custo da sua conta.', leadButton:'Quero ser contatado sobre a migração', widgetStyle: PRIMARY_WHATSAPP_STYLE },
     { slug:'conexao-placas', headline:'Tenha suas próprias placas solares e pare de depender só do desconto na conta de luz.', leadButton:'Quero ser contatado sobre a proposta', widgetStyle: SECONDARY_WHATSAPP_STYLE },

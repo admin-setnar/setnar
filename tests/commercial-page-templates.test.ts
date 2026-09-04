@@ -26,7 +26,7 @@ const PRODUCTS = [
  * `conexao-expansao-page.tsx`) — the equivalent of `FIDELITY_MARKERS` for a
  * product with no ported reference template to diff against. */
 const EXPANSAO_MARKERS = [
-  'Construa sua própria rede. Expanda sua atuação com a iGreen.',
+  'Construa uma renda recorrente com a iGreen.',
   'Onde vejo as regras completas?',
 ];
 

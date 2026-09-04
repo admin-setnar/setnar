@@ -70,11 +70,11 @@ export function ConexaoExpansaoPage({
       <HeroSection
         representative={representative}
         product={product}
-        eyebrow="Oportunidade de expansão"
-        headline="Construa sua própria rede. Expanda sua atuação com a iGreen."
-        subhead="Apresente a Conexão Expansão para novas pessoas e participe da estrutura de bonificações prevista pelo programa, conforme sua rede se desenvolve."
-        ctaMessage="Olá! Quero conhecer a Conexão Expansão."
-        ctaLabel="Quero conhecer a Conexão Expansão"
+        eyebrow="Uma renda que pode crescer com você"
+        headline="Construa uma renda recorrente com a iGreen."
+        subhead="Como licenciado autorizado, você participa da estrutura de bonificações da Conexão Expansão — com royalties recorrentes enquanto sua rede permanece ativa."
+        ctaMessage="Olá! Quero fazer parte da iGreen."
+        ctaLabel="Quero fazer parte da iGreen"
         heroNote="Bonificações sujeitas às condições vigentes do programa · Sem garantia de renda ou resultado"
         widget={<ExpansionHeroWidget />}
         origin={origin}
@@ -92,11 +92,11 @@ export function ConexaoExpansaoPage({
         <CommercialLeadForm
           productSlug={productSlug}
           representativeId={representative.id}
-          title="Quer saber mais sobre a Conexão Expansão?"
-          description={`Deixe seus dados e ${firstName} poderá entrar em contato para explicar como funciona.`}
-          submitLabel="Quero saber mais"
+          title="Quer fazer parte da iGreen?"
+          description={`Deixe seus dados e ${firstName} poderá entrar em contato para te explicar como se tornar licenciado.`}
+          submitLabel="Quero fazer parte"
           privacyNote="Seus dados são usados apenas para contato sobre a Conexão Expansão. Nada de spam."
-          successDescription="Nossa equipe entra em contato para explicar como a Conexão Expansão funciona, sem compromisso."
+          successDescription="Nossa equipe entra em contato para te explicar como se tornar um licenciado iGreen, sem compromisso."
           disabled={leadFormDisabled}
           origin={origin}
         />
@@ -105,24 +105,24 @@ export function ConexaoExpansaoPage({
       <CardsSection
         id="o-que-e"
         title="O que é a Conexão Expansão"
-        intro="A oportunidade de apresentar a iGreen para novas pessoas e construir sua própria rede."
+        intro="A porta de entrada para você se tornar um licenciado autorizado iGreen."
       >
         <p>
-          A Conexão Expansão é a forma de você apresentar a iGreen para novas pessoas, que podem se tornar
-          licenciados autorizados e desenvolver sua própria equipe — além de trabalhar os produtos iGreen, você
-          participa da estrutura de bonificações prevista para quem expande a rede.
+          A Conexão Expansão é a forma de construir uma renda recorrente conectando novas pessoas à rede iGreen. Como
+          licenciado autorizado, você participa da estrutura de bonificações do programa — com royalties que
+          continuam enquanto sua rede permanece ativa.
         </p>
         <p>Funciona em duas modalidades de licença, Connect Plus e Connect Full — veja a diferença mais abaixo.</p>
       </CardsSection>
 
       <StepsSection
         title="Como funciona"
-        intro="Do primeiro contato até a estrutura de bonificações da sua rede."
+        intro="Do primeiro contato até você atuando como licenciado iGreen."
         steps={[
-          { title: 'Você apresenta a oportunidade', description: 'A pessoa conhece a Conexão Expansão através de você.' },
-          { title: 'Ela decide participar', description: 'O interessado segue o processo aplicável para se tornar licenciado.' },
-          { title: 'A conexão pode gerar bonificação', description: 'Conforme a modalidade escolhida e as regras vigentes.' },
-          { title: 'Sua rede pode crescer', description: 'A evolução da rede e da sua qualificação pode habilitar outras formas de remuneração previstas pelo programa.' },
+          { title: 'Você conhece a oportunidade', description: `Fale com ${firstName} e entenda como funciona a Conexão Expansão.` },
+          { title: 'Você decide participar', description: 'Você segue o processo aplicável para se tornar um licenciado autorizado iGreen.' },
+          { title: 'Você começa a atuar', description: 'Como licenciado, você pode representar os produtos iGreen e apresentar a oportunidade para novas pessoas.' },
+          { title: 'Sua rede pode crescer', description: 'Conforme sua atuação e sua qualificação evoluem, outras formas de bonificação previstas pelo programa podem ser habilitadas.' },
         ]}
       />
 
@@ -141,7 +141,7 @@ export function ConexaoExpansaoPage({
       <CardsSection
         id="formas-de-bonificacao"
         title="Formas de bonificação"
-        intro="Três formas de participar da estrutura de bonificações da Conexão Expansão."
+        intro="Depois de se tornar licenciado, três formas de participar da estrutura de bonificações da Conexão Expansão."
       >
         <div className={local.bonusGrid}>
           <article className={local.bonusCard}>
@@ -190,25 +190,29 @@ export function ConexaoExpansaoPage({
         items={[
           {
             question: 'O que é a Conexão Expansão?',
+            answer: 'É a forma de você se tornar um licenciado autorizado iGreen, participando da estrutura de bonificações prevista pelo programa.',
+          },
+          {
+            question: 'Preciso já ser licenciado iGreen para participar?',
             answer:
-              'É a forma de apresentar a oportunidade de se tornar licenciado iGreen para novas pessoas, participando da estrutura de bonificações prevista pelo programa.',
+              'Não. A Conexão Expansão é justamente a forma de você se tornar um licenciado autorizado iGreen — não é necessário já ser licenciado para começar.',
           },
           {
             question: 'Como funciona?',
             answer:
-              'Você apresenta a oportunidade, a pessoa decide participar e segue o processo de ativação da licença. Conforme a estrutura da sua rede evolui, outras formas de bonificação previstas pelo programa podem ser habilitadas.',
+              'Você conhece a oportunidade, decide participar e segue o processo para se tornar um licenciado autorizado iGreen. A partir daí, você pode representar os produtos iGreen e, conforme sua atuação evolui, outras formas de bonificação previstas pelo programa podem ser habilitadas.',
           },
           {
             question: 'Quem pode participar?',
-            answer: 'Licenciados autorizados iGreen que queiram apresentar a oportunidade para novas pessoas.',
+            answer: 'Qualquer pessoa interessada em se tornar um licenciado autorizado iGreen.',
           },
           {
             question: 'Como funcionam as bonificações?',
             answer:
-              'Existem bonificações por conexão direta, por conexão indireta (feita pela sua equipe) e royalties conforme sua qualificação. Os valores e as condições completas seguem as regras vigentes da Conexão Expansão.',
+              'Depois de se tornar licenciado, existem bonificações por conexão direta, por conexão indireta (feita pela sua equipe) e royalties conforme sua qualificação. Os valores e as condições completas seguem as regras vigentes da Conexão Expansão.',
           },
           {
-            question: 'Preciso montar uma equipe?',
+            question: 'Preciso montar uma equipe assim que entrar?',
             answer:
               'Não necessariamente — a conexão direta já participa da estrutura de bonificações. Formar e desenvolver uma equipe pode habilitar formas adicionais de remuneração, conforme as regras vigentes.',
           },

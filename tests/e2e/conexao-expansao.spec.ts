@@ -66,7 +66,7 @@ test.describe('Conexão Expansão — validação end-to-end (ADR-095)', () => {
     // ------------------------------------------------------------------
     await page.goto('/pre-visualizacao/conexao-expansao');
     await expect(
-      page.getByRole('heading', { level: 1, name: 'Construa sua própria rede. Expanda sua atuação com a iGreen.' }),
+      page.getByRole('heading', { level: 1, name: 'Construa uma renda recorrente com a iGreen.' }),
     ).toBeVisible();
     await expect(page.getByText('Formulário desativado na prévia — publique a página para receber contatos reais.')).toBeVisible();
 
@@ -78,7 +78,7 @@ test.describe('Conexão Expansão — validação end-to-end (ADR-095)', () => {
     await publicPage.goto(`${publicPageOrigin(fixture)}/conexao-expansao`);
 
     await expect(
-      publicPage.getByRole('heading', { level: 1, name: 'Construa sua própria rede. Expanda sua atuação com a iGreen.' }),
+      publicPage.getByRole('heading', { level: 1, name: 'Construa uma renda recorrente com a iGreen.' }),
     ).toBeVisible();
     await expect(publicPage.getByRole('heading', { level: 2, name: fixture.displayName })).toBeVisible();
 
@@ -148,7 +148,7 @@ test.describe('Conexão Expansão — validação end-to-end (ADR-095)', () => {
     await mobilePage.setViewportSize({ width: 375, height: 812 });
     await mobilePage.goto(`${publicPageOrigin(fixture)}/conexao-expansao`);
     await expect(
-      mobilePage.getByRole('heading', { level: 1, name: 'Construa sua própria rede. Expanda sua atuação com a iGreen.' }),
+      mobilePage.getByRole('heading', { level: 1, name: 'Construa uma renda recorrente com a iGreen.' }),
     ).toBeVisible();
     expect(
       await mobilePage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
@@ -174,7 +174,7 @@ test.describe('Conexão Expansão — validação end-to-end (ADR-095)', () => {
     const leadName = `Lead Teste E2E ${Date.now()}`;
     await publicPage.getByLabel('Nome').fill(leadName);
     await publicPage.getByLabel('Telefone').fill('(11) 91234-5678');
-    await publicPage.locator('#quero-simular').getByRole('button', { name: 'Quero saber mais' }).click();
+    await publicPage.locator('#quero-simular').getByRole('button', { name: 'Quero fazer parte' }).click();
     await expect(publicPage.getByText('Recebemos seus dados')).toBeVisible({ timeout: API_ROUTE_SETTLE_TIMEOUT });
 
     const representative = await expect
