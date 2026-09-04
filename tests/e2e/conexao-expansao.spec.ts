@@ -124,22 +124,21 @@ test.describe('Conexão Expansão — validação end-to-end (ADR-095)', () => {
       await publicPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
     ).toBe(true);
 
-    // Item 9 das instruções — sticky header: verificado em Chromium real
-    // (Playwright), não no harness anterior. A investigação passada
-    // encontrou o header não grudando ao rolar, reproduzido também em
-    // Conexão Club (não modificada) — checando aqui se o mesmo acontece no
-    // navegador real do E2E, antes de decidir se é bug real ou artefato do
-    // harness anterior.
+    // Issue #76, resolved — .header's position:sticky must resolve against
+    // the real viewport. Root cause was `.page`'s `overflow-x: hidden`
+    // silently forcing a computed `overflow-y: auto` (CSS Overflow spec's
+    // visible/non-visible axis-coupling rule), which made `.page` itself
+    // the sticky positioning's scroll container instead of the viewport;
+    // fixed by using `overflow-x: clip` there instead (excluded from that
+    // coupling rule), in commercial-page-base.module.css. This assertion is
+    // duplicated, deliberately, in commercial-pages.spec.ts's shared loop
+    // (which covers all 8 products) — kept here too so this dedicated spec
+    // stays a complete, standalone read of the page's real behavior.
     await publicPage.mouse.wheel(0, 900);
-    await publicPage.waitForTimeout(150);
-    const headerStickyCheck = await publicPage.evaluate(() => {
-      const header = document.querySelector('header');
-      if (!header) return null;
-      const rect = header.getBoundingClientRect();
-      return { top: rect.top, scrollY: window.scrollY };
-    });
-    // eslint-disable-next-line no-console
-    console.log('[sticky-header-check]', JSON.stringify(headerStickyCheck));
+    await publicPage.waitForTimeout(100);
+    const headerStickyTop = await publicPage.locator('header').evaluate((header) => header.getBoundingClientRect().top);
+    expect(headerStickyTop).toBeGreaterThanOrEqual(-1);
+    expect(headerStickyTop).toBeLessThanOrEqual(1);
 
     // ------------------------------------------------------------------
     // 5. Mobile — viewport oficial da suíte mobile-smoke (375×812)

@@ -41,9 +41,28 @@
   --max-width: 1120px;
 
   /* Was `html, body{ max-width:100%; overflow-x:hidden; }` — the page
-     wrapper is this component's equivalent of that root. */
+     wrapper is this component's equivalent of that root.
+     `clip`, not `hidden` (issue #76): per the CSS Overflow spec, an
+     `overflow-x` of anything but `visible` paired with an unset `overflow-y`
+     forces the browser to compute `overflow-y` as `auto`, not the `visible`
+     it looks like from this rule alone — confirmed by reading `.page`'s own
+     computed style. That silently turns `.page` into a scroll container,
+     which is what `.header`'s `position: sticky` resolves against instead
+     of the real viewport; since `.page` never has a shorter clientHeight
+     than its content (no fixed height anywhere), it never generates a
+     scroll delta of its own, so the sticky offset math never fires and the
+     header just scrolls away like `position: static`. `clip` contains
+     horizontal overflow exactly like `hidden` did (verified: a
+     deliberately 3000px-wide probe element does not create document-level
+     horizontal scroll under either), but — unlike `hidden`, `scroll` and
+     `auto` — is excluded from that visible/non-visible coupling rule, so it
+     does not establish a scroll container and does not hijack sticky
+     positioning from descendants. The one real difference: `overflow-x`
+     programmatic scrolling (`scrollLeft`, `scrollTo` on this axis) becomes
+     inert under `clip` — never used here, since this rule's only job was
+     ever to contain overflow, not to enable a horizontal scrollbar. */
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 
   /* Was `body{...}` */
   margin: 0;
